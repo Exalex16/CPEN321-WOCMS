@@ -19,7 +19,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           source: "."
-          target: "/home/ubuntu/CPEN321-WOCMS/Backend"
+          target: "/home/ubuntu/CPEN321-WOCMS"
 
       - name: Rebuild and Deploy
         uses: appleboy/ssh-action@master
