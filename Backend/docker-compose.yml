@@ -23,10 +23,6 @@ services:
       - cpen321-tutorial_default
     command: npm start
 
-
-volumes:
-  mongo_data:
-
 networks:
   cpen321-tutorial_default:
     external: true
