@@ -1,13 +1,8 @@
 version: '3'
 services:
   mongo:
-    image: mongo:latest
-    container_name: mongo_instance
-    restart: always
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
+    external:
+      name: mongo_instance
 
   app:
     build: 
@@ -29,4 +24,3 @@ services:
 
 volumes:
   mongo_data:
-  
