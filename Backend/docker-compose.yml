@@ -1,8 +1,13 @@
 version: '3'
 services:
   mongo:
-    external:
-      name: mongo_instance
+    image: mongo:latest
+    container_name: mongo_instance
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
 
   app:
     build: 
@@ -19,10 +24,9 @@ services:
       - "${PORT}:${PORT}"
     depends_on:
       - mongo
-    networks:
-      - cpen321-tutorial_default
     command: npm start
 
-networks:
-  cpen321-tutorial_default:
-    external: true
+
+volumes:
+  mongo_data:
+  
