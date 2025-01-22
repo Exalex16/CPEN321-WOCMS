@@ -19,7 +19,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           source: "."
-          target: "/home/ubuntu/CPEN321-WOCMS"
+          target: "/home/ubuntu/CPEN321-WOCMS/Backend"
 
       - name: Rebuild and Deploy
         uses: appleboy/ssh-action@master
@@ -28,7 +28,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd /home/ubuntu/CPEN321-WOCMS
+            cd /home/ubuntu/CPEN321-WOCMS/Backend
 
             sudo rm -rf node_modules
             npm install
