@@ -1,7 +1,21 @@
 # M3 - Requirements and Design
 
 ## 1. Change History
-<!-- Leave blank for M3 -->
+1. Separated user authentication (via Google OAuth) from Manage Accounts. (2.12.2024)
+    -  Authentication was entangled as a smaller use case in Manage Accounts. Now, delineate authentication so users seperately log in. After, allow edits to username, profile picture.etc. 
+
+2. Specify new User - Location matching algorithm: identify elements in photo and generate "tags" for users. Then, recommend users to users or location based on tag similarity, proximity, and preference. (2.12.2024)
+
+    - Original technical highlight was on banning/unbanning users, a secondary functionality compared to our app's purpose.
+
+3. Elaborated NFR 1 and changed NFR2 to me specific and measurable (2.12.2024)
+
+    - NFR1 lacked a concrete justification to the upload speed. 
+    - NFR2 was updated to a more measurable problem. 
+
+
+
+
 
 ## 2. Project Description
 PhotoMap: Personalized map-based photography assistant and archive. Users can upload photos and have them displayed on the map, at the same location where the photo was taken. It will also provide recommendation information about based on user prefer locations
@@ -13,7 +27,7 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 <img src="images/use_case.drawio.png" alt="Alt text" width="500">
 
 ### **3.2. Actors Description**
-1. **Indie photographers (User)**: take photos and update locations with photos; receive notifications about photo spots
+1. **Indie photographers (User)**: take photos and update locations with photos; receive recommendation of users with similar photo taken, as well as locations with potentially interesting photos. 
 2. **Administrator**: supervisor who ensures app and information follow standards; can ban improper information and user
 
 
@@ -180,11 +194,11 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 <a name="nfr1"></a>
 
 1. **Photo Gallery Upload Speed**
-    - **Description**: The application should ensure that photo uploads to the gallery are completed within 5 seconds per photo, under a standard network connection.
-    - **Justification**:  A slow upload experience can frustrate users and discourage them from archiving their photos efficiently. Ensuring quick uploads enhances user engagement and usability.
-2. **Data Security and Privacy**
-    - **Description**: Photo metadata (GPS location, timestamp) is securely stored and should be encrypted when permissions to see them are insufficient.
-    - **Justification**:  Users may have sensitive location data tied to their photos. Encrypting this data helps prevent unauthorized access and ensures data privacy is maintained. 
+    - **Description**: The application should ensure that photo uploads to the gallery are achieved at a minimum of 10mB/s
+    - **Justification**:  According to a study of user preference on upload speed, 10mb/s is sufficient to handle photo and video upload. Regular photos are usually 4-5 mB in size, rendering 10mB/s an appropriate speed for photo upload. A slow upload experience can frustrate users and discourage them from archiving their photos efficiently. 
+2. **Photo Browsing Buffer Time**
+    - **Description**: When retrieving photos and displaying them on the screen, the buffer time should be no more than 2 seconds. 
+    - **Justification**:  Conventional photo album apps like IPhone Photos and Google Drive storage of viewing photos have small buffer windows. Long buffering time will reduce engagement and lead to impatience. We intend that when our app is fetching photo data from database, the time is short and the action swift. 
 
 
 ## 4. Designs Specification
