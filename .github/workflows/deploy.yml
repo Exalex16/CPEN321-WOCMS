@@ -2,6 +2,9 @@ name: Deploy to EC2
 
 on:
   push:
+    paths:
+      - 'Backend/**'  # Only trigger deployment if changes occur in the Backend folder
+      
     branches:
       - main
       
