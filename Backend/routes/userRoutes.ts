@@ -10,4 +10,12 @@ export const userRoutes = [
         action: controller.getuserTest,
         validation: [],
     },
+    {
+        method: "post",
+        route: "/user",
+        action: controller.postuser,
+        validation: [
+            body("userName").isString(),
+        ]
+    }
 ]
