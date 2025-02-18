@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,6 +9,10 @@ plugins {
 android {
     namespace = "com.example.photomap"
     compileSdk = 34
+
+    val file = rootProject.file("local.properties")
+    val properties = Properties()
+    properties.load(file.inputStream())
 
     defaultConfig {
         applicationId = "com.example.photomap"

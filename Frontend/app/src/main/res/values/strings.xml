@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">PhotoMap</string>
+    <string name="login_button_description">login</string>
+    <string name="photo_map_title">photo map title</string>
 </resources>
