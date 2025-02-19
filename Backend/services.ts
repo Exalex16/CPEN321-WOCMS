@@ -12,3 +12,4 @@ export const clinet = new MongoClient(process.env.DB_URI ?? "mongodb://localhost
 //     region: process.env.AWS_REGION
 // });
 
+
