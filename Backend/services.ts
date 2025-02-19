@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import AWS from "aws-sdk";
+// import AWS from "aws-sdk";
 // import dotenv from "dotenv";
 
 // dotenv.config();
