@@ -46,9 +46,12 @@ export class imageController {
                 return res.status(400).send({ error: "Image key is required" });
             }
 
+            // Ensure the correct S3 key format by always looking inside "images/"
+            const fileKey = `images/${key}`;
+
             const params = {
                 Bucket: "cpen321-photomap-images",
-                Key: key,
+                Key: fileKey,
             };
 
             await s3.send(new DeleteObjectCommand(params));
