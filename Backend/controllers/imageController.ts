@@ -8,32 +8,32 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 export class imageController {
-    // async uploadImage(req: Request, res: Response, nextFunction: NextFunction) {
-    //     try {
-    //         if (!req.file) {
-    //             return res.status(400).send({ error: "No file uploaded" });
-    //         }
+    async uploadImage(req: Request, res: Response, nextFunction: NextFunction) {
+        try {
+            if (!req.file) {
+                return res.status(400).send({ error: "No file uploaded" });
+            }
 
-    //         const file = req.file;
-    //         const fileName = `images/${Date.now()}-${file.originalname}`;
+            const file = req.file;
+            const fileName = `images/${Date.now()}-${file.originalname}`;
             
-    //         const params = {
-    //             Bucket: "cpen321-photomap-images",
-    //             Key: fileName,
-    //             Body: file.buffer,
-    //             ContentType: file.mimetype,
-    //         };
+            const params = {
+                Bucket: "cpen321-photomap-images",
+                Key: fileName,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+            };
 
-    //         await s3.send(new PutObjectCommand(params));
+            await s3.send(new PutObjectCommand(params));
 
-    //         res.status(200).send({
-    //             message: "Upload successful",
-    //             imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`
-    //         });
-    //     } catch (error) {
-    //         nextFunction(error);
-    //     }
-    // }
+            res.status(200).send({
+                message: "Upload successful",
+                imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`
+            });
+        } catch (error) {
+            nextFunction(error);
+        }
+    }
 
     // async deleteImage(req: Request, res: Response, nextFunction: NextFunction) {
     //     try {
