@@ -35,25 +35,25 @@ export class imageController {
         }
     }
 
-    // async deleteImage(req: Request, res: Response, nextFunction: NextFunction) {
-    //     try {
-    //         const { key } = req.params;
-    //         if (!key) {
-    //             return res.status(400).send({ error: "Image key is required" });
-    //         }
+    async deleteImage(req: Request, res: Response, nextFunction: NextFunction) {
+        try {
+            const { key } = req.params;
+            if (!key) {
+                return res.status(400).send({ error: "Image key is required" });
+            }
 
-    //         const params = {
-    //             Bucket: "cpen321-photomap-images",
-    //             Key: key,
-    //         };
+            const params = {
+                Bucket: "cpen321-photomap-images",
+                Key: key,
+            };
 
-    //         await s3.send(new DeleteObjectCommand(params));
+            await s3.send(new DeleteObjectCommand(params));
 
-    //         res.status(200).send({ message: "Image deleted successfully" });
-    //     } catch (error) {
-    //         nextFunction(error);
-    //     }
-    // }
+            res.status(200).send({ message: "Image deleted successfully" });
+        } catch (error) {
+            nextFunction(error);
+        }
+    }
 }
 
 // Export multer for use in routes
