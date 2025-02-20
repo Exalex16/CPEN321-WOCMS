@@ -5,12 +5,12 @@ import { uploadMiddleware } from "../services";
 const controller = new imageController()
 
 export const imageRoutes = [
-    {
-        method: "post",
-        route: "/upload",
-        action: [uploadMiddleware, controller.uploadImage],
-        validation: []
-    },
+    // {
+    //     method: "post",
+    //     route: "/upload",
+    //     action: [uploadMiddleware, controller.uploadImage],
+    //     validation: []
+    // },
     {
         method: "delete",
         route: "/:key",
