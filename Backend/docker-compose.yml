@@ -20,6 +20,9 @@ services:
     environment:
       - DB_URI=${DB_URI}
       - PORT=${PORT}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
     ports:
       - "${PORT}:${PORT}"
     depends_on:
