@@ -13,3 +13,6 @@ export const clinet = new MongoClient(process.env.DB_URI ?? "mongodb://localhost
 //     region: process.env.AWS_REGION
 // });
 
+export const s3 = new S3Client({
+    region: "us-west-2", // Set your AWS region
+});
