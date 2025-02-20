@@ -13,5 +13,14 @@ export const s3 = new S3Client({
     region: "us-west-2", // Set your AWS region
 });
 
-const storage = multer.memoryStorage();
-export const uploadMiddleware = multer({ storage }).single("image");
+let uploadMiddleware;
+
+try {
+    const storage = multer.memoryStorage();
+    uploadMiddleware = multer({ storage }).single("image");
+    console.log("Multer initialized successfully");
+} catch (error) {
+    console.error("Error initializing Multer:", error);
+}
+
+export { uploadMiddleware };

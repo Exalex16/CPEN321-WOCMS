@@ -1,16 +1,16 @@
 import { body, param } from "express-validator"
 import { imageController} from "../controllers/imageController";
-import { uploadMiddleware } from "../services";
+// import { uploadMiddleware } from "../services";
 
 const controller = new imageController()
 
 export const imageRoutes = [
-    // {
-    //     method: "post",
-    //     route: "/upload",
-    //     action: [uploadMiddleware, controller.uploadImage],
-    //     validation: []
-    // },
+    {
+        method: "post",
+        route: "/upload",
+        action: controller.uploadImage,
+        validation: []
+    },
     {
         method: "delete",
         route: "/:key",
