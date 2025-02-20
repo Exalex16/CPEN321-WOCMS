@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 // import dotenv from "dotenv";
 import { S3Client } from "@aws-sdk/client-s3";
+import multer from "multer";
 
 // dotenv.config();
 
@@ -11,3 +12,6 @@ export const clinet = new MongoClient(process.env.DB_URI ?? "mongodb://localhost
 export const s3 = new S3Client({
     region: "us-west-2", // Set your AWS region
 });
+
+const storage = multer.memoryStorage();
+export const uploadMiddleware = multer({ storage }).single("image");

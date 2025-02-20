@@ -1,11 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { s3 } from "../services"; // Import S3Client from services.ts
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import multer from "multer";
+import { uploadMiddleware } from "../services";
 
-// Multer Configuration for Handling File Uploads
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
 export class imageController {
     async uploadImage(req: Request, res: Response, nextFunction: NextFunction) {
@@ -55,6 +52,3 @@ export class imageController {
         }
     }
 }
-
-// Export multer for use in routes
-export const uploadMiddleware = upload.single("image");
