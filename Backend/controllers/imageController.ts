@@ -5,30 +5,37 @@ import { uploadMiddleware } from "../services";
 
 
 export class imageController {
-    async uploadImage(req: Request, res: Response, nextFunction: NextFunction) {
+    async uploadImage(req: Request, res: Response, next: NextFunction) {
         try {
-            if (!req.file) {
-                return res.status(400).send({ error: "No file uploaded" });
-            }
+            // Manually execute `uploadMiddleware` inside controller
+            uploadMiddleware(req, res, async (err) => {
+                if (err) {
+                    return res.status(400).send({ error: "Multer Error: " + err.message });
+                }
 
-            const file = req.file;
-            const fileName = `images/${Date.now()}-${file.originalname}`;
-            
-            const params = {
-                Bucket: "cpen321-photomap-images",
-                Key: fileName,
-                Body: file.buffer,
-                ContentType: file.mimetype,
-            };
+                if (!req.file) {
+                    return res.status(400).send({ error: "No file uploaded" });
+                }
 
-            await s3.send(new PutObjectCommand(params));
+                const file = req.file;
+                const fileName = `images/${Date.now()}-${file.originalname}`;
 
-            res.status(200).send({
-                message: "Upload successful",
-                imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`
+                const params = {
+                    Bucket: "cpen321-photomap-images",
+                    Key: fileName,
+                    Body: file.buffer,
+                    ContentType: file.mimetype,
+                };
+
+                await s3.send(new PutObjectCommand(params));
+
+                res.status(200).send({
+                    message: "Upload successful",
+                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`
+                });
             });
         } catch (error) {
-            nextFunction(error);
+            next(error);
         }
     }
 
