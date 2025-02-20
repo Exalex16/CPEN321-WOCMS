@@ -10,10 +10,10 @@ export const imageRoutes = [
     //     action: [uploadMiddleware, controller.uploadImage],
     //     validation: []
     // },
-    // {
-    //     method: "delete",
-    //     route: "/:key",
-    //     action: controller.deleteImage,
-    //     validation: [param("key").isString()]
-    // }
+    {
+        method: "delete",
+        route: "/:key",
+        action: controller.deleteImage,
+        validation: [param("key").isString()]
+    }
 ]
