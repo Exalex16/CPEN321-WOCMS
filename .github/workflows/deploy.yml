@@ -41,6 +41,8 @@ jobs:
             PORT=${{ secrets.PROD_PORT }}
             DB_URI=${{ secrets.PROD_DB_URI }}
             AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             EOF
 
             # Give .env permissions
