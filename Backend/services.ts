@@ -12,6 +12,7 @@ export const clinet = new MongoClient(process.env.DB_URI ?? "mongodb://localhost
 // AWS S3 Connection
 export const s3 = new S3Client({
     region: "us-west-2", // Set your AWS region
+    credentials: undefined, // Ensure it uses default credentials
 });
 
 const storage = multer.memoryStorage();
