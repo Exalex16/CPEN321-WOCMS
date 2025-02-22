@@ -91,6 +91,54 @@ export class imageController {
             next(error);
         }
     }
+
+    async getImagesByUploader(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { uploader } = req.params;
+            if (!uploader) {
+                return res.status(400).send({ error: "Uploader name is required" });
+            }
+
+            const queryString = `
+                SELECT s3_key, metadata_description, metadata_uploaded_by, metadata_timestamp 
+                FROM aws_s3_metadata.s3metadata_cpen321_photomap_images
+                WHERE metadata_uploaded_by = '${uploader}'
+            `;
+
+            // Start query execution
+            const queryExecution = await athenaClient.send(new StartQueryExecutionCommand({
+                QueryString: queryString,
+                QueryExecutionContext: { Database: "aws_s3_metadata" },
+                ResultConfiguration: { OutputLocation: "s3://your-athena-output-bucket/" }
+            }));
+
+            // Wait for Athena to process the query
+            const queryExecutionId = queryExecution.QueryExecutionId;
+            if (!queryExecutionId) {
+                return res.status(500).send({ error: "Failed to start Athena query" });
+            }
+
+            // Wait for results
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait for Athena processing
+
+            // Fetch results
+            const queryResults = await athenaClient.send(new GetQueryResultsCommand({ QueryExecutionId: queryExecutionId }));
+            const rows = queryResults.ResultSet?.Rows || [];
+
+            // Parse results
+            const images = rows.slice(1).map(row => ({
+                s3Key: row.Data?.[0]?.VarCharValue,
+                description: row.Data?.[1]?.VarCharValue,
+                uploadedBy: row.Data?.[2]?.VarCharValue,
+                timestamp: row.Data?.[3]?.VarCharValue,
+                imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${row.Data?.[0]?.VarCharValue}`
+            }));
+
+            res.status(200).send({ images });
+        } catch (error) {
+            next(error);
+        }
+    }
     
 
     async deleteImage(req: Request, res: Response, nextFunction: NextFunction) {

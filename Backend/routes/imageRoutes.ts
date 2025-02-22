@@ -22,5 +22,11 @@ export const imageRoutes = [
         route: "/metadata/:key",
         action: controller.getImageMetadata,
         validation: [param("key").isString()]
+    },
+    {
+        method: "get",
+        route: "/images/uploader/:uploader",
+        action: controller.getImagesByUploader,
+        validation: [param("uploader").isString()]
     }
 ]
