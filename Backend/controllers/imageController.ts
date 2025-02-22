@@ -7,7 +7,6 @@ import { uploadMiddleware } from "../services";
 export class imageController {
     async uploadImage(req: Request, res: Response, next: NextFunction) {
         try {
-            // Manually execute `uploadMiddleware` inside controller
             uploadMiddleware(req, res, async (err) => {
                 if (err) {
                     return res.status(400).send({ error: "Multer Error: " + err.message });
@@ -20,18 +19,27 @@ export class imageController {
                 const file = req.file;
                 const fileName = `images/${Date.now()}-${file.originalname}`;
 
+                // Extract metadata from the request
+                const metadata = {
+                    "x-amz-meta-description": req.body.description || "No description provided",
+                    "x-amz-meta-uploaded-by": req.body.uploadedBy || "Anonymous",
+                    "x-amz-meta-timestamp": new Date().toISOString(),
+                };
+
                 const params = {
                     Bucket: "cpen321-photomap-images",
                     Key: fileName,
                     Body: file.buffer,
                     ContentType: file.mimetype,
+                    Metadata: metadata, // Attach custom metadata here
                 };
 
                 await s3.send(new PutObjectCommand(params));
 
                 res.status(200).send({
                     message: "Upload successful",
-                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`
+                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
+                    metadata: metadata
                 });
             });
         } catch (error) {
