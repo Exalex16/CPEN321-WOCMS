@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { s3 } from "../services"; // Import S3Client from services.ts
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { uploadMiddleware } from "../services";
-import { HeadObjectCommand } from "@aws-sdk/client-s3";
+import { AthenaClient, StartQueryExecutionCommand, GetQueryResultsCommand } from "@aws-sdk/client-athena";
 
+const athenaClient = new AthenaClient({ region: "us-west-2" });
 
 export class imageController {
     async uploadImage(req: Request, res: Response, next: NextFunction) {
