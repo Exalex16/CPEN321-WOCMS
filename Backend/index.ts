@@ -17,7 +17,7 @@ app.use(morgan('tiny'))
 const Routes = [...TodoRoutes, ...InfoRoutes, ...imageRoutes, ...userRoutes, ...mapRoutes];
 
 app.get("/", (req: Request, res: Response, nextFunction: NextFunction) => {
-    res.send("Hello World");
+    res.send("CPEN321 2024W2 PhotoMap Placeholder");
 })
 
 Routes.forEach((route) => {
