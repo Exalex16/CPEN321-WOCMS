@@ -11,31 +11,40 @@ export class imageController {
                 if (err) {
                     return res.status(400).send({ error: "Multer Error: " + err.message });
                 }
-
-                if (!req.file) {
+    
+                console.log("🔹 Request body:", req.body);
+                console.log("🔹 Uploaded files:", req.files);
+    
+                if (!req.files || !("image" in req.files)) {
                     return res.status(400).send({ error: "No file uploaded" });
                 }
-
-                const file = req.file;
+    
+                const file = (req.files as { [fieldname: string]: Express.Multer.File[] })["image"][0];
                 const fileName = `images/${Date.now()}-${file.originalname}`;
-
-                // Extract metadata from the request
+    
+                // Extract metadata fields
+                const description = req.body.description ? req.body.description.toString() : "No description provided";
+                const uploadedBy = req.body.uploadedBy ? req.body.uploadedBy.toString() : "Anonymous";
+                const timestamp = new Date().toISOString();
+                const tags = req.body.tags ? req.body.tags.toString().split(",") : [];
+    
+                // Attach metadata for S3
                 const metadata = {
-                    "x-amz-meta-description": req.body.description || "No description provided",
-                    "x-amz-meta-uploaded-by": req.body.uploadedBy || "Anonymous",
-                    "x-amz-meta-timestamp": new Date().toISOString(),
+                    "x-amz-meta-description": description,
+                    "x-amz-meta-uploaded-by": uploadedBy,
+                    "x-amz-meta-timestamp": timestamp
                 };
-
+    
                 const params = {
                     Bucket: "cpen321-photomap-images",
                     Key: fileName,
                     Body: file.buffer,
                     ContentType: file.mimetype,
-                    Metadata: metadata, // Attach custom metadata here
+                    Metadata: metadata,
                 };
-
+    
                 await s3.send(new PutObjectCommand(params));
-
+    
                 res.status(200).send({
                     message: "Upload successful",
                     imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
@@ -46,6 +55,7 @@ export class imageController {
             next(error);
         }
     }
+    
 
     async deleteImage(req: Request, res: Response, nextFunction: NextFunction) {
         try {
