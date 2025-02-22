@@ -19,9 +19,10 @@ export const s3 = new S3Client({
 });
 
 const storage = multer.memoryStorage();
-export const uploadMiddleware: RequestHandler = multer({ storage }).fields([
-  { name: "image", maxCount: 1 },  // Single image file
-  { name: "description", maxCount: 1 },  // Custom metadata field
-  { name: "uploadedBy", maxCount: 1 },  // Custom metadata field
-  { name: "tags", maxCount: 1 }  // Optional tags field
-]);
+// export const uploadMiddleware: RequestHandler = multer({ storage }).fields([
+//   { name: "image", maxCount: 1 },  // Single image file
+//   { name: "description", maxCount: 1 },  // Custom metadata field
+//   { name: "uploadedBy", maxCount: 1 },  // Custom metadata field
+//   { name: "tags", maxCount: 1 }  // Optional tags field
+// ]);
+export const uploadMiddleware: RequestHandler = multer({ storage }).single("image");

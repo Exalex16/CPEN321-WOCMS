@@ -27,6 +27,6 @@ export const imageRoutes = [
         method: "get",
         route: "/images/uploader/:uploader",
         action: controller.getImagesByUploader,
-        validation: [param("uploader").isString()]
+        validation: [param("uploader").isString()],
     }
 ]
