@@ -16,5 +16,11 @@ export const imageRoutes = [
         route: "/:key",
         action: controller.deleteImage,
         validation: [param("key").isString()]
+    },
+    {
+        method: "get",
+        route: "/metadata/:key",
+        action: controller.getImageMetadata,
+        validation: [param("key").isString()]
     }
 ]

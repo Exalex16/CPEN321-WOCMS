@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { s3 } from "../services"; // Import S3Client from services.ts
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { uploadMiddleware } from "../services";
+import { HeadObjectCommand } from "@aws-sdk/client-s3";
 
 
 export class imageController {
@@ -50,6 +51,40 @@ export class imageController {
                     imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
                     metadata: metadata
                 });
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getImageMetadata(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { key } = req.params;
+            if (!key) {
+                return res.status(400).send({ error: "Image key is required" });
+            }
+
+            const fileKey = `images/${key}`; // Ensure correct key format
+
+            const params = {
+                Bucket: "cpen321-photomap-images",
+                Key: fileKey,
+            };
+
+            const response = await s3.send(new HeadObjectCommand(params));
+
+            // Extract metadata
+            const metadata = response.Metadata || {};
+
+            // Fix AWS's "double x-amz-meta-" issue
+            const cleanedMetadata: Record<string, string> = {};
+            Object.keys(metadata).forEach((key) => {
+                cleanedMetadata[key.replace(/^x-amz-meta-x-amz-meta-/, "")] = metadata[key];
+            });
+
+            res.status(200).send({
+                message: "Metadata retrieved successfully",
+                metadata: cleanedMetadata
             });
         } catch (error) {
             next(error);
