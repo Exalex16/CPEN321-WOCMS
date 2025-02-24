@@ -8,64 +8,64 @@ const athenaClient = new AthenaClient({ region: "us-west-2" });
 
 export class imageController {
     async uploadImage(req: Request, res: Response, next: NextFunction) {
-    try {
-        uploadMiddleware(req, res, async (err) => {
-            if (err) {
-                return res.status(400).send({ error: "Multer Error: " + err.message });
-            }
+        try {
+            uploadMiddleware(req, res, async (err) => {
+                if (err) {
+                    return res.status(400).send({ error: "Multer Error: " + err.message });
+                }
 
-            if (!req.file) {
-                return res.status(400).send({ error: "No file uploaded" });
-            }
+                if (!req.file) {
+                    return res.status(400).send({ error: "No file uploaded" });
+                }
 
-            const file = req.file; // Change from req.files to req.file
-            const fileName = `images/${Date.now()}-${file.originalname}`;
+                const file = req.file; // Change from req.files to req.file
+                const fileName = `images/${Date.now()}-${file.originalname}`;
 
-            // Extract metadata fields
-            const description = req.body.description || "No description provided";
-            const uploadedBy = req.body.uploadedBy || "Anonymous";
-            const timestamp = new Date().toISOString();
-            const tags = req.body.tags ? req.body.tags.split(",") : [];
+                // Extract metadata fields
+                const description = req.body.description || "No description provided";
+                const uploadedBy = req.body.uploadedBy || "Anonymous";
+                const timestamp = new Date().toISOString();
+                const tags = req.body.tags ? req.body.tags.split(",") : [];
 
-            // Attach metadata for S3
-            const metadata = {
-                "x-amz-meta-description": description,
-                "x-amz-meta-uploaded-by": uploadedBy,
-                "x-amz-meta-timestamp": timestamp,
-            };
+                // Attach metadata for S3
+                const metadata = {
+                    "x-amz-meta-description": description,
+                    "x-amz-meta-uploaded-by": uploadedBy,
+                    "x-amz-meta-timestamp": timestamp,
+                };
 
-            // Upload image to S3
-            const s3Params = {
-                Bucket: "cpen321-photomap-images",
-                Key: fileName,
-                Body: file.buffer,
-                ContentType: file.mimetype,
-                Metadata: metadata,
-            };
+                // Upload image to S3
+                const s3Params = {
+                    Bucket: "cpen321-photomap-images",
+                    Key: fileName,
+                    Body: file.buffer,
+                    ContentType: file.mimetype,
+                    Metadata: metadata,
+                };
 
-            await s3.send(new PutObjectCommand(s3Params));
+                await s3.send(new PutObjectCommand(s3Params));
 
-            // Store metadata in MongoDB
-            const db = clinet.db("images"); // New database
-            await db.collection("metadata").insertOne({
-                fileName,
-                imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
-                description,
-                uploadedBy,
-                timestamp,
-                tags,
+                // Store metadata in MongoDB
+                const db = clinet.db("images"); // New database
+                await db.collection("metadata").insertOne({
+                    fileName,
+                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
+                    description,
+                    uploadedBy,
+                    timestamp,
+                    tags,
+                });
+
+                res.status(200).send({
+                    message: "Upload successful",
+                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
+                    metadata: { description, uploadedBy, timestamp, tags },
+                });
             });
-
-            res.status(200).send({
-                message: "Upload successful",
-                imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
-                metadata: { description, uploadedBy, timestamp, tags },
-            });
-        });
-    } catch (error) {
-        next(error);
+        } catch (error) {
+            next(error);
+        }
     }
-}
 
     async getImageMetadata(req: Request, res: Response, next: NextFunction) {
         try {
