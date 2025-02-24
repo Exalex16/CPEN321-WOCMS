@@ -175,7 +175,7 @@ export class imageController {
     
             // Update the image metadata to include recipient's Gmail
             const updateResult = await db.collection("metadata").updateOne(
-                { fileName: `images/${imageKey}` },
+                { fileName: `${imageKey}` },
                 { $addToSet: { uploadedBy: recipientEmail } } // Add recipient Gmail if not already there
             );
     
