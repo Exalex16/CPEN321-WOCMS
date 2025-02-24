@@ -15,52 +15,53 @@ export class imageController {
                 if (err) {
                     return res.status(400).send({ error: "Multer Error: " + err.message });
                 }
-
+    
                 if (!req.file) {
                     return res.status(400).send({ error: "No file uploaded" });
                 }
-
+    
                 const file = req.file;
                 const uploadedBy = req.body.uploadedBy || "anonymous@example.com"; // Use Gmail instead of name
                 const timestamp = new Date().toISOString();
-                const fileName = `images/${uploadedBy}-${timestamp.replace(/:/g, "-")}`;
-
+                const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}`; // No 'images/' prefix
+    
                 // Extract metadata fields
                 const description = req.body.description || "No description provided";
                 const tags = req.body.tags ? req.body.tags.split(",") : [];
-
+    
                 // Attach metadata for S3
                 const metadata = {
                     "x-amz-meta-description": description,
                     "x-amz-meta-uploaded-by": uploadedBy,
                     "x-amz-meta-timestamp": timestamp,
                 };
-
-                // Upload image to S3
+    
+                // Upload image to S3 with 'images/' prefix
                 const s3Params = {
                     Bucket: "cpen321-photomap-images",
-                    Key: fileName,
+                    Key: `images/${rawFileName}`,
                     Body: file.buffer,
                     ContentType: file.mimetype,
                     Metadata: metadata,
                 };
-
+    
                 await s3.send(new PutObjectCommand(s3Params));
-
-                // Store metadata in MongoDB
+    
+                // Store metadata in MongoDB (without 'images/' prefix)
                 const db = clinet.db("images");
                 await db.collection("metadata").insertOne({
-                    fileName,
-                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
+                    fileName: rawFileName,  // ✅ Store only the filename
+                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
                     description,
-                    uploadedBy: [uploadedBy], // Store as an array for multiple users
+                    uploadedBy: [uploadedBy],
                     timestamp,
                     tags,
                 });
-
+    
                 res.status(200).send({
                     message: "Upload successful",
-                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
+                    fileName: rawFileName, // ✅ Send only the filename
+                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
                     metadata: { description, uploadedBy, timestamp, tags },
                 });
             });
@@ -68,6 +69,7 @@ export class imageController {
             next(error);
         }
     }
+    
 
     /**
      * Get image metadata and full-size image URL.
@@ -80,13 +82,13 @@ export class imageController {
             }
     
             const db = clinet.db("images");
-            const image = await db.collection("metadata").findOne({ fileName: `images/${key}` });
+            const image = await db.collection("metadata").findOne({ fileName: key });
     
             if (!image) {
                 return res.status(404).send({ error: "Image not found" });
             }
     
-            // Generate a presigned URL valid for 1 hour
+            // Generate a presigned URL valid for 1 hour (manually add `images/`)
             const presignedUrl = await getSignedUrl(
                 s3,
                 new GetObjectCommand({
@@ -98,6 +100,7 @@ export class imageController {
     
             res.status(200).send({
                 message: "Image retrieved successfully",
+                fileName: key,  // ✅ Send only the filename
                 presignedUrl,
                 metadata: image,
             });
@@ -105,6 +108,7 @@ export class imageController {
             next(error);
         }
     }
+    
     /**
      * Get all images uploaded by a user.
      */
@@ -134,21 +138,22 @@ export class imageController {
             if (!key) {
                 return res.status(400).send({ error: "Image key is required" });
             }
-
+    
+            // Manually add 'images/' before deleting from S3
             const fileKey = `images/${key}`;
-
+    
             // Delete from S3
             const s3Params = { Bucket: "cpen321-photomap-images", Key: fileKey };
             await s3.send(new DeleteObjectCommand(s3Params));
-
+    
             // Delete metadata from MongoDB
             const db = clinet.db("images");
-            const deleteResult = await db.collection("metadata").deleteOne({ fileName: fileKey });
-
+            const deleteResult = await db.collection("metadata").deleteOne({ fileName: key });
+    
             if (deleteResult.deletedCount === 0) {
                 return res.status(404).send({ error: "Metadata not found in MongoDB" });
             }
-
+    
             res.status(200).send({ message: "Image deleted successfully" });
         } catch (error) {
             next(error);
