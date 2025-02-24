@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { s3, clinet, uploadMiddleware } from "../services"; // Import S3Client from services.ts
-import { PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ObjectId } from "mongodb";
+import nodemailer from "nodemailer"; // For email sharing
 import { AthenaClient, StartQueryExecutionCommand, GetQueryResultsCommand, GetQueryExecutionCommand } from "@aws-sdk/client-athena";
 
 const athenaClient = new AthenaClient({ region: "us-west-2" });
@@ -18,13 +20,13 @@ export class imageController {
                     return res.status(400).send({ error: "No file uploaded" });
                 }
 
-                const file = req.file; // Change from req.files to req.file
-                const fileName = `images/${Date.now()}-${file.originalname}`;
+                const file = req.file;
+                const uploadedBy = req.body.uploadedBy || "anonymous@example.com"; // Use Gmail instead of name
+                const timestamp = new Date().toISOString();
+                const fileName = `images/${uploadedBy}-${timestamp.replace(/:/g, "-")}`;
 
                 // Extract metadata fields
                 const description = req.body.description || "No description provided";
-                const uploadedBy = req.body.uploadedBy || "Anonymous";
-                const timestamp = new Date().toISOString();
                 const tags = req.body.tags ? req.body.tags.split(",") : [];
 
                 // Attach metadata for S3
@@ -46,12 +48,12 @@ export class imageController {
                 await s3.send(new PutObjectCommand(s3Params));
 
                 // Store metadata in MongoDB
-                const db = clinet.db("images"); // New database
+                const db = clinet.db("images");
                 await db.collection("metadata").insertOne({
                     fileName,
                     imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/${fileName}`,
                     description,
-                    uploadedBy,
+                    uploadedBy: [uploadedBy], // Store as an array for multiple users
                     timestamp,
                     tags,
                 });
@@ -67,57 +69,65 @@ export class imageController {
         }
     }
 
-    async getImageMetadata(req: Request, res: Response, next: NextFunction) {
+    /**
+     * Get image metadata and full-size image URL.
+     */
+    async getImage(req: Request, res: Response, next: NextFunction) {
         try {
             const { key } = req.params;
             if (!key) {
                 return res.status(400).send({ error: "Image key is required" });
             }
-
-            const fileKey = `images/${key}`; // Ensure correct key format
-
-            const params = {
-                Bucket: "cpen321-photomap-images",
-                Key: fileKey,
-            };
-
-            const response = await s3.send(new HeadObjectCommand(params));
-
-            // Extract metadata
-            const metadata = response.Metadata || {};
-
-            // Fix AWS's "double x-amz-meta-" issue
-            const cleanedMetadata: Record<string, string> = {};
-            Object.keys(metadata).forEach((key) => {
-                cleanedMetadata[key.replace(/^x-amz-meta-x-amz-meta-/, "")] = metadata[key];
-            });
-
+    
+            const db = clinet.db("images");
+            const image = await db.collection("metadata").findOne({ fileName: `images/${key}` });
+    
+            if (!image) {
+                return res.status(404).send({ error: "Image not found" });
+            }
+    
+            // Generate a presigned URL valid for 1 hour
+            const presignedUrl = await getSignedUrl(
+                s3,
+                new GetObjectCommand({
+                    Bucket: "cpen321-photomap-images",
+                    Key: `images/${key}`,
+                }),
+                { expiresIn: 3600 } // 1 hour expiration
+            );
+    
             res.status(200).send({
-                message: "Metadata retrieved successfully",
-                metadata: cleanedMetadata
+                message: "Image retrieved successfully",
+                presignedUrl,
+                metadata: image,
             });
         } catch (error) {
             next(error);
         }
     }
-
+    /**
+     * Get all images uploaded by a user.
+     */
     async getImagesByUploader(req: Request, res: Response, next: NextFunction) {
         try {
-            const { uploader } = req.params;
-            if (!uploader) {
+            const { uploaderEmail  } = req.params;
+            if (!uploaderEmail ) {
                 return res.status(400).send({ error: "Uploader name is required" });
             }
-
+    
             const db = clinet.db("images");
-            const images = await db.collection("metadata").find({ uploadedBy: uploader }).toArray();
-
+            // Find images where uploader is in the uploadedBy array
+            const images = await db.collection("metadata").find({ uploadedBy: uploaderEmail }).toArray();
+    
             res.status(200).send({ images });
         } catch (error) {
             next(error);
         }
     }
-    
 
+    /**
+     * Delete image from S3 and remove metadata from MongoDB.
+     */
     async deleteImage(req: Request, res: Response, next: NextFunction) {
         try {
             const { key } = req.params;
@@ -144,5 +154,36 @@ export class imageController {
             next(error);
         }
     }
+
+
+    /**
+     * Share an image by sending an email with the image link.
+     */
+    async shareImage(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { recipientEmail, imageKey, senderEmail } = req.body;
+            if (!recipientEmail || !imageKey || !senderEmail) {
+                return res.status(400).send({ error: "Recipient email, image key, and sender email are required" });
+            }
+    
+            const db = clinet.db("images");
+    
+            // Update the image metadata to include recipient's Gmail
+            const updateResult = await db.collection("metadata").updateOne(
+                { fileName: `images/${imageKey}` },
+                { $addToSet: { uploadedBy: recipientEmail } } // Add recipient Gmail if not already there
+            );
+    
+            if (updateResult.matchedCount === 0) {
+                return res.status(404).send({ error: "Image not found" });
+            }
+    
+            res.status(200).send({ message: "Image shared successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
+    
+    
 }
 

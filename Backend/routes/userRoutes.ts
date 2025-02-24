@@ -23,22 +23,22 @@ export const userRoutes = [
         route: "/user",
         action: controller.postuser,
         validation: [
-            body("googleId").isString(),
+            body("googleEmail").isString(),
             body("googleName").isString(),
         ],
     },
     {
         method: "get",
-        route: "/user/:googleId",
+        route: "/user/:googleEmail",
         action: controller.getProfileInfo,
-        validation: [param("googleId").isString()],
+        validation: [param("googleEmail").isString()],
     },
     {
         method: "put",
-        route: "/user/:googleId",
+        route: "/user/:googleEmail",
         action: controller.updateProfile,
         validation: [
-            param("googleId").isString(),
+            param("googleEmail").isString(),
             body("googleName").optional().isString(),
             body("tags").optional().isArray()
         ],
@@ -54,14 +54,14 @@ export const userRoutes = [
         route: "/supervise",
         action: controller.superviseAction,
         validation: [
-            body("googleId").isString(),
+            body("googleEmail").isString(),
             body("action").isIn(["ban", "unban"]),
         ],
     },
     {
         method: "delete",
-        route: "/user/:googleId",
+        route: "/user/:googleEmail",
         action: controller.deleteUser,
-        validation: [param("googleId").isString()],
+        validation: [param("googleEmail").isString()],
     },
 ]

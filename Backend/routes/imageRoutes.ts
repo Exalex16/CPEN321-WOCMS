@@ -9,24 +9,34 @@ export const imageRoutes = [
         method: "post",
         route: "/upload",
         action: controller.uploadImage,
-        validation: []
+        validation: [],
     },
     {
         method: "delete",
-        route: "/:key",
+        route: "/image/:key",
         action: controller.deleteImage,
-        validation: [param("key").isString()]
+        validation: [param("key").isString()],
     },
     {
         method: "get",
         route: "/metadata/:key",
-        action: controller.getImageMetadata,
-        validation: [param("key").isString()]
+        action: controller.getImage,
+        validation: [param("key").isString()],
     },
     {
         method: "get",
-        route: "/images/uploader/:uploader",
+        route: "/images/uploader/:uploaderEmail",
         action: controller.getImagesByUploader,
-        validation: [param("uploader").isString()],
-    }
+        validation: [param("uploaderEmail").isEmail()],
+    },
+    {
+        method: "post",
+        route: "/share",
+        action: controller.shareImage,
+        validation: [
+            body("recipientEmail").isEmail(),
+            body("imageKey").isString(),
+            body("senderEmail").isEmail(),
+        ],
+    },
 ]
