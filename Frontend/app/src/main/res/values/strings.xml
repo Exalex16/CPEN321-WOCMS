@@ -2,4 +2,16 @@
     <string name="app_name">PhotoMap</string>
     <string name="login_button_description">login</string>
     <string name="photo_map_title">photo map title</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="temp_input">Marker Title</string>
+    <string name="actions">Actions</string>
+    <string-array name="marker_colors">
+        <item>Red</item>
+        <item>Blue</item>
+        <item>Green</item>
+        <item>Yellow</item>
+        <item>Orange</item>
+        <item>Violet</item>
+    </string-array>
+
 </resources>
