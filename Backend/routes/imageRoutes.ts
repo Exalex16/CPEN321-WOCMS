@@ -38,7 +38,7 @@ export const imageRoutes = [
         validation: [
             // body("recipientEmail").isEmail(),
             body("imageKey").isString(),
-            body("senderEmail").isEmail(),
+            // body("senderEmail").isEmail(),
         ],
     },
 ]
