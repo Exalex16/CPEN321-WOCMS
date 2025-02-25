@@ -9,7 +9,9 @@ export const imageRoutes = [
         method: "post",
         route: "/upload",
         action: controller.uploadImage,
-        validation: [],
+        validation: [
+            body("location").optional().isObject(),
+        ],
     },
     {
         method: "delete",
@@ -27,16 +29,16 @@ export const imageRoutes = [
         method: "get",
         route: "/images/uploader/:uploaderEmail",
         action: controller.getImagesByUploader,
-        validation: [param("uploaderEmail").isEmail()],
+        validation: [],
     },
     {
         method: "post",
         route: "/share",
         action: controller.shareImage,
         validation: [
-            body("recipientEmail").isEmail(),
+            // body("recipientEmail").isEmail(),
             body("imageKey").isString(),
-            body("senderEmail").isEmail(),
+            // body("senderEmail").isEmail(),
         ],
     },
 ]
