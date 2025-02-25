@@ -100,7 +100,7 @@ export class imageController {
     
             res.status(200).send({
                 message: "Image retrieved successfully",
-                fileName: key,  // ✅ Send only the filename
+                fileName: key,  
                 presignedUrl,
                 metadata: image,
             });
@@ -114,16 +114,35 @@ export class imageController {
      */
     async getImagesByUploader(req: Request, res: Response, next: NextFunction) {
         try {
-            const { uploaderEmail  } = req.params;
-            if (!uploaderEmail ) {
-                return res.status(400).send({ error: "Uploader name is required" });
+            const { uploaderEmail } = req.params;
+            if (!uploaderEmail) {
+                return res.status(400).send({ error: "Uploader email is required" });
             }
     
             const db = clinet.db("images");
-            // Find images where uploader is in the uploadedBy array
+            // Find images where uploaderEmail is in the uploadedBy array
             const images = await db.collection("metadata").find({ uploadedBy: uploaderEmail }).toArray();
     
-            res.status(200).send({ images });
+            // Generate presigned URLs for each image
+            const imagesWithPresignedUrls = await Promise.all(
+                images.map(async (image) => {
+                    const presignedUrl = await getSignedUrl(
+                        s3,
+                        new GetObjectCommand({
+                            Bucket: "cpen321-photomap-images",
+                            Key: `images/${image.fileName}`, // Add `images/` prefix for S3 lookup
+                        }),
+                        { expiresIn: 3600 } // URL valid for 1 hour
+                    );
+    
+                    return {
+                        ...image,
+                        presignedUrl, // Add temporary URL for frontend display
+                    };
+                })
+            );
+    
+            res.status(200).send({ images: imagesWithPresignedUrls });
         } catch (error) {
             next(error);
         }
