@@ -29,14 +29,14 @@ export const imageRoutes = [
         method: "get",
         route: "/images/uploader/:uploaderEmail",
         action: controller.getImagesByUploader,
-        validation: [param("uploaderEmail").isEmail()],
+        validation: [],
     },
     {
         method: "post",
         route: "/share",
         action: controller.shareImage,
         validation: [
-            body("recipientEmail").isEmail(),
+            // body("recipientEmail").isEmail(),
             body("imageKey").isString(),
             body("senderEmail").isEmail(),
         ],
