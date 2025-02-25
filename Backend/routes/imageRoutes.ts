@@ -9,7 +9,9 @@ export const imageRoutes = [
         method: "post",
         route: "/upload",
         action: controller.uploadImage,
-        validation: [],
+        validation: [
+            body("location").optional().isObject(),
+        ],
     },
     {
         method: "delete",

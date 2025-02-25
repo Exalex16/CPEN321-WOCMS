@@ -21,10 +21,11 @@ export const userRoutes = [
     {
         method: "post",
         route: "/user",
-        action: controller.postuser,
+        action: controller.postUser,
         validation: [
             body("googleEmail").isString(),
             body("googleName").isString(),
+            body("locations").optional().isArray(),
         ],
     },
     {
@@ -40,7 +41,8 @@ export const userRoutes = [
         validation: [
             param("googleEmail").isString(),
             body("googleName").optional().isString(),
-            body("tags").optional().isArray()
+            body("tags").optional().isArray(),
+            body("locations").optional().isArray(),
         ],
     },
     {

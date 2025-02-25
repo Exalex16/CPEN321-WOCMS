@@ -21,9 +21,10 @@ export class imageController {
                 }
     
                 const file = req.file;
-                const uploadedBy = req.body.uploadedBy || "anonymous@example.com"; // Use Gmail instead of name
+                const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
                 const timestamp = new Date().toISOString();
-                const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}`; // No 'images/' prefix
+                const location = req.body.location || null; // Accept location input
+                const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}`;
     
                 // Extract metadata fields
                 const description = req.body.description || "No description provided";
@@ -34,9 +35,10 @@ export class imageController {
                     "x-amz-meta-description": description,
                     "x-amz-meta-uploaded-by": uploadedBy,
                     "x-amz-meta-timestamp": timestamp,
+                    "x-amz-meta-location": JSON.stringify(location), // Store location as JSON string
                 };
     
-                // Upload image to S3 with 'images/' prefix
+                // Upload image to S3
                 const s3Params = {
                     Bucket: "cpen321-photomap-images",
                     Key: `images/${rawFileName}`,
@@ -47,22 +49,30 @@ export class imageController {
     
                 await s3.send(new PutObjectCommand(s3Params));
     
-                // Store metadata in MongoDB (without 'images/' prefix)
+                // Store metadata in MongoDB (including location)
                 const db = clinet.db("images");
                 await db.collection("metadata").insertOne({
-                    fileName: rawFileName,  // ✅ Store only the filename
+                    fileName: rawFileName,
                     imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
                     description,
                     uploadedBy: [uploadedBy],
                     timestamp,
                     tags,
+                    location, // Store location in image metadata
                 });
+    
+                // Update user database with location history
+                const userDb = clinet.db("User");
+                await userDb.collection("users").updateOne(
+                    { googleEmail: uploadedBy },
+                    { $addToSet: { locations: location } } // Prevent duplicates
+                );
     
                 res.status(200).send({
                     message: "Upload successful",
-                    fileName: rawFileName, // ✅ Send only the filename
+                    fileName: rawFileName,
                     imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
-                    metadata: { description, uploadedBy, timestamp, tags },
+                    metadata: { description, uploadedBy, timestamp, tags, location },
                 });
             });
         } catch (error) {
@@ -88,21 +98,24 @@ export class imageController {
                 return res.status(404).send({ error: "Image not found" });
             }
     
-            // Generate a presigned URL valid for 1 hour (manually add `images/`)
+            // Generate a presigned URL valid for 1 hour
             const presignedUrl = await getSignedUrl(
                 s3,
                 new GetObjectCommand({
                     Bucket: "cpen321-photomap-images",
                     Key: `images/${key}`,
                 }),
-                { expiresIn: 3600 } // 1 hour expiration
+                { expiresIn: 3600 }
             );
     
             res.status(200).send({
                 message: "Image retrieved successfully",
-                fileName: key,  
+                fileName: key,
                 presignedUrl,
-                metadata: image,
+                metadata: {
+                    ...image,
+                    location: image.location, // Include location
+                },
             });
         } catch (error) {
             next(error);
@@ -120,7 +133,6 @@ export class imageController {
             }
     
             const db = clinet.db("images");
-            // Find images where uploaderEmail is in the uploadedBy array
             const images = await db.collection("metadata").find({ uploadedBy: uploaderEmail }).toArray();
     
             // Generate presigned URLs for each image
@@ -130,14 +142,15 @@ export class imageController {
                         s3,
                         new GetObjectCommand({
                             Bucket: "cpen321-photomap-images",
-                            Key: `images/${image.fileName}`, // Add `images/` prefix for S3 lookup
+                            Key: `images/${image.fileName}`,
                         }),
-                        { expiresIn: 3600 } // URL valid for 1 hour
+                        { expiresIn: 3600 }
                     );
     
                     return {
                         ...image,
-                        presignedUrl, // Add temporary URL for frontend display
+                        presignedUrl, // Include temporary URL for frontend display
+                        location: image.location, // Include location data
                     };
                 })
             );
