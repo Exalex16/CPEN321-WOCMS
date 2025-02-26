@@ -252,6 +252,7 @@ export class imageController {
     
             const db = clinet.db("images");
             const images = await db.collection("metadata").find({ uploadedBy: uploaderEmail }).toArray();
+            
     
             // Generate presigned URLs for each image
             const imagesWithPresignedUrls = await Promise.all(
@@ -264,11 +265,24 @@ export class imageController {
                         }),
                         { expiresIn: 604800 }
                     );
+
+                    // Ensure lat/lng are always returned as double
+                    const formattedLocation = image.location
+                    ? {
+                        position: {
+                            lat: parseFloat(image.location.position.lat),
+                            lng: parseFloat(image.location.position.lng),
+                        },
+                        title: image.location.title,
+                        location: image.location.location,
+                        icon: image.location.icon,
+                    }
+                    : null; // If no location, return null
     
                     return {
                         ...image,
                         presignedUrl, // Include temporary URL for frontend display
-                        location: image.location, // Include location data
+                        location: formattedLocation, // Include location data
                     };
                 })
             );
