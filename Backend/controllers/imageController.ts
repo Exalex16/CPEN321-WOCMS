@@ -210,7 +210,7 @@ export class imageController {
                     Bucket: "cpen321-photomap-images",
                     Key: `images/${key}`,
                 }),
-                { expiresIn: 3600 }
+                { expiresIn: 604800 }
             );
     
             res.status(200).send({
@@ -245,7 +245,7 @@ export class imageController {
                             Bucket: "cpen321-photomap-images",
                             Key: `images/${image.fileName}`,
                         }),
-                        { expiresIn: 3600 }
+                        { expiresIn: 604800 }
                     );
     
                     return {
@@ -336,7 +336,7 @@ export class imageController {
                             Bucket: "cpen321-photomap-images",
                             Key: `images/${image.fileName}`,
                         }),
-                        { expiresIn: 3600 } 
+                        { expiresIn: 604800 } 
                     );
     
                     return {
