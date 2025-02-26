@@ -203,6 +203,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 // 3) Build a JSON string for your location
                 //    For example, lat, lng, markerTitle, markerColor, etc.
                 val locationJson = JSONObject().apply {
+
                     put("lat", 49.2666656)
                     put("lng", -123.249999)
                     put("markerTitle", "My Custom Marker")
@@ -261,7 +262,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // 4) Wrap it in MultipartBody.Part with form field name "image"
         return MultipartBody.Part.createFormData(
             "image",               // must match your API field name
-            "filename.png",        // will be ignored by alex's code
+            "filename",        // will be ignored by alex's code
             requestFile
         )
     }
