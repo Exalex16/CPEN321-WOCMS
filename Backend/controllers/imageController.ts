@@ -4,11 +4,104 @@ import { PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectComm
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ObjectId } from "mongodb";
 import nodemailer from "nodemailer"; // For email sharing
+import sharp from "sharp";
 import { AthenaClient, StartQueryExecutionCommand, GetQueryResultsCommand, GetQueryExecutionCommand } from "@aws-sdk/client-athena";
 
 const athenaClient = new AthenaClient({ region: "us-west-2" });
 
 export class imageController {
+    // async uploadImage(req: Request, res: Response, next: NextFunction) {
+    //     try {
+    //         uploadMiddleware(req, res, async (err) => {
+    //             if (err) {
+    //                 return res.status(400).send({ error: "Multer Error: " + err.message });
+    //             }
+    
+    //             if (!req.file) {
+    //                 return res.status(400).send({ error: "No file uploaded" });
+    //             }
+    
+    //             const file = req.file;
+    //             const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
+    //             const timestamp = new Date().toISOString();
+    //             const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}`;
+    
+    //             // Extract metadata fields
+    //             const description = req.body.description || "No description provided";
+    //             const tags = req.body.tags ? req.body.tags.split(",") : [];
+
+    //             // Extract location metadata
+    //             let location = null;
+    //             if (req.body.location) {
+    //                 try {
+    //                     location = JSON.parse(req.body.location); // Convert string to JSON
+    //                 } catch (e) {
+    //                     return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+    //                 }
+    //             }
+    
+    //             // Attach metadata for S3
+    //             const metadata = {
+    //                 "x-amz-meta-description": description,
+    //                 "x-amz-meta-uploaded-by": uploadedBy,
+    //                 "x-amz-meta-timestamp": timestamp,
+    //                 "x-amz-meta-location": JSON.stringify(location), // Store location as JSON string
+    //             };
+
+    //             const allowedMimeTypes: Record<string, string> = {
+    //                 "jpg": "image/jpeg",
+    //                 "jpeg": "image/jpeg",
+    //                 "png": "image/png",
+    //                 "gif": "image/gif",
+    //                 "webp": "image/webp",
+    //             };
+                
+    //             const fileExtension = file.originalname.split(".").pop()?.toLowerCase();
+    //             const correctedMimeType = allowedMimeTypes[fileExtension || ""] || "application/octet-stream";
+                
+    //             // Upload image to S3
+    //             const s3Params = {
+    //                 Bucket: "cpen321-photomap-images",
+    //                 Key: `images/${rawFileName}`,
+    //                 Body: file.buffer,
+    //                 ContentType: correctedMimeType,
+    //                 Metadata: metadata,
+    //             };
+    
+    //             await s3.send(new PutObjectCommand(s3Params));
+    
+    //             // Store metadata in MongoDB (including location)
+    //             const db = clinet.db("images");
+    //             await db.collection("metadata").insertOne({
+    //                 fileName: rawFileName,
+    //                 imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
+    //                 description,
+    //                 uploadedBy: [uploadedBy],
+    //                 timestamp,
+    //                 tags,
+    //                 location, // Store structured location
+    //             });
+    
+    //             // Update user database with location history
+    //             const userDb = clinet.db("User");
+    //             if (location) {
+    //                 await userDb.collection("users").updateOne(
+    //                     { googleEmail: uploadedBy },
+    //                     { $addToSet: { locations: location } } // Prevent duplicates
+    //                 );
+    //             }
+    
+    //             res.status(200).send({
+    //                 message: "Upload successful",
+    //                 fileName: rawFileName,
+    //                 imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
+    //                 metadata: { description, uploadedBy, timestamp, tags, location },
+    //             });
+    //         });
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
     async uploadImage(req: Request, res: Response, next: NextFunction) {
         try {
             uploadMiddleware(req, res, async (err) => {
@@ -20,14 +113,18 @@ export class imageController {
                     return res.status(400).send({ error: "No file uploaded" });
                 }
     
-                const file = req.file;
-                const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
-                const timestamp = new Date().toISOString();
-                const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}`;
-    
                 // Extract metadata fields
                 const description = req.body.description || "No description provided";
                 const tags = req.body.tags ? req.body.tags.split(",") : [];
+
+                const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
+                const timestamp = new Date().toISOString();
+
+                // ✅ Convert image to JPG or PNG
+                const processedImage = await processImage(req.file);
+
+                // ✅ Force file extension to match converted type
+                const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}.${processedImage.fileExtension}`;
 
                 // Extract location metadata
                 let location = null;
@@ -47,24 +144,14 @@ export class imageController {
                     "x-amz-meta-location": JSON.stringify(location), // Store location as JSON string
                 };
 
-                const allowedMimeTypes: Record<string, string> = {
-                    "jpg": "image/jpeg",
-                    "jpeg": "image/jpeg",
-                    "png": "image/png",
-                    "gif": "image/gif",
-                    "webp": "image/webp",
-                };
-                
-                const fileExtension = file.originalname.split(".").pop()?.toLowerCase();
-                const correctedMimeType = allowedMimeTypes[fileExtension || ""] || "application/octet-stream";
                 
                 // Upload image to S3
                 const s3Params = {
                     Bucket: "cpen321-photomap-images",
                     Key: `images/${rawFileName}`,
-                    Body: file.buffer,
-                    ContentType: correctedMimeType,
-                    Metadata: metadata,
+                    Body: processedImage.buffer, // ✅ Upload converted image
+                    ContentType: processedImage.mimeType, // ✅ Correct MIME type (image/jpeg or image/png)
+                    Metadata: { "x-amz-meta-uploaded-by": uploadedBy, "x-amz-meta-timestamp": timestamp },
                 };
     
                 await s3.send(new PutObjectCommand(s3Params));
@@ -246,3 +333,25 @@ export class imageController {
     
 }
 
+const allowedMimeTypes: Record<string, string> = {
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "png": "image/png",
+};
+
+
+async function processImage(file: Express.Multer.File) {
+    let fileExtension = file.originalname.split(".").pop()?.toLowerCase() || "jpg"; // Default to jpg
+    let mimeType = allowedMimeTypes[fileExtension] || "image/jpeg"; // Default to jpg
+
+    // ✅ Convert any image to JPG/PNG (force JPG by default)
+    const convertedImage = await sharp(file.buffer)
+        .toFormat(fileExtension === "png" ? "png" : "jpeg") // Convert based on original type
+        .toBuffer();
+
+    return {
+        buffer: convertedImage,
+        mimeType: fileExtension === "png" ? "image/png" : "image/jpeg", // ✅ Ensure correct MIME type
+        fileExtension: fileExtension === "png" ? "png" : "jpg", // ✅ Correct extension
+    };
+}
