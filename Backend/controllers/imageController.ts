@@ -101,7 +101,7 @@ export class imageController {
     //         next(error);
     //     }
     // }
-    
+
     async uploadImage(req: Request, res: Response, next: NextFunction) {
         try {
             uploadMiddleware(req, res, async (err) => {
@@ -357,10 +357,12 @@ async function analyzeImageLabels(s3Bucket: string, imageKey: string) {
         const labelCommand = new DetectLabelsCommand({
             Image: { S3Object: { Bucket: s3Bucket, Name: imageKey } },
             MaxLabels: 10, // Limit the number of labels returned
-            MinConfidence: 75, // Only return labels with >75% confidence
+            MinConfidence: 50, // Only return labels with >75% confidence
         });
 
         const labelResponse = await rekognition.send(labelCommand);
+        console.log("🔹 Rekognition Labels Response:", JSON.stringify(labelResponse, null, 2));
+
         const labels = labelResponse.Labels?.map(label => label.Name) || [];
 
         return labels;
