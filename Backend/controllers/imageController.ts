@@ -214,13 +214,9 @@ export class imageController {
             );
     
             res.status(200).send({
-                message: "Image retrieved successfully",
-                fileName: key,
-                presignedUrl,
-                metadata: {
-                    ...image,
-                    location: image.location, // Include location
-                },
+                ...image, // Include all image metadata directly at the top level
+                presignedUrl, 
+                location: image.location, 
             });
         } catch (error) {
             next(error);
