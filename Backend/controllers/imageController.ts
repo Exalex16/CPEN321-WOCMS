@@ -321,6 +321,37 @@ export class imageController {
             next(error);
         }
     }
+
+    async getAllImages(req: Request, res: Response, next: NextFunction) {
+        try {
+            const db = clinet.db("images");
+            const images = await db.collection("metadata").find().toArray(); // Fetch all images
+    
+            // Generate presigned URLs for each image
+            const imagesWithPresignedUrls = await Promise.all(
+                images.map(async (image) => {
+                    const presignedUrl = await getSignedUrl(
+                        s3,
+                        new GetObjectCommand({
+                            Bucket: "cpen321-photomap-images",
+                            Key: `images/${image.fileName}`,
+                        }),
+                        { expiresIn: 3600 } 
+                    );
+    
+                    return {
+                        ...image, 
+                        presignedUrl,
+                        location: image.location, 
+                    };
+                })
+            );
+    
+            res.status(200).send({ images: imagesWithPresignedUrls });
+        } catch (error) {
+            next(error);
+        }
+    }
     
     
 }
