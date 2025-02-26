@@ -46,14 +46,24 @@ export class imageController {
                     "x-amz-meta-timestamp": timestamp,
                     "x-amz-meta-location": JSON.stringify(location), // Store location as JSON string
                 };
+
+                const allowedMimeTypes: Record<string, string> = {
+                    "jpg": "image/jpeg",
+                    "jpeg": "image/jpeg",
+                    "png": "image/png",
+                    "gif": "image/gif",
+                    "webp": "image/webp",
+                };
                 
-    
+                const fileExtension = file.originalname.split(".").pop()?.toLowerCase();
+                const correctedMimeType = allowedMimeTypes[fileExtension || ""] || "application/octet-stream";
+                
                 // Upload image to S3
                 const s3Params = {
                     Bucket: "cpen321-photomap-images",
                     Key: `images/${rawFileName}`,
                     Body: file.buffer,
-                    ContentType: file.mimetype,
+                    ContentType: correctedMimeType,
                     Metadata: metadata,
                 };
     
