@@ -128,6 +128,9 @@ export class imageController {
                 if (req.body.location) {
                     try {
                         location = JSON.parse(req.body.location); // Convert string to JSON
+
+                        location.position.lat = parseFloat(location.position.lat);
+                        location.position.lng = parseFloat(location.position.lng);
                     } catch (e) {
                         return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
                     }
@@ -212,11 +215,22 @@ export class imageController {
                 }),
                 { expiresIn: 604800 }
             );
+            
     
             res.status(200).send({
                 ...image, // Include all image metadata directly at the top level
                 presignedUrl, 
-                location: image.location, 
+                location: image.location
+                    ? {
+                        position: {
+                            lat: parseFloat(image.location.position.lat),
+                            lng: parseFloat(image.location.position.lng),
+                        },
+                        title: image.location.title,
+                        location: image.location.location,
+                        icon: image.location.icon,
+                    }
+                    : null,
             });
         } catch (error) {
             next(error);
@@ -251,7 +265,17 @@ export class imageController {
                     return {
                         ...image,
                         presignedUrl, // Include temporary URL for frontend display
-                        location: image.location, // Include location data
+                        location: image.location
+                            ? {
+                                position: {
+                                    lat: parseFloat(image.location.position.lat),
+                                    lng: parseFloat(image.location.position.lng),
+                                },
+                                title: image.location.title,
+                                location: image.location.location,
+                                icon: image.location.icon,
+                            }
+                        : null, // Include location data
                     };
                 })
             );
@@ -342,7 +366,17 @@ export class imageController {
                     return {
                         ...image, 
                         presignedUrl,
-                        location: image.location, 
+                        location: image.location
+                            ? {
+                                position: {
+                                    lat: parseFloat(image.location.position.lat),
+                                    lng: parseFloat(image.location.position.lng),
+                                },
+                                title: image.location.title,
+                                location: image.location.location,
+                                icon: image.location.icon,
+                            }
+                        : null, 
                     };
                 })
             );
