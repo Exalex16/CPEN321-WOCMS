@@ -48,4 +48,10 @@ export const imageRoutes = [
             // body("senderEmail").isEmail(),
         ],
     },
+    {
+        method: "get",
+        route: "/images",
+        action: controller.getAllImages,
+        validation: [], // ✅ No input validation needed since no parameters are required
+    },
 ]
