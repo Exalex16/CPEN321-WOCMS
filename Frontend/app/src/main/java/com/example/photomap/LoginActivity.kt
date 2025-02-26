@@ -99,7 +99,7 @@ class LoginActivity : AppCompatActivity() {
                             "Received Google ID token: ${googleIdTokenCredential.idToken.take(10)}"
                         )
 
-                        saveUserToken(googleIdTokenCredential.idToken.take(10))
+                        saveUserToken(googleIdTokenCredential.idToken.take(10), googleIdTokenCredential.id)
                         val intent = Intent(this, MainActivity::class.java)
                         startActivity(intent)
                         finish()
@@ -132,12 +132,14 @@ class LoginActivity : AppCompatActivity() {
         return digest.fold("") { str, it -> str + "%02x".format(it) }
     }
 
-    private fun saveUserToken(token: String) {
+    private fun saveUserToken(token: String, email: String) {
         val sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE)
         val editor = sharedPreferences.edit()
         editor.putString("user_token", token)
+        editor.putString("user_email", email)
         editor.apply()
     }
+
 
 
 
