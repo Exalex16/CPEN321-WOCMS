@@ -2,6 +2,7 @@ package com.example.photomap
 
 import android.app.AlertDialog
 import android.content.res.Resources
+import android.location.Geocoder
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -33,6 +34,8 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.IOException
+import java.util.Locale
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -41,7 +44,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var fabActions: FloatingActionButton
     private var selectedImageUri: Uri? = null
     private var previewImageView: ImageView? = null
-
+    private var currentMarker: MarkerInstance? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,12 +115,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     val hue = getHueFromColor(selectedColor)
 
                     // Marker attributes: push this information to DB
-                    mMap.addMarker(
-                        MarkerOptions()
+                    val marker = mMap.addMarker(
+                            MarkerOptions()
                             .position(latLng)
                             .title(markerTitle)
                             .icon(BitmapDescriptorFactory.defaultMarker(hue))
                     )
+
+                    //Tag the color
+                    marker?.tag = selectedColor  // Store the hue as the tag
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -126,6 +132,35 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Set marker click listener
         mMap.setOnMarkerClickListener { marker ->
             // Display the FAB when any marker is clicked
+            val lat = marker.position.latitude
+            val lng = marker.position.longitude
+            val markerTitle = marker.title ?: "Untitled Marker"
+            // If you're storing color somewhere, retrieve it; otherwise default:
+            val markerColor = marker.tag ?: "red"
+
+            // 2) Use Geocoder to get a city name from lat-lng
+            val geocoder = Geocoder(this, Locale.getDefault())
+            var cityName = "Unknown"
+            try {
+                val addresses = geocoder.getFromLocation(lat, lng, 1)
+                if (!addresses.isNullOrEmpty()) {
+                    cityName = addresses[0].locality ?: "Unknown"
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+
+            // 3) Store the marker data
+            currentMarker = MarkerInstance(
+                lat = lat,
+                lng = lng,
+                title = markerTitle,
+                color = markerColor.toString(),
+                location = cityName
+            )
+
+            Log.d("MapsActivity", "Marker data: $currentMarker")
+
             fabActions.visibility = View.VISIBLE
             false  // Return false to allow default behavior (e.g., info window display)
         }
@@ -168,6 +203,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 Toast.makeText(this, "Please pick an image first", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+
+            if (currentMarker == null) {
+                Toast.makeText(this, "No marker selected!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             Toast.makeText(this, "Submit button clicked", Toast.LENGTH_SHORT).show()
             uploadPhotoToAWS()
             bottomSheetDialog.dismiss()
@@ -203,11 +244,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 // 3) Build a JSON string for your location
                 //    For example, lat, lng, markerTitle, markerColor, etc.
                 val locationJson = JSONObject().apply {
-
-                    put("lat", 49.2666656)
-                    put("lng", -123.249999)
-                    put("markerTitle", "My Custom Marker")
-                    put("markerColor", "red")
+                    put("position", JSONObject().apply {
+                        put("lat", currentMarker?.lat ?: 0.0)
+                        put("lng", currentMarker?.lng ?: 0.0)
+                    })
+                    put("title", currentMarker?.title ?: "Untitled")
+                    put("location", currentMarker?.location ?: "Unknown")
+                    put("icon", currentMarker?.color ?: "red")
                 }.toString()
 
                 // 4) Convert that JSON to a RequestBody
@@ -233,6 +276,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     // Show success
                     Toast.makeText(this@MapsActivity, "Upload successful!", Toast.LENGTH_SHORT).show()
                     val uploadData = response.body()
+
+                    Log.d("MapsActivity", "Upload response: $uploadData")
 
                     // check response output
                 } else {
