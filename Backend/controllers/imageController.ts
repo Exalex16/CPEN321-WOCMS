@@ -357,7 +357,7 @@ async function analyzeImageLabels(s3Bucket: string, imageKey: string) {
         const labelCommand = new DetectLabelsCommand({
             Image: { S3Object: { Bucket: s3Bucket, Name: imageKey } },
             MaxLabels: 10, // Limit the number of labels returned
-            MinConfidence: 50, // Only return labels with >75% confidence
+            MinConfidence: 75, // Only return labels with >75% confidence
         });
 
         const labelResponse = await rekognition.send(labelCommand);
