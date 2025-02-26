@@ -23,7 +23,7 @@ export class mapController {
             }).toArray();
     
             if (images.length === 0) {
-                return res.status(200).send({ popularLocations: [] });
+                return res.status(200).send({ popularLocation: null });
             }
     
             // ✅ Convert image locations into GeoJSON Points
@@ -35,7 +35,10 @@ export class mapController {
             const geoJsonPoints = turf.featureCollection(points);
             const clustered = turf.clustersDbscan(geoJsonPoints, 0.01, { minPoints: 2 });
     
-            // ✅ Process clusters to find representative location & top 3 tags
+            // ✅ Process clusters to find the largest one
+            let largestCluster: number[][] = [];
+            let mostCommonTags: string[] = [];
+    
             const clusterData: Record<string, { positions: number[][], tags: string[] }> = {};
             clustered.features.forEach(cluster => {
                 if (!cluster.properties || cluster.properties.cluster === undefined) return;
@@ -45,35 +48,43 @@ export class mapController {
     
                 clusterData[clusterId].positions.push(cluster.geometry.coordinates);
                 clusterData[clusterId].tags.push(...(cluster.properties.tags || []));
+    
+                // ✅ Track the largest cluster
+                if (clusterData[clusterId].positions.length > largestCluster.length) {
+                    largestCluster = clusterData[clusterId].positions;
+                    mostCommonTags = clusterData[clusterId].tags;
+                }
             });
     
-            // ✅ Compute central position & most frequent tags for each cluster
-            const popularLocations = Object.values(clusterData).map(cluster => {
-                // ✅ Compute average lat/lng for the cluster
-                const avgPosition = cluster.positions.reduce((acc, pos) => {
-                    acc[0] += pos[0];
-                    acc[1] += pos[1];
-                    return acc;
-                }, [0, 0]).map(coord => coord / cluster.positions.length);
+            if (largestCluster.length === 0) {
+                return res.status(200).send({ popularLocation: null });
+            }
     
-                // ✅ Count tag frequencies & get the top 3
-                const tagCounts: Record<string, number> = cluster.tags.reduce((acc: Record<string, number>, tag: string) => {
-                    acc[tag] = (acc[tag] || 0) + 1;
-                    return acc;
-                }, {} as Record<string, number>);
+            // ✅ Compute average lat/lng for the largest cluster
+            const avgPosition = largestCluster.reduce((acc, pos) => {
+                acc[0] += pos[0];
+                acc[1] += pos[1];
+                return acc;
+            }, [0, 0]).map(coord => coord / largestCluster.length);
     
-                const topTags = Object.entries(tagCounts)
-                    .sort((a, b) => b[1] - a[1]) // Sort by frequency
-                    .slice(0, 3) // Take top 3
-                    .map(tag => tag[0]);
+            // ✅ Count tag frequencies & get the top 3
+            const tagCounts: Record<string, number> = mostCommonTags.reduce((acc: Record<string, number>, tag: string) => {
+                acc[tag] = (acc[tag] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
     
-                return {
+            const topTags = Object.entries(tagCounts)
+                .sort((a, b) => b[1] - a[1]) // Sort by frequency
+                .slice(0, 3) // Take top 3
+                .map(tag => tag[0]);
+    
+            // ✅ Return only the largest cluster's location and tags
+            res.status(200).send({
+                popularLocation: {
                     position: { lat: avgPosition[1], lng: avgPosition[0] },
                     tags: topTags
-                };
+                }
             });
-    
-            res.status(200).send({ popularLocations });
         } catch (error) {
             next(error);
         }
