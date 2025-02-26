@@ -30,15 +30,14 @@ export class imageController {
                 const tags = req.body.tags ? req.body.tags.split(",") : [];
 
                 // Extract location metadata
-                const location = req.body.location
-                ? {
-                    lat: parseFloat(req.body.location.lat),
-                    lng: parseFloat(req.body.location.lng),
-                    title: req.body.location.title || "Unknown",
-                    locationName: req.body.location.locationName || "Unnamed Location",
-                    color: req.body.location.color || "red", // Default color
+                let location = null;
+                if (req.body.location) {
+                    try {
+                        location = JSON.parse(req.body.location); // Convert string to JSON
+                    } catch (e) {
+                        return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+                    }
                 }
-                : null;
     
                 // Attach metadata for S3
                 const metadata = {
