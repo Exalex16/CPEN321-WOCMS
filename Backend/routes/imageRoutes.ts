@@ -10,7 +10,14 @@ export const imageRoutes = [
         route: "/upload",
         action: controller.uploadImage,
         validation: [
-            body("location").optional().isObject(),
+            // body("description").optional().isString(),
+            // body("tags").optional().isArray(),
+            // body("location").optional().isObject(),
+            // body("location.lat").optional().isFloat({ min: -90, max: 90 }),
+            // body("location.lng").optional().isFloat({ min: -180, max: 180 }),
+            // body("location.title").optional().isString(),
+            // body("location.locationName").optional().isString(),
+            // body("location.color").optional().isString(),
         ],
     },
     {

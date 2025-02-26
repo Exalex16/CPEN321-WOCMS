@@ -23,12 +23,21 @@ export class imageController {
                 const file = req.file;
                 const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
                 const timestamp = new Date().toISOString();
-                const location = req.body.location || null; // Accept location input
                 const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}`;
     
                 // Extract metadata fields
                 const description = req.body.description || "No description provided";
                 const tags = req.body.tags ? req.body.tags.split(",") : [];
+
+                // Extract location metadata
+                let location = null;
+                if (req.body.location) {
+                    try {
+                        location = JSON.parse(req.body.location); // Convert string to JSON
+                    } catch (e) {
+                        return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+                    }
+                }
     
                 // Attach metadata for S3
                 const metadata = {
@@ -37,6 +46,7 @@ export class imageController {
                     "x-amz-meta-timestamp": timestamp,
                     "x-amz-meta-location": JSON.stringify(location), // Store location as JSON string
                 };
+                
     
                 // Upload image to S3
                 const s3Params = {
@@ -58,15 +68,17 @@ export class imageController {
                     uploadedBy: [uploadedBy],
                     timestamp,
                     tags,
-                    location, // Store location in image metadata
+                    location, // Store structured location
                 });
     
                 // Update user database with location history
                 const userDb = clinet.db("User");
-                await userDb.collection("users").updateOne(
-                    { googleEmail: uploadedBy },
-                    { $addToSet: { locations: location } } // Prevent duplicates
-                );
+                if (location) {
+                    await userDb.collection("users").updateOne(
+                        { googleEmail: uploadedBy },
+                        { $addToSet: { locations: location } } // Prevent duplicates
+                    );
+                }
     
                 res.status(200).send({
                     message: "Upload successful",
