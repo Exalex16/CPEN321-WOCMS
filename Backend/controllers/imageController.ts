@@ -128,6 +128,9 @@ export class imageController {
                 if (req.body.location) {
                     try {
                         location = JSON.parse(req.body.location); // Convert string to JSON
+
+                        location.position.lat = parseFloat(location.position.lat);
+                        location.position.lng = parseFloat(location.position.lng);
                     } catch (e) {
                         return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
                     }
@@ -202,6 +205,19 @@ export class imageController {
             if (!image) {
                 return res.status(404).send({ error: "Image not found" });
             }
+
+            // Ensure lat/lng are always returned as double
+            const formattedLocation = image.location
+            ? {
+                position: {
+                    lat: parseFloat(image.location.position.lat),
+                    lng: parseFloat(image.location.position.lng),
+                },
+                title: image.location.title,
+                location: image.location.location,
+                icon: image.location.icon,
+            }
+            : null; // If no location, return null
     
             // Generate a presigned URL valid for 1 hour
             const presignedUrl = await getSignedUrl(
@@ -212,11 +228,12 @@ export class imageController {
                 }),
                 { expiresIn: 604800 }
             );
+            
     
             res.status(200).send({
                 ...image, // Include all image metadata directly at the top level
                 presignedUrl, 
-                location: image.location, 
+                location: formattedLocation, 
             });
         } catch (error) {
             next(error);
@@ -235,6 +252,7 @@ export class imageController {
     
             const db = clinet.db("images");
             const images = await db.collection("metadata").find({ uploadedBy: uploaderEmail }).toArray();
+            
     
             // Generate presigned URLs for each image
             const imagesWithPresignedUrls = await Promise.all(
