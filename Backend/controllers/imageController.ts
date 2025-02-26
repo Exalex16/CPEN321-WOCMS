@@ -265,24 +265,11 @@ export class imageController {
                         }),
                         { expiresIn: 604800 }
                     );
-
-                    // Ensure lat/lng are always returned as double
-                    const formattedLocation = image.location
-                    ? {
-                        position: {
-                            lat: parseFloat(image.location.position.lat),
-                            lng: parseFloat(image.location.position.lng),
-                        },
-                        title: image.location.title,
-                        location: image.location.location,
-                        icon: image.location.icon,
-                    }
-                    : null; // If no location, return null
     
                     return {
                         ...image,
                         presignedUrl, // Include temporary URL for frontend display
-                        location: formattedLocation, // Include location data
+                        location: image.location, // Include location data
                     };
                 })
             );
