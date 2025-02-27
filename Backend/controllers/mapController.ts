@@ -33,7 +33,7 @@ export class mapController {
     
             // ✅ Perform DBSCAN clustering with ~1km radius (0.01 degrees)
             const geoJsonPoints = turf.featureCollection(points);
-            const clustered = turf.clustersDbscan(geoJsonPoints, 0.10, { minPoints: 2 });
+            const clustered = turf.clustersDbscan(geoJsonPoints, 0.50, { minPoints: 1 });
     
             // ✅ Process clusters to find the largest one
             let largestCluster: number[][] = [];
