@@ -16,7 +16,7 @@ export class mapController {
     
             const db = clinet.db("images");
     
-            // ✅ Fetch only images uploaded by this user
+            // Fetch only images uploaded by this user
             const images = await db.collection("metadata").find({
                 uploadedBy: userEmail, 
                 location: { $exists: true }
@@ -26,14 +26,14 @@ export class mapController {
                 return res.status(200).send({ popularLocation: null });
             }
     
-            // ✅ Convert image locations into GeoJSON Points
+            // Convert image locations into GeoJSON Points
             const points = images.map(image =>
                 turf.point([image.location.position.lng, image.location.position.lat], { tags: image.tags })
             );
     
             // ✅ Perform DBSCAN clustering with ~1km radius (0.01 degrees)
             const geoJsonPoints = turf.featureCollection(points);
-            const clustered = turf.clustersDbscan(geoJsonPoints, 0.01, { minPoints: 2 });
+            const clustered = turf.clustersDbscan(geoJsonPoints, 0.10, { minPoints: 2 });
     
             // ✅ Process clusters to find the largest one
             let largestCluster: number[][] = [];
