@@ -17,6 +17,11 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
     }
 
+    object mapContent{
+        val imageList: ArrayList<PhotoInstance> = arrayListOf()
+        val markerList: ArrayList<MarkerInstance> = arrayListOf()
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,8 +33,13 @@ class MainActivity : AppCompatActivity() {
             finish()
         }else{
             Log.d(TAG,userToken)
-            enableEdgeToEdge()
 
+
+
+
+
+
+            enableEdgeToEdge()
             // If the user is logged in, go to MapsActivity
             val intent = Intent(this, MapsActivity::class.java)
             startActivity(intent)

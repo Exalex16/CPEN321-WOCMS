@@ -1,5 +1,6 @@
 package com.example.photomap
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -25,6 +26,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.util.UUID
+import androidx.lifecycle.lifecycleScope
 
 
 class LoginActivity : AppCompatActivity() {
@@ -86,7 +88,7 @@ class LoginActivity : AppCompatActivity() {
     fun handleSignIn(result: GetCredentialResponse) {
         // Handle the successfully returned credential.
         val credential = result.credential
-
+        println("Triggers 3")
         when (credential) {
             is CustomCredential -> {
                 if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
@@ -94,15 +96,20 @@ class LoginActivity : AppCompatActivity() {
                         // Use googleIdTokenCredential and extract id to validate and authenticate on your server.
                         val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
 
-                        Log.d(
-                            TAG,
-                            "Received Google ID token: ${googleIdTokenCredential.idToken.take(10)}"
-                        )
+                        Log.d(TAG, "Received Google ID token: ${googleIdTokenCredential.idToken.take(10)}")
+                        lifecycleScope.launch {
+                            val userPostStatus = postUser(googleIdTokenCredential.displayName.toString(), googleIdTokenCredential.id)
 
-                        saveUserToken(googleIdTokenCredential.idToken.take(10), googleIdTokenCredential.id)
-                        val intent = Intent(this, MainActivity::class.java)
-                        startActivity(intent)
-                        finish()
+                            if(userPostStatus){
+                                saveUserToken(googleIdTokenCredential.idToken.take(10), googleIdTokenCredential.id)
+                                // ✅ Move to MainActivity
+                                val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                                startActivity(intent)
+                                finish()
+                            }
+
+                        }
+
 
                     } catch (e: GoogleIdTokenParsingException) {
                         Log.e(TAG, "Received an invalid Google ID token response", e)
@@ -138,6 +145,17 @@ class LoginActivity : AppCompatActivity() {
         editor.putString("user_token", token)
         editor.putString("user_email", email)
         editor.apply()
+    }
+    private suspend fun postUser(name: String, email: String): Boolean {
+
+        try {
+            RetrofitClient.api.createUser(UserPostRequest(email,name))
+            println("✅ User created successfully!")
+            return true
+        } catch (e: Exception) {
+            println("❌ User creation failed: ${e.message}")
+            return false
+        }
     }
 
 

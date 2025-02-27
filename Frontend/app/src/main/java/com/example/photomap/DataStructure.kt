@@ -15,22 +15,26 @@ data class Metadata(
 
 data class PhotoInstance(
     val imageURL:  String,
-    val marker: MarkerInstance,
     val timeString: String
 )
 
-data class MarkerInstance(
-    val lng: Float,
-    val lat: Float,
-    val title: String,
-    val location: String,
-    val color: String
+data class UserPostRequest(
+    val googleEmail: String,
+    val googleName: String
 )
 
-object mapContent{
-    val imageList: ArrayList<PhotoInstance> = arrayListOf()
-    val markerList: ArrayList<MarkerInstance> = arrayListOf()
 
-}
+
+
+data class MarkerInstance(
+    val lng: Double,
+    val lat: Double,
+    val title: String,
+    val location: String,
+    val color: String,
+    val photoAtCurrentMarker: ArrayList<PhotoInstance>
+)
+
+
 
 
