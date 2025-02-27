@@ -33,7 +33,7 @@ export class mapController {
     
             // ✅ Perform DBSCAN clustering with ~1km radius (0.01 degrees)
             const geoJsonPoints = turf.featureCollection(points);
-            const clustered = turf.clustersDbscan(geoJsonPoints, 2.0, { minPoints: 2 });
+            const clustered = turf.clustersDbscan(geoJsonPoints, 1.0, { minPoints: 1 });
 
             console.log("📌 Clustering Data:", JSON.stringify(clustered, null, 2));
     
