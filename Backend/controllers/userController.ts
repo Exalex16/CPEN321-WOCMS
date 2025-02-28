@@ -69,19 +69,19 @@ export class userController {
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         try {
             const { googleEmail } = req.params;
-            let  { googleName } = req.body; // Removed `tags` since AI manages it
+            let { googleName } = req.body;
     
             if (!googleEmail) {
                 return res.status(400).send({ error: "Google ID is required" });
             }
     
             const db = clinet.db("User");
-
+    
             let location = null;
             if (req.body.location) {
                 try {
-                    location = JSON.parse(req.body.location); 
-
+                    location = JSON.parse(req.body.location);
+    
                     location.position.lat = parseFloat(location.position.lat);
                     location.position.lng = parseFloat(location.position.lng);
                 } catch (e) {
@@ -89,26 +89,28 @@ export class userController {
                 }
             }
     
-            // Build update object
-            const updateFields: any = { updatedAt: new Date() }; 
+            // Build the update object dynamically
+            const updateFields: any = { updatedAt: new Date() };
             if (googleName) updateFields.googleName = googleName;
-            if (location) updateFields.$addToSet = { locations: location }; 
     
-            // Ensure there are fields to update
-            if (Object.keys(updateFields).length === 1) {
-                return res.status(400).send({ error: "No valid fields provided for update" });
-            }
-
+            const updateQuery: any = { $set: updateFields };
+            if (location) updateQuery.$addToSet = { locations: location };
+    
+            // Execute update
             const updateResult = await db.collection("users").updateOne(
                 { googleEmail },
-                { $set: updateFields }
+                updateQuery
             );
-
+    
             if (updateResult.matchedCount === 0) {
                 return res.status(404).send({ error: "User not found" });
             }
-
-            res.status(200).send({ message: "User profile updated", updatedFields: updateFields });
+    
+            res.status(200).send({
+                message: "User profile updated",
+                updatedFields: updateFields,
+                addedLocation: location || null,
+            });
         } catch (error) {
             next(error);
         }
