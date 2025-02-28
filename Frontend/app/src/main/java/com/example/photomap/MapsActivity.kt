@@ -61,9 +61,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         fabRecommendation.setOnClickListener {
             Toast.makeText(this, "Recommendation clicked!", Toast.LENGTH_SHORT).show()
-
-            //Log.d("MapsActivity", getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", "")?: "none")
-
             fetchRecommendation()
         }
 
@@ -89,16 +86,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     val lat = popularLocation.position.lat
                     val lng = popularLocation.position.lng
                     val tags = popularLocation.tags
-                    // You can also update the UI
+
                     Toast.makeText(this@MapsActivity, "Got recommendation", Toast.LENGTH_SHORT).show()
                     Log.d("MapsActivity", "Got recommendation at ($lat, $lng), with tags: $tags")
 
                     //Call Places API to get recommendation
                     val keywordQuery = tags.firstOrNull() ?: ""
                     fetchNearbyPlaces("$lat,$lng", keywordQuery)
-                    //fetchNearbyPlaces("49.2666656, -123.249999", "market")
-
-
                 } else {
                     val errorMsg = response.errorBody()?.string()
                     Toast.makeText(this@MapsActivity, "Recommendation failed, too few images!", Toast.LENGTH_LONG).show()
@@ -124,7 +118,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     apiKey = MAPS_API_KEY
                 )
                 if (response.status == "OK") {
-                    // Process the list of places, for example choose the closest match
+                    // Choose top tag
                     val bestPlace = response.results.firstOrNull()
                     bestPlace?.let {
                         val lat = it.geometry.location.lat
@@ -139,7 +133,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         mMap.moveCamera(
                             CameraUpdateFactory.newLatLngZoom(
                                 LatLng(lat, lng),
-                                15f // Adjust zoom level as desired
+                                15f
                             )
                         )
                     }
@@ -237,13 +231,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                             .icon(BitmapDescriptorFactory.defaultMarker(hue))
                     )
 
-                    //Tag the color
-                    marker?.tag = selectedColor  // Store the hue as the tag
+                    // Tag marker color for map use
+                    marker?.tag = selectedColor
 
                     val lat = latLng.latitude
                     val lng = latLng.longitude
 
-                    // 2) Use Geocoder to get a city name from lat-lng
+                    // Obtain location string
                     val geocoder = Geocoder(this, Locale.getDefault())
                     var cityName = "Unknown"
                     try {
@@ -255,7 +249,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         e.printStackTrace()
                     }
 
-                    // 3) Store the marker data
+                    // Store the marker data
                     currentMarker = MarkerInstance(
                         lat = lat,
                         lng = lng,
@@ -273,14 +267,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Set marker click listener
         mMap.setOnMarkerClickListener { marker ->
-            // Display the FAB when any marker is clicked
             val lat = marker.position.latitude
             val lng = marker.position.longitude
             val markerTitle = marker.title ?: "Untitled Marker"
-            // If you're storing color somewhere, retrieve it; otherwise default:
             val markerColor = marker.tag ?: "red"
 
-            // 2) Use Geocoder to get a city name from lat-lng
+            // Obtain location string
             val geocoder = Geocoder(this, Locale.getDefault())
             var cityName = "Unknown"
             try {
@@ -302,9 +294,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 photoAtCurrentMarker = arrayListOf()
             )
 
-            // Try another place to send this
-            //sendMarkerUpdate(getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", "")?: "anonymous@example.com", currentMarker!!)
-
             Log.d("MapsActivity", "Marker data: $currentMarker")
 
 
@@ -314,7 +303,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         fabActions.setOnClickListener {
-            // Step 2: Show the bottom sheet
             showUploadBottomSheet()
             Toast.makeText(this, "FAB clicked", Toast.LENGTH_SHORT).show()
         }
@@ -326,19 +314,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val view = layoutInflater.inflate(R.layout.bottom_sheet_upload, null)
         bottomSheetDialog.setContentView(view)
 
-        // Get references to buttons
         val pickPhotoButton = view.findViewById<Button>(R.id.btn_pick_photo)
         val submitButton = view.findViewById<Button>(R.id.btn_submit_upload)
         val previewImageView = view.findViewById<ImageView>(R.id.imagePreview)
         this.previewImageView = previewImageView
 
 
-        // Step 3: Implement picking a photo
         pickPhotoButton.setOnClickListener {
             pickImageLauncher.launch("image/*")
         }
 
-        // Step 4: Submit the photo (upload to AWS)
         submitButton.setOnClickListener {
             if (selectedImageUri == null) {
                 Toast.makeText(this, "Please pick an image first", Toast.LENGTH_SHORT).show()
@@ -362,9 +347,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
-            // Store the selected URI
             selectedImageUri = uri
-
             // Show the preview in your ImageView
             previewImageView?.visibility = View.VISIBLE
             previewImageView?.setImageURI(uri)
@@ -375,15 +358,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun uploadPhotoToAWS() {
         lifecycleScope.launch {
             try {
-                // 1) Convert your selectedImageUri to a MultipartBody.Part
                 val imagePart = createImagePart(selectedImageUri!!)
-
-                // 2) Build a RequestBody for the description (if needed)
                 val description = "This is a test description"
                 val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                // 3) Build a JSON string for your location
-                //    For example, lat, lng, markerTitle, markerColor, etc.
                 val locationJson = JSONObject().apply {
                     put("position", JSONObject().apply {
                         put("lat", currentMarker?.lat ?: 0.0)
@@ -393,13 +371,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     put("location", currentMarker?.location ?: "Unknown")
                     put("icon", currentMarker?.color ?: "red")
                 }.toString()
-
-                // 4) Convert that JSON to a RequestBody
                 val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
 
                 val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
                 val userEmail = prefs.getString("user_email", null) // could be null
-                val userEmailReqBody = (userEmail ?: "anonymous@example.com") // handle null case
+                val userEmailReqBody = (userEmail ?: "anonymous@example.com")
                     .toRequestBody("text/plain".toMediaTypeOrNull())
 
                 Log.d("MapsActivity", "User email: $userEmail")
@@ -412,7 +388,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     location = locationBody
                 )
 
-                // 6) Check if successful
                 if (response.isSuccessful) {
                     // Show success
                     Toast.makeText(this@MapsActivity, "Upload successful!", Toast.LENGTH_SHORT).show()
@@ -420,7 +395,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     Log.d("MapsActivity", "Upload response: $uploadData")
 
-                    // check response output
                 } else {
                     // Show error
                     val errorMsg = response.errorBody()?.string()
@@ -436,20 +410,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun createImagePart(uri: Uri): MultipartBody.Part {
-        // 1) Open input stream for the image
         val inputStream = contentResolver.openInputStream(uri) ?: throw IllegalStateException("Unable to open image")
 
-        // 2) Read bytes
         val fileBytes = inputStream.readBytes()
         inputStream.close()
 
-        // 3) Create RequestBody for the image
+        // Create RequestBody for the image
         val requestFile = fileBytes.toRequestBody("image/*".toMediaTypeOrNull())
 
-        // 4) Wrap it in MultipartBody.Part with form field name "image"
+        // Wrap it in MultipartBody.Part with form field name "image"
         return MultipartBody.Part.createFormData(
-            "image",               // must match your API field name
-            "filename",        // will be ignored by alex's code
+            "image",
+            "filename",
             requestFile
         )
     }
@@ -467,6 +439,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    // Send newly create marker to server
     private fun sendMarkerUpdate(email: String, markerData: MarkerInstance) {
         lifecycleScope.launch {
             try {
