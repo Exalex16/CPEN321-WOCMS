@@ -18,6 +18,7 @@ export class userController {
             const db = clinet.db("User");
             const existingUser = await db.collection("users").findOne({ googleEmail });
     
+            // Check if user exist
             if (existingUser) {
                 await db.collection("users").updateOne(
                     { googleEmail },
@@ -31,7 +32,7 @@ export class userController {
                     banStatus: "not banned",
                     banHistory: [],
                     tags: [],
-                    locations: [], // Initialize locations array
+                    locations: [], 
                     createdAt: new Date(),
                 };
                 const result = await db.collection("users").insertOne(newUser);
@@ -76,10 +77,10 @@ export class userController {
     
             const db = clinet.db("User");
     
-            // Build dynamic update object
-            const updateFields: any = { updatedAt: new Date() }; // Always update timestamp
+            // Build update object
+            const updateFields: any = { updatedAt: new Date() }; 
             if (googleName) updateFields.googleName = googleName;
-            if (tags) updateFields.tags = tags; // Allow updating tags separately
+            if (tags) updateFields.tags = tags; 
     
             // Ensure there are fields to update
             if (Object.keys(updateFields).length === 1) {

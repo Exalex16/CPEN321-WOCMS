@@ -9,16 +9,7 @@ export const imageRoutes = [
         method: "post",
         route: "/upload",
         action: controller.uploadImage,
-        validation: [
-            // body("description").optional().isString(),
-            // body("tags").optional().isArray(),
-            // body("location").optional().isObject(),
-            // body("location.lat").optional().isFloat({ min: -90, max: 90 }),
-            // body("location.lng").optional().isFloat({ min: -180, max: 180 }),
-            // body("location.title").optional().isString(),
-            // body("location.locationName").optional().isString(),
-            // body("location.color").optional().isString(),
-        ],
+        validation: [],
     },
     {
         method: "delete",
@@ -43,15 +34,13 @@ export const imageRoutes = [
         route: "/share",
         action: controller.shareImage,
         validation: [
-            // body("recipientEmail").isEmail(),
             body("imageKey").isString(),
-            // body("senderEmail").isEmail(),
         ],
     },
     {
         method: "get",
         route: "/images",
         action: controller.getAllImages,
-        validation: [], // ✅ No input validation needed since no parameters are required
+        validation: [], 
     },
 ]

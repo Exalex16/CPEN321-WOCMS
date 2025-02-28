@@ -7,7 +7,7 @@ export class mapController {
     /**
      * Get popular locations based on image density
      */
-    async popularLocationNotify(req: Request, res: Response, next: NextFunction) {
+    async getRecommendation(req: Request, res: Response, next: NextFunction) {
         try {
             const { userEmail } = req.params;
             if (!userEmail) {
@@ -35,7 +35,7 @@ export class mapController {
     
                     // Remove bad coordinates
                     if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-                        console.log(`Skipping invalid location: lat=${lat}, lng=${lng}`);
+                        // console.log(`Skipping invalid location: lat=${lat}, lng=${lng}`);
                         return null;
                     }
     
@@ -45,13 +45,13 @@ export class mapController {
     
             // console.log("Cleaned Image Locations:", points);
 
-            console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
+            // console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
     
             // Cluster only by location (`epsilon = 2.0` to merge nearby locations)
             const geoJsonPoints = turf.featureCollection(points);
             const clustered = turf.clustersDbscan(geoJsonPoints, 100.0, { minPoints: 2 });
     
-            console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
+            // console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
     
             // Track the largest cluster
             let largestClusterId: string | null = null;
@@ -93,15 +93,15 @@ export class mapController {
                 [0, 0]
             ).map((coord: number) => coord / largestCluster.length) as [number, number];
     
-            // Count tag frequencies & get the top 3 (processed **separately**)
+            // Count tag frequencies & get the top 3
             const tagCounts: Record<string, number> = allTagsInLargestCluster.reduce((acc: Record<string, number>, tag: string) => {
                 acc[tag] = (acc[tag] || 0) + 1;
                 return acc;
             }, {} as Record<string, number>);
     
             const topTags = Object.entries(tagCounts)
-                .sort((a, b) => b[1] - a[1]) // Sort by frequency
-                .slice(0, 3) // Take top 3
+                .sort((a, b) => b[1] - a[1]) 
+                .slice(0, 3) 
                 .map(tag => tag[0]);
     
             // Return only the largest cluster's location and tags

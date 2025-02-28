@@ -7,13 +7,24 @@
 2. Specify new User - Location matching algorithm: identify elements in photo and generate "tags" for users. Then, recommend users to users or location based on tag similarity, proximity, and preference. (2.12.2024)
 
     - Original technical highlight was on banning/unbanning users, a secondary functionality compared to our app's purpose.
+    - Therefore, the recommendation become our main complexity of our project
 
 3. Elaborated NFR 1 and changed NFR2 to me specific and measurable (2.12.2024)
 
     - NFR1 lacked a concrete justification to the upload speed. 
     - NFR2 was updated to a more measurable problem. 
 
+4. Modify the interface of component, remove some interfaces that are actually implement in frontend, and add the reasonable input and output. Also, add the new interface. 
 
+    - Also, need to modify the sequencal diagram, will modify them one by one to fit our new logic
+
+5. Due to our TA suggestion. We put our main effort on recommendation logic, therefore the ban algorithm is not implement yet. Therefore, the main actor of our current program is only user. The actor Administrator does not have a special power right now. (Some administrator interfaces have been implemented, but they are currently mainly used as testing features.) 
+
+6. Modify the use case and scenario
+    - Remove the supercision use case, since it is not implement yet. Instead, we add a new use case: View Gallery. 
+    - Modify share gallery feature, remove one sub usecase. Also adjust upload photo use case, add one sub usecase
+
+7. Add new framework: AWS Route 53, and External Modules
 
 
 
@@ -59,21 +70,32 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
             - **Primary actor(s)**: User
             - **Main success scenario**:
                 1. The user navigates to the "Edit Profile" page.
-                2. The user is taken to Google’s Sign-In API to complete the account switch.
-                3. The system validates the input and updates the user's profile.
-                4. The system confirms the successful update and reflects the changes in the user's account.
+                2. The system validates the input and updates the user's profile.
+                3. The system confirms the successful update and reflects the changes in the user's account.
             - **Failure scenario(s)**:
-                - 2a. Google Sign-in API returns Error
-                    - 2a1. The system displays an error message prompting the user to try sign-in again.
-                - 3a. The system cannot save the changes due to a server error or network issue.
+                - 2a. The system cannot save the changes due to a server error or network issue.
                     - 3a1. The system displays an error message and prompts the user to try again later.
     
 2. **Upload Photos** 
     - **Overview**:
-        1. Upload Photos
+        1. Create Marker
+        2. Upload Photos
     
-    - **Detailed Flow for Each Independent Scenario**: 
-        1. **Upload Photos**:
+    - **Detailed Flow for Each Independent Scenario**:
+
+        1. **Create Marker**:
+            - **Description**: The user create marker on the map, then they can use this loaction marker to upload and view their photo
+            - **Primary actor(s)**: User
+            - **Main success scenario**:
+                1. The user selects a location on map and click on it.
+                2. The user click "create marker" button.
+                3. The user input the name, and the color of this marker. Then click create. 
+                4. The marker display on the map.
+            - **Failure scenario(s)**:
+                - 4a. Create Error: the marker does not show on the map
+                    - 4a1. The system notifies the user. And then, user try to create again.
+
+        2. **Upload Photos**:
             - **Description**: The user uploads photos from their local device to the system. Optional metadata (captions, tags) can be added to help categorize the photos.
             - **Primary actor(s)**: User
             - **Main success scenario**:
@@ -104,8 +126,6 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
             - **Failure scenario(s)**:
                 - 1a. The system fails to retrieve map data from the external API.
                     - 1a1. An error message is displayed indicating that the map cannot be loaded and to check internet connection.
-                - 4a. The map tiles or location details fail to load.
-                    - 4a1. The user is prompted to check their connection or retry.
 
 4. **Receive Location Recommendation** 
     - **Overview**:
@@ -116,8 +136,8 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
             - **Description**: The system provides location recommendations in notification form, based on popular spots with high user ratings or photo upvotes. Additionally, the user may periodically receive nearby photo spot recommendations based on their current location.
             - **Primary actor(s)**: User
             - **Main success scenario**:
-                1. The user turns on notifications for "Popular Location Notification"
-                2. The system retrieves popular locations based on user ratings, photo upvotes, or trending spots.
+                1. The user clicks the button "Popular Location Notification"
+                2. The system retrieves popular locations based on user photo history location, prefer photo type.
                 3. The system displays the top location as an app notification to the user’s phone. More info (rating, distance, user reviews) is shown when the user clicks the notification and enters the app.
                 4. The user selects a recommended location for more details or navigation assistance.
             - **Failure scenario(s)**:
@@ -131,61 +151,40 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 5. **Share Galleries** 
     - **Overview**:
         1. Select and Share Galleries
-        2. Edit Sharing Permissions
     
     - **Detailed Flow for Each Independent Scenario**: 
         1. **Select and Share Galleries**:
-            - **Description**: The user selects a photo gallery (one or more photos) and chooses how to share it (e.g., via a public link, through social media platforms, or privately to specific contacts).
+            - **Description**: The user selects a photo gallery (one or more photos) and chooses who to share it.
             - **Primary actor(s)**: User
             - **Main success scenario**:
-                1. The user navigates to “My Galleries” and selects a gallery for sharing.
-                2. The user chooses the share method (public link, social media, private email).
-                3. The user sets or confirms the visibility level (public, restricted, private).
-                4. The system generates a link or completes a share/post action.
-                5. The system confirms successful sharing and provides a direct link.
+                1. The user navigates to marker on map.
+                2. User click the share image button.
+                3. The user full in the email of the user they want to share to, and choose the image, then click share button.
+                4. The system confirms successful sharing.
             - **Failure scenario(s)**:
-                - 2a. The system detects a missing or invalid permission setting.
-                    - 2a1. The user is prompted to correct sharing permissions before proceeding.
-                - 5a. The system fails to connect or authenticate with the external social media service.
-                    - 5a1. The system notifies the user of the error and suggests retrying or using a different sharing method.
+                - 3a. The system detects a missing or invalid permission setting.
+                    - 3a1. The user is prompted to correct sharing permissions before proceeding.
+                - 3b. The system encounters a server error or network issue and cannot share image.
+                    - 3a1. The system displays an error message and try again later
 
-
-        2. **Edit Sharing Permissions**:
-            - **Description**: The user sets sharing permissions for newly created galleries or modifies permissions for previously created galleries. The system ensures that access rights are updated accordingly and reflected in the gallery settings.
-            - **Primary actor(s)**: User
-            - **Main success scenario**:
-                1. The user navigates to the "Gallery Settings" page.
-                2. The user selects a new gallery or an existing gallery to modify permissions.
-                3. The user updates the sharing settings (e.g., public, private, specific users).
-                4. The user submits the changes.
-                5. The system validates and updates the permissions.
-                6. The system confirms the successful update and applies the new sharing settings.
-            - **Failure scenario(s)**:
-                - 2a. Invalid input or unauthorized changes
-                    - 2a1. The system displays an error message prompting the user to enter valid information or confirming permission restrictions.
-                - 5a. The system cannot apply the changes due to a server error or network issue.
-                    - 5a1. The system displays an error message and prompts the user to try again	later.
     
-6. **Supervise Account** 
+6. **View Gallery** 
     - **Overview**:
-        1. Supervise Account
+        1. View Gallery
     
     - **Detailed Flow for Each Independent Scenario**: 
         1. **Supervise Account**:
-            - **Description**: The admin reviews user activity based on certain flags or reports. The system (via a complexity or “smart” algorithm) recommends ban, warning, or unban actions. The admin can then finalize these actions (ban/unban).
-            - **Primary actor(s)**: Administrator
+            - **Description**: User can view all the image they uploaded by time, in a separated activity.
+            - **Primary actor(s)**: User
             - **Main success scenario**:
-                1. The admin navigates to the “User Supervision” panel.
-                2. The system displays a list of flagged or suspicious accounts along with reasons (reports, abnormal activity).
-                3. The admin selects an account and reviews the system’s recommendation (ban, warn, or unban).
-                4. The admin decides to proceed with the recommended action or override it (ban the account if repeated violations).
-                5. The system updates the account status accordingly (banned, restricted, unbanned) and records an audit log.
+                1. The user clicks the button "Gallery"
+                2. The application go to a new activity page.
+                3. The system try to fetch all the image for current user.
+                4. The gallery page displays all photos in chronological order.
             - **Failure scenario(s)**:
-                - 2a. The system does not have sufficient logs or flags to determine a recommendation.
-                    - 2a1. The system asks the admin to manually assess and take an action.
-                - 5a. A technical issue prevents the ban/unban update from being saved in the database.
-                    - 5a1. The system notifies the admin of the error and logs the event for further review. 
-
+                - 3a. Network or server error, cannot display the image
+                    - 3a1. The system displays a error message, and suggest to click gallery and fetch image again. 
+                
 
 ### **3.4. Screen Mockups**
 
@@ -206,92 +205,77 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 1. **Map**
     - **Purpose**: The map component contains all the interactions with the map in our project.
     - **Interfaces**: 
-        1. getCurrentLocation
-            - **Purpose**: get Current location of the user if location permission is granted
-            - **Parameter**: none
-            - **Return Value**: current location
-        2. loadMap
-            - **Purpose**: Load map information by using API
-            - **Parameter**: none
-            - **Return Value**: google map by using API
-        3. viewMapInfo
-            - **Purpose**: view the detail information that on the map
-            - **Parameter**: location
-            - **Return Value**: location detail
-        4. viewPhotoInfo
-            - **Purpose**: view the photo information that on the map
-            - **Parameter**: location
-            - **Return Value**: photo detail
-        5. popularLocationNotify
-            - **Purpose**: Get the location recommendation based on user data
-	        - **Parameter**: user rate on locations
-	        - **Return Value**: location information, recommendation, and routes, etc..
-        6. RouteGenerator
-            - **Purpose**: Generate a route between the origin and destination
-	        - **Parameter**: origin, destination
-	        - **Return Value**: route
+        1. getRecommendation
+            - **Purpose**: Get the location recommendation based on user data. This will return the information that frontend can use it to search a place. 
+	        - **Parameter**: googleEmail
+	        - **Return Value**: JSON format, with recommend position (latitude and longitude), and tags
 
 2. **Image Services**
     - **Purpose**: Our project is a photomap, obviously photos are a very important part of our project. All the photo related functionalities will be counted in this component
     - **Interfaces**: 
         1. imageUpload
             - **Purpose**: Users can upload the image to let the image become a part of the photomap.
-            - **Parameter**: photo, date, location
-            - **Return Value**: bool result
-        2. imageDeletion
+            - **Parameter**: photo (file) , uploadby (googleEmail), location (JSON object)
+            - **Return Value**: image data the store in the database or error message
+        2. deleteImage
             - **Purpose**: Users can delete any image they have uploaded.
-            - **Parameter**: photo
-            - **Return Value**: bool result
-        3. imageCheck
-            - **Purpose**: Using AWS recognition to check is the image improper or not
-            - **Parameter**: image
-            - **Return Value**: confidence level of improper 
-        4. imageGet
-            - **Purpose**: Get an image and its information from the cloud by location or image token
-            - **Parameter**: location, image token
-            - **Return Value**: photo information
-        5. imageShareHandler
-            - **Purpose**: Share the images selected by the given method
-	        - **Parameter**: method, images
-	        - **Return Value**: bool result
-        6. RouteGenerator
-            - **Purpose**: Generate a route between the origin and destination
-	        - **Parameter**: origin, destination
-	        - **Return Value**: route
+            - **Parameter**: image filename
+            - **Return Value**: Success Message or error
+        3. getImage
+            - **Purpose**: Get one image and its information from the cloud
+            - **Parameter**: image filename in database
+            - **Return Value**: all image information in database and a presign URL that can display the image
+        4. getImagesByUploader
+            - **Purpose**: Get all image and their information from the cloud for the specific user
+            - **Parameter**: googleEmail
+            - **Return Value**: image information in database and presign URL that can display the image for all the image
+        5. getAllImages
+            - **Purpose**: Get all image and their information from the cloud
+            - **Parameter**: none
+            - **Return Value**: image information in database and presign URL that can display the image for all the image
+        6. shareImage
+            - **Purpose**: Share the images selected to a specific user
+	        - **Parameter**: googleEmail (current user), googleEmail(share to user), image filename
+	        - **Return Value**: Success Message or error 
+        7. analyzeImageLabels
+            - **Purpose**: Call AWS Rekognition to indicate the tags of the image
+	        - **Parameter**: image filename
+	        - **Return Value**: tags of image
+        7. analyzeImageModeration
+            - **Purpose**: Call AWS Rekognition to indicate the moderation of the image
+	        - **Parameter**: image filename
+	        - **Return Value**: moderation tags of image
+        8. processImage
+            - **Purpose**: Convert input image to .jpg or .png format. Makesure the MIMETYPE is correct when uploading to S3
+	        - **Parameter**: input file from imageUpload method
+	        - **Return Value**: image with available type
+
 3. **User**
     - **Purpose**: User component is mandatory as we will store user information. This component will include all interactions directly related to the user. Also, some functions for Administrator use only.
     - **Interfaces**: 
-        1. googleSignIn
-            - **Purpose**: Use Google ID to login or create an account.
-            - **Parameter**: none
-            - **Return Value**: sign in result
+        1. postUser
+            - **Purpose**: Upload a new user or update if user exist.
+            - **Parameter**: googleEmail
+            - **Return Value**:  Success Message
         2. getProfileInfo
             - **Purpose**: Users are able to view their personal profile, additional ban, warning history information for supervisor
-            - **Parameter**: accountID
-            - **Return Value**: profile information 
+            - **Parameter**: googleEmail
+            - **Return Value**: JSON format of user's profile information
         3. updateProfile
             - **Purpose**: Request to update the personal profile.
-            - **Parameter**: accountID, new profile information
-            - **Return Value**: bool result 
-        4. SignInRequest
-            - **Purpose**: Request to sign in from the front end action.
-            - **Parameter**: none
-            - **Return Value**: sign in result
-        5. createAccountRequest
-            - **Purpose**: frontend action that requires to create account
+            - **Parameter**: googleEmail, new profile information
+            - **Return Value**: Success Message or error 
+        4. deleteUser
+            - **Purpose**: Delete a user and it's information in database
+	        - **Parameter**: googleEmail
+	        - **Return Value**: successed message  
+        5. getUserList
+            - **Purpose**: get a list of all users from data
 	        - **Parameter**: none
-	        - **Return Value**: lint result indicates succeed or not
-        6. deleteAccountRequest
-            - **Purpose**: frontend action that requires to delete account
-	        - **Parameter**: none
-	        - **Return Value**: int result indicate succeed or not  
-        7. getUserList
-            - **Purpose**: get supervise user list from data for supervisor
-	        - **Parameter**: none
-	        - **Return Value**: list of users  
-        8. superviseAction
+	        - **Return Value**: JSON that contains all users with their data in database  
+        6. superviseAction
             - **Purpose**: Perform actions to the user on the supervisor’s list
-	        - **Parameter**: accountID, action
+	        - **Parameter**: googleEmail, action
 	        - **Return Value**: action result  
 
 
@@ -305,8 +289,8 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
     - **Purpose**: The graphical user interface of our project is a map, and all functionalities of the app are all around this map. Hence Google Map API is mandatory.
 2. **Google ID API**
     - **Purpose**: We are planning to make users login/create accounts based on their Google account. Hence Google ID API is required.
-3. **AWS Recognition**
-    - **Purpose**: We want to check if images uploaded by a user are appropriate or not, AWS Recognition can help us decide that.
+3. **AWS Rekognition**
+    - **Purpose**: We want to check if images uploaded by a user are appropriate or not, and the tags of this photo. AWS Rekognition can help us indicate that.
 
 
 
@@ -317,6 +301,9 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 2. **AWS S3 Cloud Storage**
     - **Purpose**: Provide an online cloud data storage for image storage and is mandatory in order to use some external modules
     - **Reason**: MongoDB and SQL-like databases are not ideal for storing images. Alternatively, we will use AWS Rekognition as our model to detect uploaded images is appropriate, and it is required to use AWS S3
+3. **AWS Route 53**
+    - **Purpose**: Provide an domain to our EC2 instance
+    - **Reason**: In case to use SSL certification. We need to have a stable domain and record our aws public DNS. Otherwise, we cannot use https to access our routes. 
 
 
 ### **4.5. Dependencies Diagram**
@@ -357,43 +344,50 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 
 
 ### **4.8. Main Project Complexity Design**
-**Smart banning/unbanning of accounts**
-- **Description**: A smart algorithm that uses the user’s data and AI feedback to warn or ban the improper user.
-- **Why complex?**: This algorithm uses the user’s ban history, improper photo upload date, improper photo upload times, and the AI confidence of improper content to determine the severity of the user. Then, give users corresponding consequences.
+**Location Recommendation**
+- **Description**: A smart algorithm that uses the user’s data to provide a new location that user may interested in.
+- **Why complex?**: This algorithm uses the user’s data history, photo locations, tags of photos. It also uses Density-Based Spatial Clustering of Applications with Noise (DBSCAN) algorithm to analyze the photo locations to provide locations that the user can easily reach.
 - **Design**:
-    - **Input**: ban_history, improper_upload_dates, improper_upload_count, ai_confidence, last_ban_date
-    - **Output**: User warning or ban status
-    - **Main computational logic**: Evaluate Severity Score: Assign weightage to each factor; Determine Action: If the severity score is high and repeated, issue a ban, if the severity score is moderate, issue a warning, if the severity score is low, take no action; Adjust Based on Ban History: If a user has multiple past bans, escalate the punishment;
+    - **Input**: User email, user photo location information, photo tags information
+    - **Output**: A position include latitude and longitude, and a array of tags.
+    - **Main computational logic**: Use DBSCAN to clustering the user location history. Then pick one (or more in future improve) most famous location cluster. Then, based on the position in this cluster, calculate a new position in this region. Next, use the photo information that in this cluster, to figure our the top three famous tags. 
     - **Pseudo-code**:
         ```
-        def evaluate_user_behavior(ban_history, improper_upload_dates, improper_upload_count, ai_confidence, last_ban_date):
+        async getRecommendation(req: Request, res: Response, next: NextFunction)
 
-            severity_score = 0
+            // Fetch only images uploaded by this user
+            const db = clinet.db("images");
+            const images = await db.collection("metadata").find().toArray();
 
-            # 1. Apply AI confidence scaling (higher confidence = higher severity)
-            confidence_weight = ai_confidence / scale number 
-            increase severity_score 
+            // Filter out invalid lat/lng values
+            const points = images.filter().map()
 
-            # 2. Factor in upload frequency with time decay
-            recent_uploads, weighted_upload_score = last_7_days(improper_upload_dates)
-            severity_score += weighted_upload_score  # Add decay-adjusted score
+            // Fit to DBSCAN model and predict the cluster
+            const clustered = DBSCAN(points)
 
-            # 3. Consider past ban history 
-            severity_score += ban_history * scale  # Each past ban increases severity
+            // Track the largest cluster
+            const clusterData = clustered.features.forEach(cluster => {})
 
-            # 4. Cooldown: Reduce severity if the last ban was long ago
-            if last_ban_date and time_since(last_ban_date) > threshold_date:  
-                severity_score -= reduce_weight  
+            // Get the largest cluster's data and tags
+            const largestCluster = clusterData[largestIndex]
+            const allTagsInLargestCluster = largestCluster.tags[]
 
-            # 5. Determine action based on severity score thresholds
-            if severity_score >= high_consequence or ban_history >= high_history:
-                return "Permanent Ban"
-            elif severity_score >= median_consequence:
-                return "Temporary Ban - {ban_duration(ban_history)} days"
-            elif severity_score >= low_consequence:
-                return "Warning"
-            else:
-                return "No Action"
+            // Compute average lat/lng for the largest cluster
+            const avgPosition: [number, number] = largestCluster.reduce().map() as [number, number];
+    
+            // Count tag frequencies & get the top 3 
+            const tagCounts = allTagsInLargestCluster.reduce();
+    
+            const topTags = Object.entries(tagCounts).sort().slicS().map();
+
+
+            // Send the location and tags
+            res.status(200).send({
+                popularLocation: {
+                    position: { lat: avgPosition[1], lng: avgPosition[0] },
+                    tags: topTags
+                }
+            });
         ```
 
 
