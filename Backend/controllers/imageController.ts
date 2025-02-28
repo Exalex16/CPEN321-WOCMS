@@ -61,6 +61,16 @@ export class imageController {
                 // Send image to AWS Rekognition
                 const labels = await analyzeImageLabels("cpen321-photomap-images", `images/${rawFileName}`);
                 const moderationLabels = await analyzeImageModeration("cpen321-photomap-images", `images/${rawFileName}`);
+
+                // Generate a presigned URL valid for 1 hour
+                const presignedUrl = await getSignedUrl(
+                    s3,
+                    new GetObjectCommand({
+                        Bucket: "cpen321-photomap-images",
+                        Key: `images/${rawFileName}`,
+                    }),
+                    { expiresIn: 604800 }
+                );
     
                 // Store metadata in MongoDB 
                 const db = clinet.db("images");
@@ -87,6 +97,7 @@ export class imageController {
                 res.status(200).send({
                     message: "Upload successful",
                     fileName: rawFileName,
+                    presignedUrl,
                     imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
                     metadata: { uploadedBy, timestamp,tags: labels, moderationLabels, location},
                 });
