@@ -242,7 +242,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 lng = lng,
                 title = markerTitle,
                 color = markerColor.toString(),
-                location = cityName
+                location = cityName,
+                photoAtCurrentMarker = arrayListOf()
             )
 
             Log.d("MapsActivity", "Marker data: $currentMarker")

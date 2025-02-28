@@ -42,7 +42,6 @@ class MainActivity : AppCompatActivity() {
             finish()
         }else{
 
-
             setContentView(R.layout.activity_main)
             ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.login_button)) { v, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -64,6 +63,13 @@ class MainActivity : AppCompatActivity() {
                     val photoJsonArr = JSONObject(photoResponse.body()!!.string()).getJSONArray("images")
                     val markerJson = JSONObject(markerResponse.body()!!.string()).getJSONArray("locations")
 
+                    Log.d(TAG,  photoJsonArr.toString())
+                    Log.d(TAG, markerJson.toString())
+
+                    //Clear the list
+                    mapContent.markerList.clear()
+                    mapContent.imageList.clear()
+
                     for(i in 0 until markerJson.length()){
                         val marker = markerJson.getJSONObject(i)
                         val position = marker.getJSONObject("position")
@@ -72,16 +78,16 @@ class MainActivity : AppCompatActivity() {
                         val title = marker.getString("title")
                         val location = marker.getString("location")
                         val color = marker.getString("icon")
+
                         mapContent.markerList.add(MarkerInstance(
                             lat = lat,
                             lng = lang,
                             title = title,
                             location = location,
                             color = color,
-                            //photoAtCurrentMarker = arrayListOf()
+                            photoAtCurrentMarker = arrayListOf()
                         ))
                     }
-
 
                     for(i in 0 until photoJsonArr.length()){
                         val imageObject = photoJsonArr.getJSONObject(i)
@@ -91,8 +97,9 @@ class MainActivity : AppCompatActivity() {
                             imageURL = imageUrl,
                             time = time
                         )
+
                         mapContent.imageList.add(photo)
-                        /*
+
                         val location = imageObject.getJSONObject("location").getJSONObject("position")
                         val lat = location.getDouble("lat")
                         val lng = location.getDouble("lng")
@@ -102,7 +109,6 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                         */
                     }
                     Log.d(TAG,  mapContent.markerList.toString())
                     Log.d(TAG,  mapContent.imageList.toString())
@@ -118,7 +124,6 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-
 
     private fun getUserToken(): String? {
         val sharedPreferences: SharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE)

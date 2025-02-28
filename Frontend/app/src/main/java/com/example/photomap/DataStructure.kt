@@ -69,7 +69,7 @@ data class MarkerInstance(
     val title: String,
     val location: String,
     val color: String,
-    //val photoAtCurrentMarker: ArrayList<PhotoInstance>
+    val photoAtCurrentMarker: ArrayList<PhotoInstance>
 )
 
 

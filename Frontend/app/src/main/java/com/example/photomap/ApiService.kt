@@ -28,10 +28,6 @@ interface ApiService {
     @POST("user")
     suspend fun createUser(@Body request: UserPostRequest)
 
-
-
-
-
     @GET("images/uploader/{email}")
     suspend fun getImagesByUser(@Path("email") email: String): Response<ResponseBody>
 
