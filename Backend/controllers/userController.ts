@@ -69,7 +69,7 @@ export class userController {
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         try {
             const { googleEmail } = req.params;
-            let  { googleName, location } = req.body; // Removed `tags` since AI manages it
+            let  { googleName } = req.body; // Removed `tags` since AI manages it
     
             if (!googleEmail) {
                 return res.status(400).send({ error: "Google ID is required" });
@@ -77,9 +77,13 @@ export class userController {
     
             const db = clinet.db("User");
 
-            if (typeof location === "string") {
+            let location = null;
+            if (req.body.location) {
                 try {
-                    location = JSON.parse(location);
+                    location = JSON.parse(req.body.location); 
+
+                    location.position.lat = parseFloat(location.position.lat);
+                    location.position.lng = parseFloat(location.position.lng);
                 } catch (e) {
                     return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
                 }
@@ -91,20 +95,20 @@ export class userController {
             if (location) updateFields.$addToSet = { locations: location }; 
     
             // Ensure there are fields to update
-        if (Object.keys(updateFields).length === 1) {
-            return res.status(400).send({ error: "No valid fields provided for update" });
-        }
+            if (Object.keys(updateFields).length === 1) {
+                return res.status(400).send({ error: "No valid fields provided for update" });
+            }
 
-        const updateResult = await db.collection("users").updateOne(
-            { googleEmail },
-            { $set: updateFields }
-        );
+            const updateResult = await db.collection("users").updateOne(
+                { googleEmail },
+                { $set: updateFields }
+            );
 
-        if (updateResult.matchedCount === 0) {
-            return res.status(404).send({ error: "User not found" });
-        }
+            if (updateResult.matchedCount === 0) {
+                return res.status(404).send({ error: "User not found" });
+            }
 
-        res.status(200).send({ message: "User profile updated", updatedFields: updateFields });
+            res.status(200).send({ message: "User profile updated", updatedFields: updateFields });
         } catch (error) {
             next(error);
         }
