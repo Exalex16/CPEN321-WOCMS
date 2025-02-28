@@ -2,6 +2,7 @@ package com.example.photomap
 
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
@@ -28,11 +29,14 @@ interface ApiService {
     suspend fun createUser(@Body request: UserPostRequest)
 
 
-    @GET("images/uploader/{email}")
-    fun getImagesByUser(@Path("email") email: String): Call<RequestBody>
+
+
 
     @GET("images/uploader/{email}")
-    fun getMarkerByUser(@Path("email") email: String): Call<RequestBody>
+    suspend fun getImagesByUser(@Path("email") email: String): Response<ResponseBody>
+
+    @GET("user/{email}")
+    suspend fun getMarkerByUser(@Path("email") email: String): Response<ResponseBody>
 
     @GET("map/popular-locations/{username}")
     suspend fun getPopularLocations(

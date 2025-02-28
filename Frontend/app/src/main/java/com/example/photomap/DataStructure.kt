@@ -1,5 +1,7 @@
 package com.example.photomap
 
+import java.time.Instant
+
 //UploadResponse
 // ? means nullible data
 data class UploadResponse(
@@ -32,7 +34,7 @@ data class Metadata(
 
 data class PhotoInstance(
     val imageURL:  String,
-    val timeString: String
+    val time: Instant
 )
 
 data class UserPostRequest(
