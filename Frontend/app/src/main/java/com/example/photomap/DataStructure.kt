@@ -1,13 +1,48 @@
 package com.example.photomap
 
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import androidx.recyclerview.widget.RecyclerView
 import java.time.Instant
+import com.bumptech.glide.Glide
+
+
+
+class GalleryAdapter(
+    private val imageUrls: List<String>
+) : RecyclerView.Adapter<GalleryAdapter.GalleryViewHolder>() {
+
+    inner class GalleryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val imageView: ImageView = itemView.findViewById(R.id.galleryImageView)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GalleryViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_gallery_image, parent, false)
+        return GalleryViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: GalleryViewHolder, position: Int) {
+        val url = imageUrls[position]
+        // Use Glide to load the image
+        Glide.with(holder.imageView.context)
+            .load(url)
+            .placeholder(R.drawable.placeholder) // optional placeholder
+            .into(holder.imageView)
+    }
+
+    override fun getItemCount(): Int = imageUrls.size
+}
+
 
 //UploadResponse
 // ? means nullible data
 data class UploadResponse(
     val message: String?,
     val fileName: String?,
-    val imageUrl: String?,
+    val presignedUrl: String?,
     val metadata: Metadata?
 )
 

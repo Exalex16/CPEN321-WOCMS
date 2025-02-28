@@ -11,11 +11,15 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.photomap.BuildConfig.MAPS_API_KEY
 
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -36,6 +40,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
+import java.time.Instant
 import java.util.Locale
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -43,6 +48,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fabActions: FloatingActionButton
+    private lateinit var galleryContainer: FrameLayout
+    private lateinit var noImagesText: TextView
+    private lateinit var imageGalleryRecycler: RecyclerView
+
+
     private var selectedImageUri: Uri? = null
     private var previewImageView: ImageView? = null
     private var currentMarker: MarkerInstance? = null
@@ -52,6 +62,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Gallery display container
+        galleryContainer = findViewById(R.id.galleryContainer)
+        noImagesText = findViewById(R.id.noImagesText)
+        imageGalleryRecycler = findViewById(R.id.imageGalleryRecycler)
+
+        // Set up horizontal layout manager
+        imageGalleryRecycler.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
         fabActions = findViewById(R.id.fab_actions)
         fabActions.visibility = View.GONE
@@ -95,7 +113,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     fetchNearbyPlaces("$lat,$lng", keywordQuery)
                 } else {
                     val errorMsg = response.errorBody()?.string()
-                    Toast.makeText(this@MapsActivity, "Recommendation failed, too few images!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MapsActivity, "Recommendation failed, no places found match. ", Toast.LENGTH_LONG).show()
                     Log.e("MapsActivity", "Receive recommendation failed: $errorMsg")
 
                 }
@@ -212,7 +230,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 colorSpinner.adapter = adapter
             }
 
+            // Views: Upload off, Gallery Off
             fabActions.visibility = View.GONE
+            hideGallery()
 
             // Build and display the AlertDialog
             AlertDialog.Builder(this)
@@ -294,10 +314,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 photoAtCurrentMarker = arrayListOf()
             )
 
+            val matchedMarker = MainActivity.mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
+
+            matchedMarker?.let {
+                Log.d("MapsActivity", "Photos at current marker: ${it.photoAtCurrentMarker}")
+            } ?: Log.d("MapsActivity", "No matching marker found for title: ${currentMarker!!.title}")
+
+            matchedMarker?.let { markerInstance ->
+                val photos = markerInstance.photoAtCurrentMarker
+                showGallery(photos)
+            } ?: run {
+                hideGallery()
+            }
+
             Log.d("MapsActivity", "Marker data: $currentMarker")
-
-
-
             fabActions.visibility = View.VISIBLE
             false  // Return false to allow default behavior (e.g., info window display)
         }
@@ -306,6 +336,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             showUploadBottomSheet()
             Toast.makeText(this, "FAB clicked", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showGallery(imageUrls: List<PhotoInstance>) {
+        if (imageUrls.isEmpty()) {
+            // No images to display
+            imageGalleryRecycler.visibility = View.GONE
+            noImagesText.visibility = View.VISIBLE
+        } else {
+            // Display images in RecyclerView
+            imageGalleryRecycler.visibility = View.VISIBLE
+            noImagesText.visibility = View.GONE
+            val urlList = imageUrls.map { it.imageURL }
+            imageGalleryRecycler.adapter = GalleryAdapter(urlList)
+        }
+        // Make container visible
+        galleryContainer.visibility = View.VISIBLE
+    }
+
+    private fun hideGallery() {
+        galleryContainer.visibility = View.GONE
     }
 
     // Upload photos
@@ -393,6 +443,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     Toast.makeText(this@MapsActivity, "Upload successful!", Toast.LENGTH_SHORT).show()
                     val uploadData = response.body()
 
+                    val matchedMarker = MainActivity.mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
+                    matchedMarker?.photoAtCurrentMarker?.add(PhotoInstance(
+                        imageURL = uploadData?.presignedUrl?: "no url available.",
+                        time = Instant.now()
+                    ))
+
                     Log.d("MapsActivity", "Upload response: $uploadData")
 
                 } else {
@@ -455,7 +511,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         })
                     }.toString()
 
-                // 4) Convert that JSON to a RequestBody
+                // Convert to Json Request Body
                 val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
 
                 Log.d("MapsActivity", "Marker update request: $locationBody")

@@ -111,9 +111,9 @@ class MainActivity : AppCompatActivity() {
 
                     }
                     Log.d(TAG,  mapContent.markerList.toString())
-                    Log.d(TAG,  mapContent.imageList.toString())
-                    Log.d(TAG,  photoJsonArr.toString())
-                    Log.d(TAG, markerJson.toString())
+                    //Log.d(TAG,  mapContent.imageList.toString())
+                    //Log.d(TAG,  photoJsonArr.toString())
+                    //Log.d(TAG, markerJson.toString())
 
                     // If the user is logged in, go to MapsActivity
                     val intent = Intent(this@MainActivity, MapsActivity::class.java)

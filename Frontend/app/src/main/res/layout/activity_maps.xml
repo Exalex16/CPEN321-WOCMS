@@ -45,4 +45,36 @@
         android:layout_gravity="bottom|end"
         />
 
+    <FrameLayout
+        android:id="@+id/galleryContainer"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_alignParentTop="true"
+        android:visibility="gone"
+        android:background="@color/white"
+        android:padding="8dp">
+
+        <!-- TextView shown if no images -->
+        <TextView
+            android:id="@+id/noImagesText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No images here"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"/>
+
+        <!-- RecyclerView for scrolling images horizontally -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/imageGalleryRecycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:clipToPadding="false"
+            android:padding="8dp"/>
+
+    </FrameLayout>
+
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
