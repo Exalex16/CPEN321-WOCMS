@@ -18,3 +18,4 @@ export const s3 = new S3Client({
 
 const storage = multer.memoryStorage();
 export const uploadMiddleware: RequestHandler = multer({ storage }).single("image");
+export const formDataMiddleware: RequestHandler = multer().none();

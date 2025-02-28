@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { clinet } from "../services";
+import { clinet, formDataMiddleware } from "../services";
 import { ObjectId } from "mongodb";
 
 export class userController {
@@ -68,47 +68,53 @@ export class userController {
 
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         try {
-            const { googleEmail } = req.params;
-            let { googleName, location } = req.body; // Extract location as a string
-    
-            if (!googleEmail) {
-                return res.status(400).send({ error: "Google ID is required" });
-            }
-    
-            const db = clinet.db("User");
-    
-            // ✅ Parse `location` if it's a string (form-data issue)
-            if (typeof location === "string") {
-                try {
-                    location = JSON.parse(location); // Convert JSON string to object
-                    location.position.lat = parseFloat(location.position.lat);
-                    location.position.lng = parseFloat(location.position.lng);
-                } catch (e) {
-                    return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+            formDataMiddleware(req, res, async (err) => { // ✅ Middleware to process form-data
+                if (err) {
+                    return res.status(400).send({ error: "Multer Error: " + err.message });
                 }
-            }
     
-            // ✅ Build update object dynamically
-            const updateFields: any = { updatedAt: new Date() };
-            if (googleName) updateFields.googleName = googleName;
+                const { googleEmail } = req.params;
+                let { googleName, location } = req.body; // Extract location as a string
     
-            const updateQuery: any = { $set: updateFields };
-            if (location) updateQuery.$addToSet = { locations: location }; // Add location
+                if (!googleEmail) {
+                    return res.status(400).send({ error: "Google ID is required" });
+                }
     
-            // ✅ Execute update
-            const updateResult = await db.collection("users").updateOne(
-                { googleEmail },
-                updateQuery
-            );
+                const db = clinet.db("User");
     
-            if (updateResult.matchedCount === 0) {
-                return res.status(404).send({ error: "User not found" });
-            }
+                // ✅ Parse `location` if it's a string (form-data issue)
+                if (typeof location === "string") {
+                    try {
+                        location = JSON.parse(location); // Convert JSON string to object
+                        location.position.lat = parseFloat(location.position.lat);
+                        location.position.lng = parseFloat(location.position.lng);
+                    } catch (e) {
+                        return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+                    }
+                }
     
-            res.status(200).send({
-                message: "User profile updated",
-                updatedFields: updateFields,
-                addedLocation: location || null,
+                // ✅ Build update object dynamically
+                const updateFields: any = { updatedAt: new Date() };
+                if (googleName) updateFields.googleName = googleName;
+    
+                const updateQuery: any = { $set: updateFields };
+                if (location) updateQuery.$addToSet = { locations: location }; // Add location
+    
+                // ✅ Execute update
+                const updateResult = await db.collection("users").updateOne(
+                    { googleEmail },
+                    updateQuery
+                );
+    
+                if (updateResult.matchedCount === 0) {
+                    return res.status(404).send({ error: "User not found" });
+                }
+    
+                res.status(200).send({
+                    message: "User profile updated",
+                    updatedFields: updateFields,
+                    addedLocation: location || null,
+                });
             });
         } catch (error) {
             next(error);
