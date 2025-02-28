@@ -1,5 +1,6 @@
 package com.example.photomap
 
+//UploadResponse
 // ? means nullible data
 data class UploadResponse(
     val message: String?,
@@ -8,6 +9,22 @@ data class UploadResponse(
     val metadata: Metadata?
 )
 
+// RecommendationResponse
+data class PopularLocationResponse(
+    val popularLocation: PopularLocation
+)
+
+data class PopularLocation(
+    val position: Position,
+    val tags: List<String>
+)
+
+data class Position(
+    val lat: Double,
+    val lng: Double
+)
+
+//PhotoResponse
 data class Metadata(
     val uploadedBy: String,
     val timestamp: String,
@@ -23,8 +40,26 @@ data class UserPostRequest(
     val googleName: String
 )
 
+//BestPlaces Response
+data class PlacesResponse(
+    val results: List<PlaceResult>,
+    val status: String
+)
 
+data class PlaceResult(
+    val name: String,
+    val geometry: Geometry,
+    val types: List<String>
+)
 
+data class Geometry(
+    val location: Location
+)
+
+data class Location(
+    val lat: Double,
+    val lng: Double
+)
 
 data class MarkerInstance(
     val lng: Double,
@@ -32,7 +67,7 @@ data class MarkerInstance(
     val title: String,
     val location: String,
     val color: String,
-    val photoAtCurrentMarker: ArrayList<PhotoInstance>
+    //val photoAtCurrentMarker: ArrayList<PhotoInstance>
 )
 
 

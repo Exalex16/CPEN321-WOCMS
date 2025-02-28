@@ -16,6 +16,7 @@ import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
+import com.example.photomap.BuildConfig.MAPS_API_KEY
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -55,10 +56,95 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         fabActions = findViewById(R.id.fab_actions)
         fabActions.visibility = View.GONE
 
+        val fabRecommendation: FloatingActionButton = findViewById(R.id.recommendation)
+        fabRecommendation.visibility = View.VISIBLE
+
+        fabRecommendation.setOnClickListener {
+            Toast.makeText(this, "Recommendation clicked!", Toast.LENGTH_SHORT).show()
+
+            //Log.d("MapsActivity", getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", "")?: "none")
+
+            fetchRecommendation()
+        }
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+    }
+
+    private fun fetchRecommendation() {
+        lifecycleScope.launch {
+            try {
+                // Make the network request on the IO thread
+
+                val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
+                val email = prefs.getString("user_email", "")?: "anonymous@example.com"
+
+
+                val response = RetrofitClient.api.getPopularLocations(email)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val popularLocation = response.body()!!.popularLocation
+                    val lat = popularLocation.position.lat
+                    val lng = popularLocation.position.lng
+                    val tags = popularLocation.tags
+                    // You can also update the UI
+                    Toast.makeText(this@MapsActivity, "Got recommendation", Toast.LENGTH_SHORT).show()
+                    Log.d("MapsActivity", "Got recommendation at ($lat, $lng), with tags: $tags")
+
+                    //Call Places API to get recommendation
+                    val keywordQuery = tags.firstOrNull() ?: ""
+                    //fetchNearbyPlaces("$lat,$lng", "school")
+                    fetchNearbyPlaces("49.2666656, -123.249999", "market")
+
+
+                } else {
+                    val errorMsg = response.errorBody()?.string()
+                    Toast.makeText(this@MapsActivity, "Receive recommendation failed", Toast.LENGTH_LONG).show()
+                    Log.e("MapsActivity", "Receive recommendation failed: $errorMsg")
+
+                }
+            } catch (e: Exception) {
+                // Handle the error
+                e.printStackTrace()
+                Toast.makeText(this@MapsActivity, "Failed to fetch recommendation.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
+    private fun fetchNearbyPlaces(coordinate: String, keyword: String) {
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitPlacesClient.api.nearbySearch(
+                    location = coordinate,
+                    radius = 1500, // can adjust
+                    keyword = keyword,
+                    apiKey = MAPS_API_KEY
+                )
+                if (response.status == "OK") {
+                    // Process the list of places, for example choose the closest match
+                    val bestPlace = response.results.firstOrNull()
+                    bestPlace?.let {
+                        val lat = it.geometry.location.lat
+                        val lng = it.geometry.location.lng
+                        // Add a marker on your map at these coordinates
+                        mMap.addMarker(MarkerOptions().
+                            position(LatLng(lat, lng)).
+                            title(it.name).
+                            icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor("violet"))))
+                    }
+                    Log.d("MapsActivity", "Nearby places added on map.")
+                } else {
+                    // Handle API error (e.g., OVER_QUERY_LIMIT, REQUEST_DENIED, etc.)
+                    Log.e("MapsActivity", "Error: ${response.status}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("MapsActivity", "Network request failed.", e)
+            }
+        }
     }
 
     /**
@@ -284,6 +370,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     // Show error
                     val errorMsg = response.errorBody()?.string()
                     Toast.makeText(this@MapsActivity, "Upload failed: $errorMsg", Toast.LENGTH_LONG).show()
+                    Log.e("MapsActivity", "Upload failed: $errorMsg")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

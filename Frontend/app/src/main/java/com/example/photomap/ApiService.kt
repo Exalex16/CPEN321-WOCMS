@@ -12,6 +12,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ApiService {
     @Multipart
@@ -23,11 +24,8 @@ interface ApiService {
         @Part("location") location: RequestBody
     ): Response<UploadResponse>
 
-
-
     @POST("user")
     suspend fun createUser(@Body request: UserPostRequest)
-
 
 
     @GET("images/uploader/{email}")
@@ -35,4 +33,19 @@ interface ApiService {
 
     @GET("images/uploader/{email}")
     fun getMarkerByUser(@Path("email") email: String): Call<RequestBody>
+
+    @GET("map/popular-locations/{username}")
+    suspend fun getPopularLocations(
+        @Path("username") username: String
+    ): Response<PopularLocationResponse>
+}
+
+interface GooglePlacesApi {
+    @GET("maps/api/place/nearbysearch/json")
+    suspend fun nearbySearch(
+        @Query("location") location: String,  // "lat,lng"
+        @Query("radius") radius: Int,           // in meters
+        @Query("keyword") keyword: String,            // e.g., "park"
+        @Query("key") apiKey: String
+    ): PlacesResponse  // Define this data class to match the JSON response structure
 }
