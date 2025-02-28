@@ -69,7 +69,7 @@ export class userController {
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         try {
             const { googleEmail } = req.params;
-            let { googleName } = req.body;
+            let { googleName, location } = req.body; // Extract location as a string
     
             if (!googleEmail) {
                 return res.status(400).send({ error: "Google ID is required" });
@@ -77,11 +77,10 @@ export class userController {
     
             const db = clinet.db("User");
     
-            let location = null;
-            if (req.body.location) {
+            // ✅ Parse `location` if it's a string (form-data issue)
+            if (typeof location === "string") {
                 try {
-                    location = JSON.parse(req.body.location);
-    
+                    location = JSON.parse(location); // Convert JSON string to object
                     location.position.lat = parseFloat(location.position.lat);
                     location.position.lng = parseFloat(location.position.lng);
                 } catch (e) {
@@ -89,14 +88,14 @@ export class userController {
                 }
             }
     
-            // Build the update object dynamically
+            // ✅ Build update object dynamically
             const updateFields: any = { updatedAt: new Date() };
             if (googleName) updateFields.googleName = googleName;
     
             const updateQuery: any = { $set: updateFields };
-            if (location) updateQuery.$addToSet = { locations: location };
+            if (location) updateQuery.$addToSet = { locations: location }; // Add location
     
-            // Execute update
+            // ✅ Execute update
             const updateResult = await db.collection("users").updateOne(
                 { googleEmail },
                 updateQuery
@@ -115,6 +114,7 @@ export class userController {
             next(error);
         }
     }
+    
 
     /**
      * Get list of all users (for admin).
