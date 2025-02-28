@@ -69,64 +69,42 @@ export class userController {
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         try {
             const { googleEmail } = req.params;
-            const { googleName, location } = req.body; // Removed `tags` since AI manages it
+            let  { googleName, location } = req.body; // Removed `tags` since AI manages it
     
             if (!googleEmail) {
                 return res.status(400).send({ error: "Google ID is required" });
             }
     
             const db = clinet.db("User");
-    
-            // Build update object
-            const updateFields: any = { updatedAt: new Date() };
-            if (googleName) updateFields.googleName = googleName; 
-    
-            // Ensure location is in correct format and should be added to the array
-            let locationUpdate = {};
-            if (location) {
+
+            if (typeof location === "string") {
                 try {
-                    const parsedLocation = typeof location === "string" ? JSON.parse(location) : location;
-    
-                    // Validate necessary fields
-                    if (!parsedLocation.position || !parsedLocation.position.lat || !parsedLocation.position.lng) {
-                        return res.status(400).send({ error: "Invalid location format. Missing required fields." });
-                    }
-    
-                    parsedLocation.position.lat = parseFloat(parsedLocation.position.lat);
-                    parsedLocation.position.lng = parseFloat(parsedLocation.position.lng);
-    
-                    // Prepare MongoDB update query to add unique locations
-                    locationUpdate = { $addToSet: { locations: parsedLocation } }; // Prevent duplicate locations
+                    location = JSON.parse(location);
                 } catch (e) {
                     return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
                 }
             }
     
-            // Ensure at least one field is being updated
-            if (Object.keys(updateFields).length === 1 && Object.keys(locationUpdate).length === 0) {
-                return res.status(400).send({ error: "No valid fields provided for update" });
-            }
+            // Build update object
+            const updateFields: any = { updatedAt: new Date() }; 
+            if (googleName) updateFields.googleName = googleName;
+            if (location) updateFields.$addToSet = { locations: location }; 
     
-            // Apply updates to the user profile
-            const updateResult = await db.collection("users").updateOne(
-                { googleEmail },
-                { 
-                    ...locationUpdate,  
-                    $set: updateFields  
-                }
-            );
-    
-            if (updateResult.matchedCount === 0) {
-                return res.status(404).send({ error: "User not found" });
-            }
-    
-            res.status(200).send({ 
-                message: "User profile updated", 
-                updatedFields: { 
-                    googleName: googleName || "Not Modified", 
-                    location: location ? "Added" : "Not Provided" 
-                }
-            });
+            // Ensure there are fields to update
+        if (Object.keys(updateFields).length === 1) {
+            return res.status(400).send({ error: "No valid fields provided for update" });
+        }
+
+        const updateResult = await db.collection("users").updateOne(
+            { googleEmail },
+            { $set: updateFields }
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return res.status(404).send({ error: "User not found" });
+        }
+
+        res.status(200).send({ message: "User profile updated", updatedFields: updateFields });
         } catch (error) {
             next(error);
         }
