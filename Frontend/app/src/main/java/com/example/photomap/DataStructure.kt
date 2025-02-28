@@ -26,6 +26,10 @@ data class Position(
     val lng: Double
 )
 
+data class PutLocationResponse(
+    val message: String
+)
+
 //PhotoResponse
 data class Metadata(
     val uploadedBy: String,

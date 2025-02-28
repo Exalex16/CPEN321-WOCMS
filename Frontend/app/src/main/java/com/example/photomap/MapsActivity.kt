@@ -95,13 +95,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     //Call Places API to get recommendation
                     val keywordQuery = tags.firstOrNull() ?: ""
-                    //fetchNearbyPlaces("$lat,$lng", "school")
-                    fetchNearbyPlaces("49.2666656, -123.249999", "market")
+                    fetchNearbyPlaces("$lat,$lng", keywordQuery)
+                    //fetchNearbyPlaces("49.2666656, -123.249999", "market")
 
 
                 } else {
                     val errorMsg = response.errorBody()?.string()
-                    Toast.makeText(this@MapsActivity, "Receive recommendation failed", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MapsActivity, "Recommendation failed, too few images!", Toast.LENGTH_LONG).show()
                     Log.e("MapsActivity", "Receive recommendation failed: $errorMsg")
 
                 }
@@ -129,12 +129,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     bestPlace?.let {
                         val lat = it.geometry.location.lat
                         val lng = it.geometry.location.lng
-                        // Add a marker on your map at these coordinates
+                        // Add a marker on the map at these coordinates
                         mMap.addMarker(MarkerOptions().
                             position(LatLng(lat, lng)).
                             title(it.name).
                             icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor("violet"))))
+
+                        // Move the camera to the new location
+                        mMap.moveCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(lat, lng),
+                                15f // Adjust zoom level as desired
+                            )
+                        )
                     }
+
                     Log.d("MapsActivity", "Nearby places added on map.")
                 } else {
                     // Handle API error (e.g., OVER_QUERY_LIMIT, REQUEST_DENIED, etc.)
@@ -170,6 +179,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         } catch (e: Resources.NotFoundException) {
             Log.e("MapsActivity", "Can't find style. Error: ", e)
+        }
+
+        Log.d("MapsActivity", "Begin loading map.")
+
+        for (marker in MainActivity.mapContent.markerList) {
+            val position = LatLng(marker.lat, marker.lng)
+            Log.d("MapsActivity", "Adding marker: $marker")
+            mMap.addMarker(
+                MarkerOptions()
+                    .position(position)
+                    .title(marker.title)
+                    .icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor(marker.color)))
+            )
+        }
+
+        // Optionally, adjust the camera to the first marker
+        MainActivity.mapContent.markerList.firstOrNull()?.let {
+            val position = LatLng(it.lat, it.lng)
+            Log.d("MapsActivity", "Moving camera to: $position")
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
         }
 
         // Add markers
@@ -210,6 +239,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     //Tag the color
                     marker?.tag = selectedColor  // Store the hue as the tag
+
+                    val lat = latLng.latitude
+                    val lng = latLng.longitude
+
+                    // 2) Use Geocoder to get a city name from lat-lng
+                    val geocoder = Geocoder(this, Locale.getDefault())
+                    var cityName = "Unknown"
+                    try {
+                        val addresses = geocoder.getFromLocation(lat, lng, 1)
+                        if (!addresses.isNullOrEmpty()) {
+                            cityName = addresses[0].locality ?: "Unknown"
+                        }
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+
+                    // 3) Store the marker data
+                    currentMarker = MarkerInstance(
+                        lat = lat,
+                        lng = lng,
+                        title = markerTitle,
+                        color = selectedColor,
+                        location = cityName,
+                        photoAtCurrentMarker = arrayListOf()
+                    )
+
+                    sendMarkerUpdate(getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", "")?: "anonymous@example.com", currentMarker!!)
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -246,7 +302,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 photoAtCurrentMarker = arrayListOf()
             )
 
+            // Try another place to send this
+            //sendMarkerUpdate(getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", "")?: "anonymous@example.com", currentMarker!!)
+
             Log.d("MapsActivity", "Marker data: $currentMarker")
+
+
 
             fabActions.visibility = View.VISIBLE
             false  // Return false to allow default behavior (e.g., info window display)
@@ -257,13 +318,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             showUploadBottomSheet()
             Toast.makeText(this, "FAB clicked", Toast.LENGTH_SHORT).show()
         }
-
-        // Add a marker in Sydney and move the camera
-        val van = LatLng(49.2666656, -123.249999)
-        val marker = mMap.addMarker(MarkerOptions().position(van).title("Marker in Van"))
-        val zoomLevel = 15f // Adjust this value to set the desired zoom level
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(van, zoomLevel))
-        marker?.showInfoWindow()
     }
 
     // Upload photos
@@ -410,6 +464,38 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             "orange" -> BitmapDescriptorFactory.HUE_ORANGE
             "violet" -> BitmapDescriptorFactory.HUE_VIOLET
             else -> BitmapDescriptorFactory.HUE_RED  // Default color if none match
+        }
+    }
+
+    private fun sendMarkerUpdate(email: String, markerData: MarkerInstance) {
+        lifecycleScope.launch {
+            try {
+                val locationJson = JSONObject().apply {
+                        put("location", JSONObject().apply {
+                            put("position", JSONObject().apply {
+                                put("lat", markerData.lat)
+                                put("lng", markerData.lng)
+                            })
+                            put("title", markerData.title)
+                            put("location", markerData.location)
+                            put("icon", markerData.color)
+                        })
+                    }.toString()
+
+                // 4) Convert that JSON to a RequestBody
+                val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
+
+                Log.d("MapsActivity", "Marker update request: $locationBody")
+
+                val response = RetrofitClient.api.putLocation(email, locationBody)
+
+                val message = response.message
+
+                Log.d("MapsActivity", "Marker update response: $message")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("MapsActivity", "Network request failed.", e)
+            }
         }
     }
 
