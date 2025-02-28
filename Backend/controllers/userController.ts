@@ -8,6 +8,9 @@ export class userController {
             res.status(200).send(todos);
     }
 
+    /**
+     * Create a new user info, (or update name if it is exist).
+     */
     async postUser(req: Request, res: Response, next: NextFunction) {
         try {
             const { googleEmail, googleName } = req.body;
@@ -66,15 +69,18 @@ export class userController {
         }
     }
 
+    /**
+     * Update user profile info.
+     */
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         try {
-            formDataMiddleware(req, res, async (err) => { // ✅ Middleware to process form-data
+            formDataMiddleware(req, res, async (err) => { 
                 if (err) {
                     return res.status(400).send({ error: "Multer Error: " + err.message });
                 }
     
                 const { googleEmail } = req.params;
-                let { googleName, location } = req.body; // Extract location as a string
+                let { googleName, location } = req.body; 
     
                 if (!googleEmail) {
                     return res.status(400).send({ error: "Google ID is required" });
@@ -82,7 +88,7 @@ export class userController {
     
                 const db = clinet.db("User");
     
-                // ✅ Parse `location` if it's a string (form-data issue)
+                // Parse `location` 
                 if (typeof location === "string") {
                     try {
                         location = JSON.parse(location); // Convert JSON string to object
@@ -93,14 +99,14 @@ export class userController {
                     }
                 }
     
-                // ✅ Build update object dynamically
+                // Build update object dynamically
                 const updateFields: any = { updatedAt: new Date() };
                 if (googleName) updateFields.googleName = googleName;
     
                 const updateQuery: any = { $set: updateFields };
                 if (location) updateQuery.$addToSet = { locations: location }; // Add location
     
-                // ✅ Execute update
+                // Execute update
                 const updateResult = await db.collection("users").updateOne(
                     { googleEmail },
                     updateQuery
@@ -121,7 +127,6 @@ export class userController {
         }
     }
     
-
     /**
      * Get list of all users (for admin).
      */
@@ -182,6 +187,4 @@ export class userController {
             next(error);
         }
     }
-
-
 }
