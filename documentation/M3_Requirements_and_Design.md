@@ -38,7 +38,7 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 
 ## 3. Requirements Specification
 ### **3.1. Use-Case Diagram**
-<!-- ![Alt text](images/use_case.drawio.png) -->
+<!-- ![Alt text](images/use_case.drawio.png) --> 
 <img src="images/use_case.drawio.png" alt="Alt text" width="500">
 
 ### **3.2. Actors Description**
