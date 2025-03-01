@@ -9,22 +9,26 @@
     - Original technical highlight was on banning/unbanning users, a secondary functionality compared to our app's purpose.
     - Therefore, the recommendation become our main complexity of our project
 
-3. Elaborated NFR 1 and changed NFR2 to me specific and measurable (2.12.2024)
+3. Elaborated NFR 1 and changed NFR2 to be specific and measurable (2.12.2024)
 
     - NFR1 lacked a concrete justification to the upload speed. 
     - NFR2 was updated to a more measurable problem. 
 
-4. Modify the interface of component, remove some interfaces that are actually implement in frontend, and add the reasonable input and output. Also, add the new interface. 
+4. Modify the interface of component, remove some interfaces that are actually implement in frontend, and add the reasonable input and output. Also, add the new interface. (2.17.2024)
 
     - Also, need to modify the sequencal diagram, will modify them one by one to fit our new logic
 
-5. Due to our TA suggestion. We put our main effort on recommendation logic, therefore the ban algorithm is not implement yet. Therefore, the main actor of our current program is only user. The actor Administrator does not have a special power right now. (Some administrator interfaces have been implemented, but they are currently mainly used as testing features.) 
+5. Due to our TA suggestion. We put our main effort on recommendation logic, 
+therefore the ban algorithm is not implement yet. Therefore, the main actor of our current program is only user. The actor Administrator does not have a special power right now. 
+(Some administrator interfaces have been implemented, but they are currently mainly used as testing features.) (2.20.2024)
 
 6. Modify the use case and scenario
-    - Remove the supercision use case, since it is not implement yet. Instead, we add a new use case: View Gallery. 
-    - Modify share gallery feature, remove one sub usecase. Also adjust upload photo use case, add one sub usecase
+    - Remove the supervision use case, since it is not implement yet. Instead, we add a new use case: View Gallery. (2.22.2024)
+    - Modify share gallery feature, remove one sub usecase. Also adjust upload photo use case, add one sub usecase (2.22.2024)
+    - These changes to use case allow us to focus on addressing our primary users more, ensuring our key features match the target audience. 
 
-7. Add new framework: AWS Route 53, and External Modules
+7. Add new framework: AWS Route 53, and External Modules (2.20.2024)
+
 
 
 
@@ -39,16 +43,15 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 
 ### **3.2. Actors Description**
 1. **Indie photographers (User)**: take photos and update locations with photos; receive recommendation of users with similar photo taken, as well as locations with potentially interesting photos. 
-2. **Administrator**: supervisor who ensures app and information follow standards; can ban improper information and user
+2. **Secondary - Administrator**: supervisor who ensures app and information follow standards; can ban improper information and user
 
 
 ### **3.3. Functional Requirements**
 <a name="fr1"></a>
 
-1. **Manage Account** 
+1. **Log In** 
     - **Overview**:
         1. Create Account
-        2. Edit Account Profile
     
     - **Detailed Flow for Each Independent Scenario**: 
         1. **Create an Account**:
@@ -64,18 +67,6 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
                 - 3a. The system cannot store the user data due to a server error or network issue.
                     - 3a1. The system displays an error message and prompts the user to try again later.
 
-
-        2. **Update Account Profile**:
-            - **Description**: The user updates their account profile by changing their Google Account. The system ensures that changes are saved and reflected in the user's account.
-            - **Primary actor(s)**: User
-            - **Main success scenario**:
-                1. The user navigates to the "Edit Profile" page.
-                2. The system validates the input and updates the user's profile.
-                3. The system confirms the successful update and reflects the changes in the user's account.
-            - **Failure scenario(s)**:
-                - 2a. The system cannot save the changes due to a server error or network issue.
-                    - 3a1. The system displays an error message and prompts the user to try again later.
-    
 2. **Upload Photos** 
     - **Overview**:
         1. Create Marker
@@ -90,17 +81,17 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
                 1. The user selects a location on map and click on it.
                 2. The user click "create marker" button.
                 3. The user input the name, and the color of this marker. Then click create. 
-                4. The marker display on the map.
+                4. The marker displays on the map.
             - **Failure scenario(s)**:
                 - 4a. Create Error: the marker does not show on the map
-                    - 4a1. The system notifies the user. And then, user try to create again.
+                    - 4a1. The system notifies the user of failure to add marker. User is prompted to try again.
 
         2. **Upload Photos**:
-            - **Description**: The user uploads photos from their local device to the system. Optional metadata (captions, tags) can be added to help categorize the photos.
+            - **Description**: The user uploads photos from their local device to the system. 
             - **Primary actor(s)**: User
             - **Main success scenario**:
                 1. The user selects “Add Photo” within their account.
-                2. The user chooses one or more photos from their device.
+                2. The user chooses one photo from their device.
                 3. The user optionally enters descriptive tags or captions.
                 4. The user confirms and the system uploads the photos.
                 5. The system displays a success message and shows the newly uploaded photos in the user’s gallery.
@@ -116,7 +107,7 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
     
     - **Detailed Flow for Each Independent Scenario**: 
         1. **View Map Info**:
-            - **Description**: The user can click on icons on the map to see information (e.g., places of interest, user photo locations, route suggestions).
+            - **Description**: The user can pan around the map to see their markers and click on markers to see previously uploaded photos. 
             - **Primary actor(s)**: User
             - **Main success scenario**:
                 1. The user navigates to the “Map” section.
@@ -147,26 +138,6 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
                     - 3a1. The system notifies the user that there are no current recommendations and suggests waiting longer. 
                 - 4a. The system encounters a server error or network issue and cannot fetch recommendations.
                     - 4a1. The system displays an error message and prompts the user to retry later.
-
-5. **Share Galleries** 
-    - **Overview**:
-        1. Select and Share Galleries
-    
-    - **Detailed Flow for Each Independent Scenario**: 
-        1. **Select and Share Galleries**:
-            - **Description**: The user selects a photo gallery (one or more photos) and chooses who to share it.
-            - **Primary actor(s)**: User
-            - **Main success scenario**:
-                1. The user navigates to marker on map.
-                2. User click the share image button.
-                3. The user full in the email of the user they want to share to, and choose the image, then click share button.
-                4. The system confirms successful sharing.
-            - **Failure scenario(s)**:
-                - 3a. The system detects a missing or invalid permission setting.
-                    - 3a1. The user is prompted to correct sharing permissions before proceeding.
-                - 3b. The system encounters a server error or network issue and cannot share image.
-                    - 3a1. The system displays an error message and try again later
-
     
 6. **View Gallery** 
     - **Overview**:
