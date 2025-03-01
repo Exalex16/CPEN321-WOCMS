@@ -52,7 +52,6 @@ export class imageController {
                     ContentType: processedImage.mimeType, 
                     Metadata: { "x-amz-meta-uploaded-by": uploadedBy, 
                                 "x-amz-meta-timestamp": timestamp,
-                                "x-amz-meta-location": JSON.stringify(location),
                             },
                 };
     
