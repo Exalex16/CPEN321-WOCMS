@@ -1,6 +1,7 @@
 package com.example.photomap
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.content.res.Resources
 import android.location.Geocoder
 import android.net.Uri
@@ -87,7 +88,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         fabAlbum.visibility = View.VISIBLE
         fabAlbum.setOnClickListener {
             Toast.makeText(this, "Album clicked!", Toast.LENGTH_SHORT).show()
-
+            val intent = Intent(this, GalleryActivity::class.java)
+            startActivity(intent)
         }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
