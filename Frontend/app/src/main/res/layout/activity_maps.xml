@@ -16,6 +16,21 @@
         app:layout_anchorGravity="center" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/album"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="500dp"
+        android:layout_marginEnd="10dp"
+        android:visibility="gone"
+        app:srcCompat="@drawable/album"
+        android:contentDescription="gallery"
+        app:tint = "@null"
+        app:maxImageSize="50dp"
+        app:backgroundTint="@color/gray"
+        android:layout_gravity="bottom|end"
+        />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/recommendation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

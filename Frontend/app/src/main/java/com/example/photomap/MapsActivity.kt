@@ -74,12 +74,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         fabActions = findViewById(R.id.fab_actions)
         fabActions.visibility = View.GONE
 
+        // Recommendation button
         val fabRecommendation: FloatingActionButton = findViewById(R.id.recommendation)
         fabRecommendation.visibility = View.VISIBLE
-
         fabRecommendation.setOnClickListener {
             Toast.makeText(this, "Recommendation clicked!", Toast.LENGTH_SHORT).show()
             fetchRecommendation()
+        }
+
+        // Album Button
+        val fabAlbum: FloatingActionButton = findViewById(R.id.album)
+        fabAlbum.visibility = View.VISIBLE
+        fabAlbum.setOnClickListener {
+            Toast.makeText(this, "Album clicked!", Toast.LENGTH_SHORT).show()
+
         }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
