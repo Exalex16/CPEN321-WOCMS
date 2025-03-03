@@ -23,7 +23,8 @@ export class mapController {
             }).toArray();
     
             if (images.length === 0) {
-                return res.status(200).send({ popularLocation: null });
+                console.log(`No images found for user: ${userEmail}.`);
+                return res.status(200).send({ popularLocation: null, message: "No images uploaded. Cannot generate recommendation." });
             }
     
             // Filter out invalid lat/lng values
@@ -44,6 +45,11 @@ export class mapController {
                 .filter(point => point !== null);
     
             // console.log("Cleaned Image Locations:", points);
+
+            if (points.length === 0) {
+                console.log(`📌 All images for ${userEmail} had invalid coordinates.`);
+                return res.status(200).send({ popularLocation: null, message: "No valid image locations found. Cannot generate recommendation." });
+            }
 
             console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
     
@@ -80,9 +86,10 @@ export class mapController {
             const allTagsInLargestCluster = largestClusterId ? clusterData[largestClusterId].tags : [];
     
             if (largestCluster.length === 0) {
-                return res.status(200).send({ popularLocation: null });
+                console.log(`📌 DBSCAN found no clusters for user: ${userEmail}.`);
+                return res.status(200).send({ popularLocation: null, message: "No meaningful clusters found. Cannot generate recommendation." });
             }
-    
+
             // Compute average lat/lng for the largest cluster
             const avgPosition: [number, number] = largestCluster.reduce(
                 (acc: [number, number], pos: [number, number]) => {
@@ -112,7 +119,8 @@ export class mapController {
                 }
             });
         } catch (error) {
-            next(error);
+            console.error("📌 Error fetching recommendation:", error);
+            res.status(500).send({ popularLocation: null, message: "Server error. Please try again later." });
         }
     }
 }
