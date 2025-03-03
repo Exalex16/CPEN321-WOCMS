@@ -45,13 +45,13 @@ export class mapController {
     
             // console.log("Cleaned Image Locations:", points);
 
-            // console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
+            console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
     
             // Cluster only by location (`epsilon = 2.0` to merge nearby locations)
             const geoJsonPoints = turf.featureCollection(points);
             const clustered = turf.clustersDbscan(geoJsonPoints, 100.0, { minPoints: 2 });
     
-            // console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
+            console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
     
             // Track the largest cluster
             let largestClusterId: string | null = null;
