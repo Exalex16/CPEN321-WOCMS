@@ -49,7 +49,7 @@ export class mapController {
     
             // Cluster only by location (`epsilon = 2.0` to merge nearby locations)
             const geoJsonPoints = turf.featureCollection(points);
-            const clustered = turf.clustersDbscan(geoJsonPoints, 100.0, { minPoints: 2 });
+            const clustered = turf.clustersDbscan(geoJsonPoints, 100.0, { minPoints: 1 });
     
             console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
     
