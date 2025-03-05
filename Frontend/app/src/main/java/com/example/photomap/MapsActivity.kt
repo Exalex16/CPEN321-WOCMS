@@ -44,6 +44,8 @@ import java.io.IOException
 import java.time.Instant
 import java.util.Locale
 
+import com.example.photomap.MainActivity.mapContent
+
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
@@ -298,6 +300,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     )
 
                     sendMarkerUpdate(getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", "")?: "anonymous@example.com", currentMarker!!)
+                    mapContent.markerList.add(currentMarker!!)
+
+
+                    Log.d("MapsActivity", "Marker data: $currentMarker")
+                    for(i in 0 until mapContent.markerList.size){
+                        Log.d("MapsActivity", "Marker data in list: ${mapContent.markerList[i]}")
+                    }
+                    //Log.d("MapsActivity", mapContent.markerList.toString())
+
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
