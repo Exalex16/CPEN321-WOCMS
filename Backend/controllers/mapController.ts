@@ -23,7 +23,8 @@ export class mapController {
             }).toArray();
     
             if (images.length === 0) {
-                return res.status(200).send({ popularLocation: null });
+                console.log(`No images found for user: ${userEmail}.`);
+                return res.status(200).send({ popularLocation: null, message: "No images uploaded. Cannot generate recommendation." });
             }
     
             // Filter out invalid lat/lng values
@@ -45,13 +46,18 @@ export class mapController {
     
             // console.log("Cleaned Image Locations:", points);
 
-            // console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
+            if (points.length === 0) {
+                console.log(`📌 All images for ${userEmail} had invalid coordinates.`);
+                return res.status(200).send({ popularLocation: null, message: "No valid image locations found. Cannot generate recommendation." });
+            }
+
+            console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
     
             // Cluster only by location (`epsilon = 2.0` to merge nearby locations)
             const geoJsonPoints = turf.featureCollection(points);
-            const clustered = turf.clustersDbscan(geoJsonPoints, 100.0, { minPoints: 2 });
+            const clustered = turf.clustersDbscan(geoJsonPoints, 100.0, { minPoints: 1 });
     
-            // console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
+            console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
     
             // Track the largest cluster
             let largestClusterId: string | null = null;
@@ -80,9 +86,10 @@ export class mapController {
             const allTagsInLargestCluster = largestClusterId ? clusterData[largestClusterId].tags : [];
     
             if (largestCluster.length === 0) {
-                return res.status(200).send({ popularLocation: null });
+                console.log(`📌 DBSCAN found no clusters for user: ${userEmail}.`);
+                return res.status(200).send({ popularLocation: null, message: "No meaningful clusters found. Cannot generate recommendation." });
             }
-    
+
             // Compute average lat/lng for the largest cluster
             const avgPosition: [number, number] = largestCluster.reduce(
                 (acc: [number, number], pos: [number, number]) => {
@@ -112,7 +119,8 @@ export class mapController {
                 }
             });
         } catch (error) {
-            next(error);
+            console.error("📌 Error fetching recommendation:", error);
+            res.status(500).send({ popularLocation: null, message: "Server error. Please try again later." });
         }
     }
 }

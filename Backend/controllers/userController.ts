@@ -3,11 +3,6 @@ import { clinet, formDataMiddleware } from "../services";
 import { ObjectId } from "mongodb";
 
 export class userController {
-    async getuserTest(req: Request, res: Response, nextFunction: NextFunction) {
-            const todos = await clinet.db("User").collection("test").find().toArray();
-            res.status(200).send(todos);
-    }
-
     /**
      * Create a new user info, (or update name if it is exist).
      */
@@ -183,6 +178,59 @@ export class userController {
             }
 
             res.status(200).send({ message: "User deleted successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Delete user from a location.
+     */
+    async deleteUserLocation(req: Request, res: Response, next: NextFunction) {
+        try {
+            formDataMiddleware(req, res, async (err) => {
+                if (err) {
+                    return res.status(400).send({ error: "Multer Error: " + err.message });
+                }
+    
+                const { googleEmail } = req.params;
+                let { location } = req.body;
+    
+                if (!googleEmail) {
+                    return res.status(400).send({ error: "Google ID is required" });
+                }
+    
+                if (!location || typeof location !== "object") {
+                    return res.status(400).send({ error: "Invalid or missing location data" });
+                }
+    
+                try {
+                    // Ensure correct numeric values
+                    location.position.lat = parseFloat(location.position.lat);
+                    location.position.lng = parseFloat(location.position.lng);
+                } catch (e) {
+                    return res.status(400).send({ error: "Invalid location format. Ensure it contains valid lat/lng values." });
+                }
+    
+                const db = clinet.db("User");
+                const updateResult = await db.collection("users").updateOne(
+                    { googleEmail },
+                    { $pull: { locations: location } } // Remove the matching location from the array
+                );
+    
+                if (updateResult.matchedCount === 0) {
+                    return res.status(404).send({ error: "User not found" });
+                }
+    
+                if (updateResult.modifiedCount === 0) {
+                    return res.status(404).send({ error: "Location not found in user's data" });
+                }
+    
+                res.status(200).send({
+                    message: "Location removed successfully",
+                    removedLocation: location,
+                });
+            });
         } catch (error) {
             next(error);
         }
