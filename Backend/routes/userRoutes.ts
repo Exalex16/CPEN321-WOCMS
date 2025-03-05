@@ -58,7 +58,7 @@ export const userRoutes = [
         action: controller.removeLocation,
         validation: [
             param("googleEmail").isString(),
-            body("location").isString()
+            // body("location").isString()
         ],
     },
 ]
