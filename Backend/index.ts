@@ -1,8 +1,6 @@
 import express, {NextFunction, Request, Response} from "express";
 import { MongoClient } from "mongodb";
 import { clinet } from "./services";
-import { TodoRoutes } from "./routes/TodoRoutes";
-import { InfoRoutes } from "./routes/InfoRoutes";
 import { imageRoutes } from "./routes/imageRoutes";
 import { userRoutes } from "./routes/userRoutes";
 import { mapRoutes } from "./routes/mapRoutes";
@@ -14,7 +12,7 @@ const app = express();
 
 app.use(express.json()) 
 app.use(morgan('tiny'))
-const Routes = [...TodoRoutes, ...InfoRoutes, ...imageRoutes, ...userRoutes, ...mapRoutes];
+const Routes = [ ...imageRoutes, ...userRoutes, ...mapRoutes];
 
 app.get("/", (req: Request, res: Response, nextFunction: NextFunction) => {
     res.send("CPEN321 2024W2 PhotoMap Placeholder");
