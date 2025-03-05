@@ -109,16 +109,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if (response.isSuccessful && response.body() != null) {
                     val popularLocation = response.body()!!.popularLocation
-                    val lat = popularLocation.position.lat
-                    val lng = popularLocation.position.lng
-                    val tags = popularLocation.tags
 
-                    Toast.makeText(this@MapsActivity, "Got recommendation", Toast.LENGTH_SHORT).show()
-                    Log.d("MapsActivity", "Got recommendation at ($lat, $lng), with tags: $tags")
+                    if (popularLocation == null) {
+                        //Display custom backend message for no recommendation
+                        Toast.makeText(this@MapsActivity, "No recommendation available: Did you upload enough photos?.", Toast.LENGTH_LONG).show()
+                        Log.e("MapsActivity", "No recommendation available: insufficient images or bad location")
 
-                    //Call Places API to get recommendation
-                    val keywordQuery = tags.firstOrNull() ?: ""
-                    fetchNearbyPlaces("$lat,$lng", keywordQuery)
+                    } else {
+                        val lat = popularLocation.position.lat
+                        val lng = popularLocation.position.lng
+                        val tags = popularLocation.tags
+
+                        Toast.makeText(this@MapsActivity, "Got recommendation", Toast.LENGTH_SHORT).show()
+                        Log.d("MapsActivity", "Got recommendation at ($lat, $lng), with tags: $tags")
+
+                        //Call Places API to get recommendation
+                        val keywordQuery = tags.firstOrNull() ?: ""
+                        fetchNearbyPlaces("$lat,$lng", keywordQuery)
+                    }
                 } else {
                     val errorMsg = response.errorBody()?.string()
                     Toast.makeText(this@MapsActivity, "Recommendation failed, no places found match. ", Toast.LENGTH_LONG).show()
