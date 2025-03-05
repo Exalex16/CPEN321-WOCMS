@@ -54,11 +54,11 @@ export const userRoutes = [
     },
     {
         method: "delete",
-        route: "/user/location",
-        action: controller.deleteUserLocation,
+        route: "/user/:googleEmail/location",
+        action: controller.removeLocation,
         validation: [
-            body("googleEmail").isString(),
-            body("location").isObject(),
+            param("googleEmail").isString(),
+            body("location").isString()
         ],
     },
 ]

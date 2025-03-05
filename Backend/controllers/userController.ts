@@ -186,52 +186,59 @@ export class userController {
     /**
      * Delete user from a location.
      */
-    async deleteUserLocation(req: Request, res: Response, next: NextFunction) {
+    async removeLocation(req: Request, res: Response, next: NextFunction) {
         try {
             formDataMiddleware(req, res, async (err) => {
                 if (err) {
                     return res.status(400).send({ error: "Multer Error: " + err.message });
                 }
-    
-                const { googleEmail, location } = req.body;
-    
+
+                const { googleEmail } = req.params;
+                let { location } = req.body; // Extract location from form-data
+
                 if (!googleEmail) {
-                    return res.status(400).send({ error: "Google Email is required in the request body" });
+                    return res.status(400).send({ error: "Google ID is required." });
                 }
-    
-                if (!location || typeof location !== "object") {
-                    return res.status(400).send({ error: "Invalid or missing location data" });
+
+                if (!location) {
+                    return res.status(400).send({ error: "Location is required for removal." });
                 }
-    
-                try {
-                    // Ensure correct numeric values
-                    location.position.lat = parseFloat(location.position.lat);
-                    location.position.lng = parseFloat(location.position.lng);
-                } catch (e) {
-                    return res.status(400).send({ error: "Invalid location format. Ensure it contains valid lat/lng values." });
-                }
-    
+
                 const db = clinet.db("User");
+
+                // ✅ Parse `location` if it's a string (handling form-data issue)
+                if (typeof location === "string") {
+                    try {
+                        location = JSON.parse(location);
+                        location.position.lat = parseFloat(location.position.lat);
+                        location.position.lng = parseFloat(location.position.lng);
+                    } catch (e) {
+                        return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+                    }
+                }
+
+                // ✅ Perform the location removal from the user's document
                 const updateResult = await db.collection("users").updateOne(
                     { googleEmail },
-                    { $pull: { locations: location } } // Remove the matching location from the array
+                    { $pull: { locations: location } } // Removes the matching location
                 );
-    
+
                 if (updateResult.matchedCount === 0) {
-                    return res.status(404).send({ error: "User not found" });
+                    return res.status(404).send({ error: "User not found." });
                 }
-    
+
                 if (updateResult.modifiedCount === 0) {
-                    return res.status(404).send({ error: "Location not found in user's data" });
+                    return res.status(404).send({ error: "Location not found in user's data." });
                 }
-    
+
                 res.status(200).send({
-                    message: "Location removed successfully",
-                    removedLocation: location,
+                    message: "Location removed successfully.",
+                    removedLocation: location
                 });
             });
         } catch (error) {
-            next(error);
+            console.error("📌 Error removing location:", error);
+            res.status(500).send({ error: "Server error. Please try again later." });
         }
     }
     
