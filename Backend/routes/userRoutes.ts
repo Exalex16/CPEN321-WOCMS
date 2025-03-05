@@ -5,12 +5,6 @@ const controller = new userController()
 
 export const userRoutes = [
     {
-        method: "get",
-        route: "/user",
-        action: controller.getuserTest,
-        validation: [],
-    },
-    {
         method: "post",
         route: "/user",
         action: controller.postUser,
@@ -57,5 +51,14 @@ export const userRoutes = [
         route: "/user/:googleEmail",
         action: controller.deleteUser,
         validation: [param("googleEmail").isString()],
+    },
+    {
+        method: "delete",
+        route: "/user/:googleEmail/location",
+        action: controller.deleteUserLocation,
+        validation: [
+            param("googleEmail").isString(),
+            body("location").isObject(),
+        ],
     },
 ]
