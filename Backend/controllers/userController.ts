@@ -193,11 +193,10 @@ export class userController {
                     return res.status(400).send({ error: "Multer Error: " + err.message });
                 }
     
-                const { googleEmail } = req.params;
-                let { location } = req.body;
+                const { googleEmail, location } = req.body;
     
                 if (!googleEmail) {
-                    return res.status(400).send({ error: "Google ID is required" });
+                    return res.status(400).send({ error: "Google Email is required in the request body" });
                 }
     
                 if (!location || typeof location !== "object") {
@@ -235,4 +234,5 @@ export class userController {
             next(error);
         }
     }
+    
 }
