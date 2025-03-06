@@ -58,7 +58,6 @@ export const userRoutes = [
         action: controller.removeLocation,
         validation: [
             param("googleEmail").isString(),
-            // body("location").isString()
         ],
     },
     {
@@ -66,8 +65,6 @@ export const userRoutes = [
         route: "/user/add-friend",
         action: controller.addFriend,
         validation: [
-            body("googleEmail").isString(),
-            body("friendEmail").isString(),
         ],
     },
     {
@@ -75,8 +72,6 @@ export const userRoutes = [
         route: "/user/delete-friend",
         action: controller.deleteFriend,
         validation: [
-            // body("googleEmail").isString(),
-            // body("friendEmail").isString(),
         ],
     },
     {
