@@ -43,4 +43,10 @@ export const imageRoutes = [
         action: controller.getAllImages,
         validation: [], 
     },
+    {
+        method: "put",
+        route: "/image/update-description",
+        action: controller.updateImageDescription,
+        validation: [],
+    },
 ]

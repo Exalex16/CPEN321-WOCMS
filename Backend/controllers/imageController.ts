@@ -286,6 +286,38 @@ export class imageController {
             next(error);
         }
     }
+
+    async updateImageDescription(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { fileName, newDescription } = req.body;
+    
+            if (!fileName || !newDescription) {
+                return res.status(400).send({ error: "Both fileName and newDescription are required." });
+            }
+    
+            const db = clinet.db("images");
+    
+            // Find the image
+            const image = await db.collection("metadata").findOne({ fileName });
+            if (!image) {
+                return res.status(404).send({ error: "Image not found" });
+            }
+    
+            // Update the description field
+            const updateResult = await db.collection("metadata").updateOne(
+                { fileName },
+                { $set: { description: newDescription } }
+            );
+    
+            if (updateResult.modifiedCount === 0) {
+                return res.status(500).send({ error: "Failed to update image description." });
+            }
+    
+            res.status(200).send({ message: "Image description updated successfully", fileName, newDescription });
+        } catch (error) {
+            next(error);
+        }
+    }
     
     
 }
