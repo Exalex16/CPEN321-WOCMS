@@ -61,4 +61,28 @@ export const userRoutes = [
             // body("location").isString()
         ],
     },
+    {
+        method: "post",
+        route: "/user/add-friend",
+        action: controller.addFriend,
+        validation: [
+            body("googleEmail").isString(),
+            body("friendEmail").isString(),
+        ],
+    },
+    {
+        method: "post",
+        route: "/user/delete-friend",
+        action: controller.deleteFriend,
+        validation: [
+            body("googleEmail").isString(),
+            body("friendEmail").isString(),
+        ],
+    },
+    {
+        method: "get",
+        route: "/user/:googleEmail/friends",
+        action: controller.getFriends,
+        validation: [param("googleEmail").isString()],
+    },
 ]

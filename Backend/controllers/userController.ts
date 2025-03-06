@@ -31,6 +31,7 @@ export class userController {
                     banHistory: [],
                     tags: [],
                     locations: [], 
+                    friends: [],
                     createdAt: new Date(),
                 };
                 const result = await db.collection("users").insertOne(newUser);
@@ -239,6 +240,84 @@ export class userController {
         } catch (error) {
             console.error("📌 Error removing location:", error);
             res.status(500).send({ error: "Server error. Please try again later." });
+        }
+    }
+
+    async addFriend(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { googleEmail, friendEmail } = req.body;
+            if (!googleEmail || !friendEmail) {
+                return res.status(400).send({ error: "Both user email and friend email are required" });
+            }
+    
+            const db = clinet.db("User");
+    
+            // Check if the user and friend exist
+            const user = await db.collection("users").findOne({ googleEmail });
+            const friend = await db.collection("users").findOne({ googleEmail: friendEmail });
+    
+            if (!user) {
+                return res.status(404).send({ error: "User not found" });
+            }
+
+            if (!friend) {
+                return res.status(404).send({ error: "Friend not found" });
+            }
+    
+            // Add friendEmail to user's friends list (if not already added)
+            await db.collection("users").updateOne(
+                { googleEmail },
+                { $addToSet: { friends: friendEmail } }  // ✅ Ensures no duplicates
+            );
+    
+            res.status(200).send({ message: "Friend added successfully", friendEmail });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async deleteFriend(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { googleEmail, friendEmail } = req.body;
+            if (!googleEmail || !friendEmail) {
+                return res.status(400).send({ error: "Both user email and friend email are required" });
+            }
+    
+            const db = clinet.db("User");
+    
+            // Remove friendEmail from user's friends list
+            const result = await db.collection("users").updateOne(
+                { googleEmail },
+                { $pull: { friends: friendEmail } }  // ✅ Removes friend from list
+            );
+    
+            if (result.modifiedCount === 0) {
+                return res.status(404).send({ error: "Friend not found in user's list" });
+            }
+    
+            res.status(200).send({ message: "Friend removed successfully", friendEmail });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getFriends(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { googleEmail } = req.params;
+            if (!googleEmail) {
+                return res.status(400).send({ error: "User email is required" });
+            }
+    
+            const db = clinet.db("User");
+            const user = await db.collection("users").findOne({ googleEmail }, { projection: { friends: 1 } });
+    
+            if (!user) {
+                return res.status(404).send({ error: "User not found" });
+            }
+    
+            res.status(200).send({ friends: user.friends || [] });
+        } catch (error) {
+            next(error);
         }
     }
     
