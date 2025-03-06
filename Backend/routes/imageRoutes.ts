@@ -49,4 +49,10 @@ export const imageRoutes = [
         action: controller.updateImageDescription,
         validation: [],
     },
+    {
+        method: "delete",
+        route: "/image/delete-all/:userEmail",
+        action: controller.deleteAllImagesByUser,
+        validation: [],
+    },
 ]

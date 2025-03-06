@@ -319,6 +319,38 @@ export class imageController {
         }
     }
     
+    async deleteAllImagesByUser(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { userEmail } = req.params;
+            if (!userEmail) {
+                return res.status(400).send({ error: "User email is required." });
+            }
+    
+            const db = clinet.db("images");
+    
+            // Find all images uploaded by the user
+            const images = await db.collection("metadata").find({ uploadedBy: userEmail }).toArray();
+    
+            if (images.length === 0) {
+                return res.status(404).send({ error: "No images found for this user." });
+            }
+    
+            // Delete images from S3
+            for (const image of images) {
+                const fileKey = `images/${image.fileName}`;
+                await s3.send(new DeleteObjectCommand({ Bucket: "cpen321-photomap-images", Key: fileKey }));
+            }
+    
+            // Remove image metadata from MongoDB
+            const deleteResult = await db.collection("metadata").deleteMany({ uploadedBy: userEmail });
+    
+            res.status(200).send({
+                message: `Successfully deleted ${deleteResult.deletedCount} images for user ${userEmail}.`,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
     
 }
 
