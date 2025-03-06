@@ -75,8 +75,8 @@ export const userRoutes = [
         route: "/user/delete-friend",
         action: controller.deleteFriend,
         validation: [
-            body("googleEmail").isString(),
-            body("friendEmail").isString(),
+            // body("googleEmail").isString(),
+            // body("friendEmail").isString(),
         ],
     },
     {
