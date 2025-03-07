@@ -82,6 +82,9 @@ export class imageController {
                     tags: labels,
                     moderationLabels,
                     location, 
+                    sharedTo: [],  
+                    shared: false, 
+                    sharedBy: null 
                 });
     
                 // Update user database with location history
@@ -98,7 +101,8 @@ export class imageController {
                     fileName: rawFileName,
                     presignedUrl,
                     imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
-                    metadata: { uploadedBy, timestamp,tags: labels, moderationLabels, location},
+                    metadata: { uploadedBy, timestamp,tags: labels, moderationLabels, location, sharedTo: [], shared: false,
+                        sharedBy: null},
                 });
             });
         } catch (error) {
