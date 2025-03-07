@@ -22,7 +22,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.photomap.BuildConfig.MAPS_API_KEY
-
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -34,7 +33,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -106,7 +104,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 // Make the network request on the IO thread
 
                 val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
-                val email = prefs.getString("user_email", "")?: "anonymous@example.com"
+                val email = prefs.getString("user_email", null) ?: "anonymous@example.com"
+
 
 
                 val response = RetrofitClient.api.getPopularLocations(email)
@@ -146,6 +145,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
+    // Uses Places API to get nearby places
     private fun fetchNearbyPlaces(coordinate: String, keyword: String) {
         lifecycleScope.launch {
             try {
@@ -203,6 +203,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Load the style from the raw resource folder
         try {
 
+            // Styling for map display
             val success = mMap.setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style)
             )
@@ -215,7 +216,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         Log.d("MapsActivity", "Begin loading map.")
 
-        for (marker in MainActivity.mapContent.markerList) {
+        // Load all markers fetched from backend
+        for (marker in mapContent.markerList) {
             val position = LatLng(marker.lat, marker.lng)
             Log.d("MapsActivity", "Adding marker: $marker")
             mMap.addMarker(
@@ -227,13 +229,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         // Optionally, adjust the camera to the first marker
-        MainActivity.mapContent.markerList.firstOrNull()?.let {
+        mapContent.markerList.firstOrNull()?.let {
             val position = LatLng(it.lat, it.lng)
             Log.d("MapsActivity", "Moving camera to: $position")
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
         }
 
-        // Add markers
+        // Draw markers onto the map
         mMap.setOnMapClickListener { latLng ->
             // Inflate the custom dialog layout
             val dialogView = layoutInflater.inflate(R.layout.marker_style, null)
@@ -343,7 +345,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 photoAtCurrentMarker = arrayListOf()
             )
 
-            val matchedMarker = MainActivity.mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
+            val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
 
             matchedMarker?.let {
                 Log.d("MapsActivity", "Photos at current marker: ${it.photoAtCurrentMarker}")
@@ -459,12 +461,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 Log.d("MapsActivity", "User email: $userEmail")
 
+                val sharedToBody = "[]".toRequestBody("application/json".toMediaTypeOrNull())
+                val sharedBody = "false".toRequestBody("text/plain".toMediaTypeOrNull())
+                val sharedByBody = "".toRequestBody("text/plain".toMediaTypeOrNull())
+
 
                 val response = RetrofitClient.api.uploadPhoto(
                     image = imagePart,
                     description = descriptionBody,
                     uploader = userEmailReqBody,
-                    location = locationBody
+                    location = locationBody,
+                    sharedTo = sharedToBody,
+                    shared = sharedBody,
+                    sharedBy = sharedByBody
                 )
 
                 if (response.isSuccessful) {
@@ -472,7 +481,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     Toast.makeText(this@MapsActivity, "Upload successful!", Toast.LENGTH_SHORT).show()
                     val uploadData = response.body()
 
-                    val matchedMarker = MainActivity.mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
+                    val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
                     matchedMarker?.photoAtCurrentMarker?.add(PhotoInstance(
                         imageURL = uploadData?.presignedUrl?: "no url available.",
                         time = Instant.now()

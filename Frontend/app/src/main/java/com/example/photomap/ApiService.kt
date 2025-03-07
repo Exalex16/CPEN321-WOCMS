@@ -23,7 +23,10 @@ interface ApiService {
         @Part image: MultipartBody.Part,
         @Part("description") description: RequestBody,
         @Part("uploadedBy") uploader: RequestBody,
-        @Part("location") location: RequestBody
+        @Part("location") location: RequestBody,
+        @Part("sharedTo") sharedTo: RequestBody,
+        @Part("shared") shared: RequestBody,
+        @Part("sharedBy") sharedBy: RequestBody
     ): Response<UploadResponse>
 
     @POST("user")
