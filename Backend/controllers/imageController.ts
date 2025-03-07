@@ -181,10 +181,6 @@ export class imageController {
                 ]
             }).toArray();
     
-            if (userImages.length === 0) {
-                return res.status(404).send({ error: "No images found for this user." });
-            }
-    
             // Generate pre-signed URLs for each image
             const imagesWithPresignedUrls = await Promise.all(
                 userImages.map(async (image) => {
