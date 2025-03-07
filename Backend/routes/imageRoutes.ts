@@ -55,4 +55,22 @@ export const imageRoutes = [
         action: controller.deleteAllImagesByUser,
         validation: [],
     },
+    {
+        method: "post",
+        route: "/image/share",
+        action: controller.shareImage,
+        validation: [],
+    },
+    {
+        method: "get",
+        route: "/image/shared",
+        action: controller.getSharedImages,
+        validation: [],
+    },
+    {
+        method: "post",
+        route: "/image/cancel-share",
+        action: controller.cancelShare,
+        validation: [],
+    },
 ]
