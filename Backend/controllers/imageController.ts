@@ -168,29 +168,39 @@ export class imageController {
         try {
             const { uploaderEmail } = req.params;
             if (!uploaderEmail) {
-                return res.status(400).send({ error: "Uploader email is required" });
+                return res.status(400).send({ error: "Uploader email is required." });
             }
     
             const db = clinet.db("images");
-            const images = await db.collection("metadata").find({ uploadedBy: uploaderEmail }).toArray();
-            
     
-            // Generate presigned URLs for each image
+            // Fetch images that were either uploaded by the user OR shared with them
+            const userImages = await db.collection("metadata").find({
+                $or: [
+                    { uploadedBy: uploaderEmail },  // Images the user uploaded
+                    { sharedTo: uploaderEmail }     // Images shared with the user
+                ]
+            }).toArray();
+    
+            if (userImages.length === 0) {
+                return res.status(404).send({ error: "No images found for this user." });
+            }
+    
+            // Generate pre-signed URLs for each image
             const imagesWithPresignedUrls = await Promise.all(
-                images.map(async (image) => {
+                userImages.map(async (image) => {
                     const presignedUrl = await getSignedUrl(
                         s3,
                         new GetObjectCommand({
                             Bucket: "cpen321-photomap-images",
                             Key: `images/${image.fileName}`,
                         }),
-                        { expiresIn: 604800 }
+                        { expiresIn: 604800 } // 7-day expiration
                     );
     
                     return {
                         ...image,
-                        presignedUrl, 
-                        location: image.location, 
+                        presignedUrl, // Include presigned URL
+                        location: image.location, // Ensure location is included
                     };
                 })
             );
@@ -380,13 +390,23 @@ export class imageController {
 
     async getSharedImages(req: Request, res: Response, next: NextFunction) {
         try {
+            const { userEmail } = req.params;
+            if (!userEmail) {
+                return res.status(400).send({ error: "User email is required." });
+            }
+    
             const db = clinet.db("images");
     
-            // Fetch all images where "shared" is true
-            const sharedImages = await db.collection("metadata").find({ shared: true }).toArray();
+            // Fetch images that the user shared OR received as a shared image
+            const sharedImages = await db.collection("metadata").find({
+                $or: [
+                    { sharedBy: userEmail }, // Images the user shared
+                    { sharedTo: userEmail }  // Images shared to the user
+                ]
+            }).toArray();
     
             if (sharedImages.length === 0) {
-                return res.status(404).send({ error: "No shared images found." });
+                return res.status(404).send({ error: "No shared images found for this user." });
             }
     
             // Generate pre-signed URLs for each shared image

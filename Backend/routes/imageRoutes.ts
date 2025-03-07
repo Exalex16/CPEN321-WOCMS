@@ -30,14 +30,6 @@ export const imageRoutes = [
         validation: [],
     },
     {
-        method: "post",
-        route: "/share",
-        action: controller.shareImage,
-        validation: [
-            body("imageKey").isString(),
-        ],
-    },
-    {
         method: "get",
         route: "/images",
         action: controller.getAllImages,
@@ -63,7 +55,7 @@ export const imageRoutes = [
     },
     {
         method: "get",
-        route: "/image/shared",
+        route: "/image/shared/:userEmail",
         action: controller.getSharedImages,
         validation: [],
     },
