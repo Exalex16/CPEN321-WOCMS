@@ -420,10 +420,6 @@ export class imageController {
                 ]
             }).toArray();
     
-            if (sharedImages.length === 0) {
-                return res.status(404).send({ error: "No shared images found for this user." });
-            }
-    
             // Generate pre-signed URLs for each shared image
             const sharedImagesWithPresignedUrls = await Promise.all(
                 sharedImages.map(async (image) => {
