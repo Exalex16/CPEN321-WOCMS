@@ -360,6 +360,11 @@ export class imageController {
                 return res.status(403).send({ error: "Only the owner can share this image" });
             }
     
+            // Check if the recipient already has the image
+            if (image.sharedTo && image.sharedTo.includes(recipientEmail)) {
+                return res.status(400).send({ error: "Recipient already has access to this image" });
+            }
+    
             // Update the image metadata
             const updateResult = await db.collection("metadata").updateOne(
                 { fileName: imageKey },
@@ -373,16 +378,30 @@ export class imageController {
                 return res.status(500).send({ error: "Failed to share image" });
             }
     
-            // Add shared location to the recipient's user profile
+            // Check if the recipient already has the location
+            const userDb = clinet.db("User");
+            const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
+    
+            let locationAdded = false;
             if (image.location) {
-                const userDb = clinet.db("User");
-                await userDb.collection("users").updateOne(
-                    { googleEmail: recipientEmail },
-                    { $addToSet: { locations: image.location } }
+                const alreadyHasLocation = recipient?.locations?.some(
+                    (loc: any) => loc.position.lat === image.location.position.lat && loc.position.lng === image.location.position.lng
                 );
+    
+                if (!alreadyHasLocation) {
+                    await userDb.collection("users").updateOne(
+                        { googleEmail: recipientEmail },
+                        { $addToSet: { locations: image.location } }
+                    );
+                    locationAdded = true;
+                }
             }
     
-            res.status(200).send({ message: "Image shared successfully", sharedTo: recipientEmail });
+            res.status(200).send({ 
+                message: "Image shared successfully", 
+                sharedTo: recipientEmail, 
+                locationAdded
+            });
         } catch (error) {
             next(error);
         }
