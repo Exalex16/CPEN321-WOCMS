@@ -53,7 +53,7 @@ export const userRoutes = [
         validation: [param("googleEmail").isString()],
     },
     {
-        method: "delete",
+        method: "post",
         route: "/user/:googleEmail/location",
         action: controller.removeLocation,
         validation: [
