@@ -201,10 +201,6 @@ export class userController {
                     return res.status(400).send({ error: "Google ID is required." });
                 }
 
-                if (!location) {
-                    return res.status(400).send({ error: "Location is required for removal." });
-                }
-
                 const db = clinet.db("User");
 
                 // ✅ Parse `location` if it's a string (handling form-data issue)
