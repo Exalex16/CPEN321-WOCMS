@@ -7,7 +7,7 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import java.time.Instant
 import com.bumptech.glide.Glide
-
+import com.google.android.gms.maps.model.Marker
 
 
 class GalleryAdapter(
@@ -62,7 +62,15 @@ data class Position(
 )
 
 data class PutLocationResponse(
-    val message: String
+    val message: String,
+    val addedLocation: AddedLocationData
+)
+
+data class AddedLocationData(
+    val position: Location,
+    val title: String,
+    val location: String,
+    val icon: String
 )
 
 //PhotoResponse
@@ -73,7 +81,8 @@ data class Metadata(
 
 data class PhotoInstance(
     val imageURL:  String,
-    val time: Instant
+    val time: Instant,
+    val fileName: String
 )
 
 data class UserPostRequest(
@@ -108,7 +117,12 @@ data class MarkerInstance(
     val title: String,
     val location: String,
     val color: String,
-    val photoAtCurrentMarker: ArrayList<PhotoInstance>
+    val photoAtCurrentMarker: ArrayList<PhotoInstance>,
+    var drawnMarker: Marker? = null
+)
+
+data class DeleteResponse(
+    val message: String
 )
 
 

@@ -60,6 +60,21 @@
         android:layout_gravity="bottom|end"
         />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/deleteMarker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="200dp"
+        android:layout_marginEnd="10dp"
+        android:visibility="gone"
+        app:srcCompat="@drawable/delete_marker"
+        android:contentDescription="@string/deletemarker"
+        app:tint = "@null"
+        app:maxImageSize="50dp"
+        app:backgroundTint="@color/gray"
+        android:layout_gravity="bottom|end"
+        />
+
     <FrameLayout
         android:id="@+id/galleryContainer"
         android:layout_width="match_parent"

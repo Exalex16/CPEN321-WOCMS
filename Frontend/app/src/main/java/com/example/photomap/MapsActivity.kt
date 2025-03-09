@@ -1,5 +1,4 @@
 package com.example.photomap
-
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Resources
@@ -49,6 +48,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fabActions: FloatingActionButton
+    private lateinit var fabDeleteMarker: FloatingActionButton
     private lateinit var galleryContainer: FrameLayout
     private lateinit var noImagesText: TextView
     private lateinit var imageGalleryRecycler: RecyclerView
@@ -74,6 +74,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         fabActions = findViewById(R.id.fab_actions)
         fabActions.visibility = View.GONE
+
+        fabDeleteMarker = findViewById(R.id.deleteMarker)
+        fabDeleteMarker.visibility = View.GONE
 
         // Recommendation button
         val fabRecommendation: FloatingActionButton = findViewById(R.id.recommendation)
@@ -219,13 +222,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Load all markers fetched from backend
         for (marker in mapContent.markerList) {
             val position = LatLng(marker.lat, marker.lng)
-            Log.d("MapsActivity", "Adding marker: $marker")
-            mMap.addMarker(
+            //Log.d("MapsActivity", "Adding marker: $marker")
+            val drawnMarker = mMap.addMarker(
                 MarkerOptions()
                     .position(position)
                     .title(marker.title)
                     .icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor(marker.color)))
             )
+
+            //Remember when first creating the marker, add the tag to it!!!!!
+            drawnMarker?.tag = marker.color
+            marker.drawnMarker = drawnMarker
         }
 
         // Optionally, adjust the camera to the first marker
@@ -254,6 +261,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
             // Views: Upload off, Gallery Off
             fabActions.visibility = View.GONE
+            fabDeleteMarker.visibility = View.GONE
             hideGallery()
 
             // Build and display the AlertDialog
@@ -298,7 +306,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         title = markerTitle,
                         color = selectedColor,
                         location = cityName,
-                        photoAtCurrentMarker = arrayListOf()
+                        photoAtCurrentMarker = arrayListOf(),
+                        drawnMarker = marker
                     )
 
                     sendMarkerUpdate(getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", "")?: "anonymous@example.com", currentMarker!!)
@@ -321,7 +330,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val lat = marker.position.latitude
             val lng = marker.position.longitude
             val markerTitle = marker.title ?: "Untitled Marker"
-            val markerColor = marker.tag ?: "red"
+            val markerColor = marker.tag ?: "unknown Color"
 
             // Obtain location string
             val geocoder = Geocoder(this, Locale.getDefault())
@@ -347,9 +356,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
             val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
 
-            matchedMarker?.let {
-                Log.d("MapsActivity", "Photos at current marker: ${it.photoAtCurrentMarker}")
-            } ?: Log.d("MapsActivity", "No matching marker found for title: ${currentMarker!!.title}")
+            //set currMarker to point to the correct googlemapmarker.
+            currentMarker?.drawnMarker = marker
 
             matchedMarker?.let { markerInstance ->
                 val photos = markerInstance.photoAtCurrentMarker
@@ -360,12 +368,64 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
             Log.d("MapsActivity", "Marker data: $currentMarker")
             fabActions.visibility = View.VISIBLE
+            fabDeleteMarker.visibility = View.VISIBLE
             false  // Return false to allow default behavior (e.g., info window display)
         }
 
         fabActions.setOnClickListener {
             showUploadBottomSheet()
             Toast.makeText(this, "FAB clicked", Toast.LENGTH_SHORT).show()
+        }
+
+        fabDeleteMarker.setOnClickListener {
+            deleteMarker()
+            Toast.makeText(this, "Delete marker clicked", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun deleteMarker() {
+        lifecycleScope.launch {
+            try {
+                // Build the location JSON and convert it to RequestBody
+                val locationJson = JSONObject().apply {
+                    put("location", JSONObject().apply {
+                        put("position", JSONObject().apply {
+                            put("lat", currentMarker?.lat)
+                            put("lng", currentMarker?.lng)
+                        })
+                        put("title", currentMarker?.title)
+                        put("location", currentMarker?.location)
+                        put("icon", currentMarker?.color)
+                    })
+                }.toString()
+
+                Log.d("MapsActivity", "currLat: ${currentMarker?.lat}, currLng: ${currentMarker?.lng}, currTitle: ${currentMarker?.title}, currColor: ${currentMarker?.color}")
+                val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
+
+                // Retrieve user email from SharedPreferences
+                val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
+                val userEmail = prefs.getString("user_email", null) ?: "anonymous@example.com"
+
+                Log.d("MapsActivity", "User email: $userEmail")
+
+                // Call the deleteMarker endpoint, appending the email to the URL path
+                val response = RetrofitClient.api.deleteMarker(userEmail, locationBody)
+                if (response.isSuccessful) {
+                    // Remove the marker from the list and update UI
+                    Log.d("MapsActivity", "Marker deleted successfully")
+                    currentMarker?.drawnMarker?.remove()
+                    mapContent.markerList.remove(currentMarker)
+                    Toast.makeText(this@MapsActivity, "Marker deleted successfully", Toast.LENGTH_SHORT).show()
+                } else {
+                    // Handle error response
+                    val errorMsg = response.errorBody()?.string()
+                    Log.e("MapsActivity", "Failed to delete marker: $errorMsg")
+                    Toast.makeText(this@MapsActivity, "Failed to delete marker: $errorMsg", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this@MapsActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -481,10 +541,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     Toast.makeText(this@MapsActivity, "Upload successful!", Toast.LENGTH_SHORT).show()
                     val uploadData = response.body()
 
+                    Log.d("MapsActivity", "Upload filename: ${uploadData?.fileName}")
+
                     val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
                     matchedMarker?.photoAtCurrentMarker?.add(PhotoInstance(
                         imageURL = uploadData?.presignedUrl?: "no url available.",
-                        time = Instant.now()
+                        time = Instant.now(),
+                        fileName = uploadData?.fileName?: "no file name available."
                     ))
 
                     Log.d("MapsActivity", "Upload response: $uploadData")
@@ -549,16 +612,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         })
                     }.toString()
 
+                Log.d("MapsActivity", "Marker update JSON: $locationJson")
+
                 // Convert to Json Request Body
                 val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
 
-                Log.d("MapsActivity", "Marker update request: $locationBody")
-
                 val response = RetrofitClient.api.putLocation(email, locationBody)
 
-                val message = response.message
+                if (response.isSuccessful) {
+                    val responseBody = response.body()
 
-                Log.d("MapsActivity", "Marker update response: $message")
+                    val message = responseBody?.message ?: "No message"
+                    val addedLocation = responseBody?.addedLocation
+
+                    Log.d("MapsActivity", "Marker update response: $message")
+                    addedLocation?.let {
+                        Log.d("MapsActivity", "Triggered here")
+                        Log.d("MapsActivity", "Added Location: ${it.title}, ${it.position.lat}, ${it.position.lng}")
+                        // Update UI or map marker here
+                    }
+                } else {
+                    Log.e("MapsActivity", "Failed to update marker: ${response.errorBody()?.string()}")
+                }
+
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("MapsActivity", "Network request failed.", e)

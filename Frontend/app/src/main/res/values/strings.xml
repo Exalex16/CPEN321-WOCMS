@@ -15,5 +15,6 @@
     </string-array>
     <string name="title_activity_gallery">GalleryActivity</string>
     <string name="recommendation">recommendation</string>
+    <string name="deletemarker">deleteMarker</string>
 
 </resources>
