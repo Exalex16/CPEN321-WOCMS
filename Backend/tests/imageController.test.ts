@@ -44,7 +44,7 @@ describe("API Route Testing (No Direct MongoDB Connection)", () => {
             const config: AxiosRequestConfig = {
                 timeout: 5000, // ✅ Fail fast if stuck
                 responseType: "json",
-                httpsAgent: new https.Agent({ keepAlive: false }) // ✅ Force close connection
+                // httpsAgent: new https.Agent({ keepAlive: false }) // ✅ Force close connection
             };
     
             response = await axios.get(`${baseURL}/metadata/exalex16@gmail.com-2025-03-07T03-30-05.309Z.jpg`, config);
