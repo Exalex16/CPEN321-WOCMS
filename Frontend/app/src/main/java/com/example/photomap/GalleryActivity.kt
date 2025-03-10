@@ -42,6 +42,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
@@ -49,6 +50,7 @@ import androidx.compose.ui.Alignment
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import coil.compose.AsyncImage
 
 import kotlinx.coroutines.launch
@@ -82,14 +84,14 @@ class GalleryActivity : ComponentActivity() {
 
     @Composable
     fun GalleryScreen() {
-        val imageGroups: MutableMap<String, MutableList<String>> = mutableMapOf()
+        val imageGroups: MutableMap<MarkerInstance, MutableList<String>> = mutableMapOf()
         for(i in 0 until MainActivity.mapContent.markerList.size){
             if(MainActivity.mapContent.markerList[i].photoAtCurrentMarker.size != 0){
                 val imageArr: MutableList<String> = mutableListOf()
                 for (j in 0 until MainActivity.mapContent.markerList[i].photoAtCurrentMarker.size){
                     imageArr.add(MainActivity.mapContent.markerList[i].photoAtCurrentMarker[j].imageURL)
                 }
-                imageGroups[MainActivity.mapContent.markerList[i].title] = imageArr
+                imageGroups[MainActivity.mapContent.markerList[i]] = imageArr
             }
         }
 
@@ -102,25 +104,38 @@ class GalleryActivity : ComponentActivity() {
 
 
     @Composable
-    fun Gallery(imageGroups: Map<String, List<String>>) {
+    fun Gallery(imageGroups: Map<MarkerInstance, List<String>>) {
         val screenWidth = LocalConfiguration.current.screenWidthDp.dp
         val imageSize = screenWidth / 3
 
 
         var selectedImageIndex by remember { mutableStateOf<Int?>(null) }
-        var selectedImages by remember { mutableStateOf<List<String>>(emptyList()) }
+        var selectedImages by remember { mutableStateOf<List<Pair<MarkerInstance,String>>>(emptyList()) }
+        var selectedMarker by remember { mutableStateOf<List<Pair<MarkerInstance,String>>>(emptyList()) }
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
 
             item {
                 Spacer(modifier = Modifier.height(40.dp))
             }
-            val allImages = imageGroups.values.flatten()
+
+            val allImages: MutableList<Pair<MarkerInstance, String>> = mutableListOf()
+
+            //val allImages = imageGroups.values.flatten()
+            for((key, value) in imageGroups){
+                for(item in value){
+                    allImages.add(Pair(key, item))
+                }
+            }
+
+
+
+
             Log.d("GalleryActivity1",allImages.toString())
             imageGroups.forEach { (category, imageUrls) ->
                 item {
                     Text(
-                        text = category,
+                        text = category.title,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
@@ -143,7 +158,7 @@ class GalleryActivity : ComponentActivity() {
                                     .height(imageSize)
                                     .padding(2.dp)
                                     .clickable {
-                                        selectedImageIndex = allImages.indexOf(imageUrl) // ✅ Get index from full list
+                                        selectedImageIndex = allImages.indexOfFirst {it.second == imageUrl} // ✅ Get index from full list
                                         selectedImages = allImages // ✅ Store all images, not just row
                                         Log.d("Gallery", "Clicked Image: $imageUrl")
                                         Log.d("Gallery", "All Images: $allImages")
@@ -176,19 +191,19 @@ class GalleryActivity : ComponentActivity() {
 
 
     @Composable
-    fun FullScreenImageViewer(images: List<String>, startIndex: Int, onDismiss: () -> Unit) {
+    fun FullScreenImageViewer(images: List<Pair<MarkerInstance,String>>, startIndex: Int, onDismiss: () -> Unit) {
         val pagerState = rememberPagerState( // ✅ Move pageCount inside `rememberPagerState`
             initialPage = startIndex,
             pageCount = { images.size } // ✅ Correct way in newer versions
         )
         val coroutineScope = rememberCoroutineScope()
-
+        val spacerHeight = LocalConfiguration.current.screenHeightDp.dp * 0.2f
         Log.d("Gallery", "Opening Full-Screen Viewer at Index: $startIndex")
 
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.9f))
+                .background(Color.Black.copy(alpha = 1f))
                 .pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) },
             color = Color.Transparent
         ) {
@@ -196,18 +211,85 @@ class GalleryActivity : ComponentActivity() {
                 state = pagerState, // ✅ Uses state that includes page count
                 modifier = Modifier.fillMaxSize()
             ) { page ->
-                Box(
+
+
+                Column(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Spacer(modifier = Modifier.height(spacerHeight))
+                    // The Image (Centered)
                     AsyncImage(
-                        model = images[page],
+                        model = images[page].second,
                         contentDescription = "Full-screen image",
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                             // Makes image take most of the space
                     )
+
+                    // Row of Text (Directly Below Image)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Black)
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // First Column (Left Side)
+                        Column(
+                            modifier = Modifier
+                                .weight(4f) // Takes up available space
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                text = "Marker: ${images[page].first.title}",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+
+                            )
+                            Text(
+                                text = "Location: ${images[page].first.location}",
+                                color = Color.Gray,
+                                fontSize = 14.sp
+                            )
+                        }
+
+                        // Second Column (Right Side)
+                        Column(
+                            modifier = Modifier
+                                .weight(1f) // Takes up available space
+                                .padding(8.dp),
+                            horizontalAlignment = Alignment.End // Aligns content to the right
+                        ) {
+                            Button(
+                                onClick = { Log.d("Gallery", "Icon Button Clicked") },
+                                modifier = Modifier.size(64.dp), // Adjust size as needed
+                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                    containerColor = Color.Transparent
+                                )
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.share), // Replace with actual drawable name
+                                    contentDescription = "Button Icon",
+                                    modifier = Modifier.fillMaxSize() // Adjust icon size as needed
+                                )
+                            }
+                        }
+                    }
                 }
+
+
+
+
+
+
+
+
+
             }
+
         }
 
         LaunchedEffect(pagerState.currentPage) {
