@@ -21,6 +21,7 @@ jobs:
         with:
           node-version: 18
           cache: npm
+          cache-dependency-path: Backend/package-lock.json
 
       - name: Install Dependencies
         run: |
