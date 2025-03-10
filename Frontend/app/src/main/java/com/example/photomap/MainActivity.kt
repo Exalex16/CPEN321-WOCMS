@@ -93,9 +93,11 @@ class MainActivity : AppCompatActivity() {
                         val imageObject = photoJsonArr.getJSONObject(i)
                         val imageUrl = imageObject.getString("presignedUrl")
                         val time = Instant.parse(imageObject.getString("timestamp"))
+                        val fileName = imageObject.getString("fileName")
                         val photo = PhotoInstance(
                             imageURL = imageUrl,
-                            time = time
+                            time = time,
+                            fileName = fileName
                         )
 
                         mapContent.imageList.add(photo)

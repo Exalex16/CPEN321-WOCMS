@@ -82,6 +82,9 @@ export class imageController {
                     tags: labels,
                     moderationLabels,
                     location, 
+                    sharedTo: [],  
+                    shared: false, 
+                    sharedBy: null 
                 });
     
                 // Update user database with location history
@@ -98,7 +101,8 @@ export class imageController {
                     fileName: rawFileName,
                     presignedUrl,
                     imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
-                    metadata: { uploadedBy, timestamp,tags: labels, moderationLabels, location},
+                    metadata: { uploadedBy, timestamp,tags: labels, moderationLabels, location, sharedTo: [], shared: false,
+                        sharedBy: null},
                 });
             });
         } catch (error) {
@@ -164,29 +168,35 @@ export class imageController {
         try {
             const { uploaderEmail } = req.params;
             if (!uploaderEmail) {
-                return res.status(400).send({ error: "Uploader email is required" });
+                return res.status(400).send({ error: "Uploader email is required." });
             }
     
             const db = clinet.db("images");
-            const images = await db.collection("metadata").find({ uploadedBy: uploaderEmail }).toArray();
-            
     
-            // Generate presigned URLs for each image
+            // Fetch images that were either uploaded by the user OR shared with them
+            const userImages = await db.collection("metadata").find({
+                $or: [
+                    { uploadedBy: uploaderEmail },  // Images the user uploaded
+                    { sharedTo: uploaderEmail }     // Images shared with the user
+                ]
+            }).toArray();
+    
+            // Generate pre-signed URLs for each image
             const imagesWithPresignedUrls = await Promise.all(
-                images.map(async (image) => {
+                userImages.map(async (image) => {
                     const presignedUrl = await getSignedUrl(
                         s3,
                         new GetObjectCommand({
                             Bucket: "cpen321-photomap-images",
                             Key: `images/${image.fileName}`,
                         }),
-                        { expiresIn: 604800 }
+                        { expiresIn: 604800 } // 7-day expiration
                     );
     
                     return {
                         ...image,
-                        presignedUrl, 
-                        location: image.location, 
+                        presignedUrl, // Include presigned URL
+                        location: image.location, // Ensure location is included
                     };
                 })
             );
@@ -222,35 +232,6 @@ export class imageController {
             }
     
             res.status(200).send({ message: "Image deleted successfully" });
-        } catch (error) {
-            next(error);
-        }
-    }
-
-
-    /**
-     * Share an image by sending an email with the image link.
-     */
-    async shareImage(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { recipientEmail, imageKey, senderEmail } = req.body;
-            if (!recipientEmail || !imageKey || !senderEmail) {
-                return res.status(400).send({ error: "Recipient email, image key, and sender email are required" });
-            }
-    
-            const db = clinet.db("images");
-    
-            // Update the image metadata to include recipient's Gmail
-            const updateResult = await db.collection("metadata").updateOne(
-                { fileName: `${imageKey}` },
-                { $addToSet: { uploadedBy: recipientEmail } } 
-            );
-    
-            if (updateResult.matchedCount === 0) {
-                return res.status(404).send({ error: "Image not found" });
-            }
-    
-            res.status(200).send({ message: "Image shared successfully" });
         } catch (error) {
             next(error);
         }
@@ -347,6 +328,174 @@ export class imageController {
             res.status(200).send({
                 message: `Successfully deleted ${deleteResult.deletedCount} images for user ${userEmail}.`,
             });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Share an image by sending an email with the image link.
+     */
+    async shareImage(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { recipientEmail, imageKey, senderEmail } = req.body;
+            if (!recipientEmail || !imageKey || !senderEmail) {
+                return res.status(400).send({ error: "Recipient email, image key, and sender email are required" });
+            }
+    
+            const db = clinet.db("images");
+    
+            // Find the image
+            const image = await db.collection("metadata").findOne({ fileName: imageKey });
+            if (!image) {
+                return res.status(404).send({ error: "Image not found" });
+            }
+    
+            // Ensure the sender is the owner of the image
+            if (!image.uploadedBy.includes(senderEmail)) {
+                return res.status(403).send({ error: "Only the owner can share this image" });
+            }
+    
+            // Check if the recipient already has the image
+            if (image.sharedTo && image.sharedTo.includes(recipientEmail)) {
+                return res.status(400).send({ error: "Recipient already has access to this image" });
+            }
+    
+            // Update the image metadata
+            const updateResult = await db.collection("metadata").updateOne(
+                { fileName: imageKey },
+                {
+                    $addToSet: { sharedTo: recipientEmail }, // Add recipient to shared list
+                    $set: { shared: true, sharedBy: senderEmail }
+                }
+            );
+    
+            if (updateResult.matchedCount === 0) {
+                return res.status(500).send({ error: "Failed to share image" });
+            }
+    
+            // Check if the recipient already has the location
+            const userDb = clinet.db("User");
+            const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
+    
+            let locationAdded = false;
+            if (image.location) {
+                const alreadyHasLocation = recipient?.locations?.some(
+                    (loc: any) => loc.position.lat === image.location.position.lat && loc.position.lng === image.location.position.lng
+                );
+    
+                if (!alreadyHasLocation) {
+                    await userDb.collection("users").updateOne(
+                        { googleEmail: recipientEmail },
+                        { $addToSet: { locations: image.location } }
+                    );
+                    locationAdded = true;
+                }
+            }
+    
+            res.status(200).send({ 
+                message: "Image shared successfully", 
+                sharedTo: recipientEmail, 
+                locationAdded
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getSharedImages(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { userEmail } = req.params;
+            if (!userEmail) {
+                return res.status(400).send({ error: "User email is required." });
+            }
+    
+            const db = clinet.db("images");
+    
+            // Fetch images that the user shared OR received as a shared image
+            const sharedImages = await db.collection("metadata").find({
+                $or: [
+                    { sharedBy: userEmail }, // Images the user shared
+                    { sharedTo: userEmail }  // Images shared to the user
+                ]
+            }).toArray();
+    
+            // Generate pre-signed URLs for each shared image
+            const sharedImagesWithPresignedUrls = await Promise.all(
+                sharedImages.map(async (image) => {
+                    const presignedUrl = await getSignedUrl(
+                        s3,
+                        new GetObjectCommand({
+                            Bucket: "cpen321-photomap-images",
+                            Key: `images/${image.fileName}`,
+                        }),
+                        { expiresIn: 604800 } // 7-day expiration
+                    );
+    
+                    return {
+                        ...image,
+                        presignedUrl, // Include presigned URL
+                        location: image.location, // Ensure location is included
+                    };
+                })
+            );
+    
+            res.status(200).send({ sharedImages: sharedImagesWithPresignedUrls });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async cancelShare(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { imageKey, senderEmail } = req.body;
+            if (!imageKey || !senderEmail) {
+                return res.status(400).send({ error: "Image key and sender email are required" });
+            }
+    
+            const db = clinet.db("images");
+    
+            // Find the image
+            const image = await db.collection("metadata").findOne({ fileName: imageKey });
+            if (!image) {
+                return res.status(404).send({ error: "Image not found" });
+            }
+    
+            // Ensure only the original sharer can cancel sharing
+            if (image.sharedBy !== senderEmail) {
+                return res.status(403).send({ error: "Only the original sharer can cancel sharing" });
+            }
+    
+            // Store sharedTo users for location cleanup
+            const sharedUsers = image.sharedTo || [];
+    
+            // Reset the shared attributes
+            const updateResult = await db.collection("metadata").updateOne(
+                { fileName: imageKey },
+                { $set: { shared: false, sharedBy: null, sharedTo: [] } }
+            );
+    
+            if (updateResult.modifiedCount === 0) {
+                return res.status(500).send({ error: "Failed to cancel sharing" });
+            }
+    
+            // Remove shared location from users if they have no other shared images at that location
+            const userDb = clinet.db("User");
+            for (const userEmail of sharedUsers) {
+                const userImages = await db.collection("metadata").find({
+                    sharedTo: userEmail,
+                    "location.position": image.location.position
+                }).toArray();
+    
+                if (userImages.length === 0) {
+                    await userDb.collection("users").updateOne(
+                        { googleEmail: userEmail },
+                        { $pull: { locations: image.location } }
+                    );
+                }
+            }
+    
+            res.status(200).send({ message: "Sharing canceled successfully", imageKey });
         } catch (error) {
             next(error);
         }

@@ -6,7 +6,9 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 
 // ✅ Use Retrofit annotations
 import retrofit2.http.Multipart
@@ -23,7 +25,10 @@ interface ApiService {
         @Part image: MultipartBody.Part,
         @Part("description") description: RequestBody,
         @Part("uploadedBy") uploader: RequestBody,
-        @Part("location") location: RequestBody
+        @Part("location") location: RequestBody,
+        @Part("sharedTo") sharedTo: RequestBody,
+        @Part("shared") shared: RequestBody,
+        @Part("sharedBy") sharedBy: RequestBody
     ): Response<UploadResponse>
 
     @POST("user")
@@ -41,8 +46,16 @@ interface ApiService {
     ): Response<PopularLocationResponse>
 
     @PUT("user/{email}")
-    suspend fun putLocation(@Path("email") email: String,
-                            @Body location: RequestBody): PutLocationResponse
+    suspend fun putLocation(
+        @Path("email") email: String,
+        @Body location: RequestBody
+    ): Response<PutLocationResponse>
+
+    @POST("user/{email}/location")
+    suspend fun deleteMarker(
+        @Path("email") userEmail: String,
+        @Body location: RequestBody
+    ): Response<DeleteResponse>
 }
 
 interface GooglePlacesApi {
