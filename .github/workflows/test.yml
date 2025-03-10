@@ -1,13 +1,13 @@
 name: CI - Run Tests
 
 on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
-
+    push:
+      paths:
+        - 'Backend/**'  # Only trigger deployment if changes occur in the Backend folder
+        
+      branches:
+        - main
+        
 jobs:
   test:
     runs-on: ubuntu-latest
