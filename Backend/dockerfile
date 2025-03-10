@@ -12,5 +12,5 @@ COPY . .
 
 EXPOSE $PORT
 
-
+ENTRYPOINT ["sh", "-c", "sleep 5 && exec \"$0\" \"$@\""]  
 CMD ["npm", "start"]

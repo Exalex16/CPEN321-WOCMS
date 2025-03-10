@@ -1,13 +1,16 @@
-console.log("🚀 Jest is starting..."); // ✅ Debug log at the start
-
 import request from "supertest";
 import { app } from "../index";  
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import https from "https";
+import "../controllers/imageController";
+import "../routes/imageRoutes";
+import "../controllers/mapController";
+import "../routes/mapRoutes";
+import "../controllers/userController";
+import "../routes/userRoutes";
+import { imageController } from '../controllers/imageController';
 
 jest.setTimeout(10000);
-
-// console.log("✅ Jest loaded the dependencies..."); // ✅ Check if Jest even reaches here
 
 describe("API Route Testing (No Direct MongoDB Connection)", () => {
     let uploadedFileName = "";
@@ -35,6 +38,7 @@ describe("API Route Testing (No Direct MongoDB Connection)", () => {
 
     //     uploadedFileName = response.body.fileName;
     // });
+    
 
     test("✅ Should get uploaded image metadata from live API", async () => {
         console.log("🔹 Fetching image metadata from API...");
@@ -52,6 +56,27 @@ describe("API Route Testing (No Direct MongoDB Connection)", () => {
             // console.log("✅ Metadata response:", response.status, response.data);
             expect(response.status).toBe(200);
             expect(response.data.fileName).toBe("exalex16@gmail.com-2025-03-07T03-30-05.309Z.jpg");
+        } catch (error) {
+            console.error("❌ API Request Failed:", error);
+            throw error;
+        }
+    });
+
+    test("✅ Should fetch images uploaded by a user", async () => {
+        console.log("🔹 Fetching images uploaded by a user...");
+    
+        let response: AxiosResponse;
+        try {
+            const config: AxiosRequestConfig = {
+                timeout: 5000,
+                responseType: "json",
+                httpsAgent: new https.Agent({ keepAlive: false })
+            };
+    
+            response = await axios.get("https://wocmpphotomap.com/images/uploader/exalex16@gmail.com", config);
+    
+            expect(response.status).toBe(200);
+            expect(response.data.images.length).toBeGreaterThan(0);
         } catch (error) {
             console.error("❌ API Request Failed:", error);
             throw error;
