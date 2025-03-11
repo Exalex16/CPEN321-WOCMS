@@ -9,6 +9,7 @@ const BASE_URL = "https://wocmpphotomap.com";
 const TEST_IMAGE = path.join(__dirname, "../test1.png");
 const TEST_USER = "exalex16@gmail.com";
 let uploadedFileName = "";  // ✅ Store the uploaded file name dynamically
+const EXISTING_IMAGE = "exalex16@gmail.com-2025-03-07T03-30-05.309Z.jpg";
 
 const TEST_LOCATION = JSON.stringify({
     position: {
@@ -137,4 +138,55 @@ describe("Unmocked API Tests - imageController", () => {
     //     expect(res.data.message).toBe("Image deleted successfully");
     //     console.log(`🗑️ Deleted file: ${uploadedFileName}`);
     // });
+
+    // test("❌ 404 - Delete Non-Existing Image", async () => {
+    //     try {
+    //         await axios.delete(`${BASE_URL}/image/non-existing.jpg`);
+    //     } catch (err: any) {
+    //         expect(err.response.status).toBe(404);
+    //         expect(err.response.data.error).toBe("Metadata not found in MongoDB");
+    //     }
+    // });
+
+    // test("✅ Get All Images", async () => {
+    //     const res = await axios.get(`${BASE_URL}/images`);
+    //     expect(res.status).toBe(200);
+    //     expect(Array.isArray(res.data.images)).toBe(true);
+    // });
+
+    test("✅ Update Image Description", async () => {
+        const res = await axios.put(`${BASE_URL}/image/update-description`, {
+            fileName: EXISTING_IMAGE,
+            newDescription: "Updated test description",
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.data.message).toBe("Image description updated successfully");
+        expect(res.data.fileName).toBe(EXISTING_IMAGE);
+        expect(res.data.newDescription).toBe("Updated test description");
+    });
+
+    test("❌ 404 - Update Description for Non-Existing Image", async () => {
+        try {
+            await axios.put(`${BASE_URL}/image/update-description`, {
+                fileName: "non-existing.jpg",
+                newDescription: "This should fail",
+            });
+        } catch (err: any) {
+            expect(err.response.status).toBe(404);
+            expect(err.response.data.error).toBe("Image not found");
+        }
+    });
+
+    test("❌ 500 - Update Fails (No Changes Made)", async () => {
+        try {
+            await axios.put(`${BASE_URL}/image/update-description`, {
+                fileName: EXISTING_IMAGE,
+                newDescription: "Updated test description",  // ❌ Same description as before
+            });
+        } catch (err: any) {
+            expect(err.response.status).toBe(500);
+            expect(err.response.data.error).toBe("Failed to update image description.");
+        }
+    });
 });

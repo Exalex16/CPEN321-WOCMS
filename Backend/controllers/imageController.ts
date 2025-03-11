@@ -45,47 +45,64 @@ export class imageController {
                 }
                 
                 // Upload image to S3
-                const s3Params = {
-                    Bucket: "cpen321-photomap-images",
-                    Key: `images/${rawFileName}`,
-                    Body: processedImage.buffer, 
-                    ContentType: processedImage.mimeType, 
-                    Metadata: { "x-amz-meta-uploaded-by": uploadedBy, 
-                                "x-amz-meta-timestamp": timestamp,
-                            },
-                };
-    
-                await s3.send(new PutObjectCommand(s3Params));
-
-                // Send image to AWS Rekognition
-                const labels = await analyzeImageLabels("cpen321-photomap-images", `images/${rawFileName}`);
-                const moderationLabels = await analyzeImageModeration("cpen321-photomap-images", `images/${rawFileName}`);
-
-                // Generate a presigned URL valid for 1 hour
-                const presignedUrl = await getSignedUrl(
-                    s3,
-                    new GetObjectCommand({
+                try {
+                    const s3Params = {
                         Bucket: "cpen321-photomap-images",
                         Key: `images/${rawFileName}`,
-                    }),
-                    { expiresIn: 604800 }
-                );
+                        Body: processedImage.buffer,
+                        ContentType: processedImage.mimeType,
+                        Metadata: { "x-amz-meta-uploaded-by": uploadedBy, "x-amz-meta-timestamp": timestamp },
+                    };
+                    await s3.send(new PutObjectCommand(s3Params));
+                } catch (s3Error) {
+                    return res.status(500).send({ error: "Failed to upload image to S3." });
+                }
+    
+
+                // Send image to AWS Rekognition
+                // const labels = await analyzeImageLabels("cpen321-photomap-images", `images/${rawFileName}`);
+                // const moderationLabels = await analyzeImageModeration("cpen321-photomap-images", `images/${rawFileName}`);
+                
+                let labels;
+                let moderationLabels;
+                try {
+                    labels = await analyzeImageLabels("cpen321-photomap-images", `images/${rawFileName}`);
+                    moderationLabels = await analyzeImageModeration("cpen321-photomap-images", `images/${rawFileName}`);
+                } catch (rekognitionError) {
+                    return res.status(500).send({ error: "Image analysis failed." });
+                }
+
+                // Generate a presigned URL valid for 1 hour
+                let presignedUrl;
+                try {
+                    presignedUrl = await getSignedUrl(
+                        s3,
+                        new GetObjectCommand({ Bucket: "cpen321-photomap-images", Key: `images/${rawFileName}` }),
+                        { expiresIn: 604800 }
+                    );
+                } catch (s3Error) {
+                    return res.status(500).send({ error: "Failed to generate presigned URL." });
+                }
     
                 // Store metadata in MongoDB 
-                const db = clinet.db("images");
-                await db.collection("metadata").insertOne({
-                    fileName: rawFileName,
-                    imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
-                    description: req.body.description || "No description provided",
-                    uploadedBy: [uploadedBy],
-                    timestamp,
-                    tags: labels,
-                    moderationLabels,
-                    location, 
-                    sharedTo: [],  
-                    shared: false, 
-                    sharedBy: null 
-                });
+                try {
+                    const db = clinet.db("images");
+                    await db.collection("metadata").insertOne({
+                        fileName: rawFileName,
+                        imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
+                        description: req.body.description || "No description provided",
+                        uploadedBy: [uploadedBy],
+                        timestamp,
+                        tags: labels,
+                        moderationLabels,
+                        location,
+                        sharedTo: [],
+                        shared: false,
+                        sharedBy: null
+                    });
+                } catch (dbError) {
+                    return res.status(500).send({ error: "Failed to store metadata in MongoDB." });
+                }
     
                 // Update user database with location history
                 const userDb = clinet.db("User");
@@ -213,9 +230,6 @@ export class imageController {
     async deleteImage(req: Request, res: Response, next: NextFunction) {
         try {
             const { key } = req.params;
-            if (!key) {
-                return res.status(400).send({ error: "Image key is required" });
-            }
     
             const fileKey = `images/${key}`;
     
@@ -289,10 +303,6 @@ export class imageController {
                 { fileName },
                 { $set: { description: newDescription } }
             );
-    
-            if (updateResult.modifiedCount === 0) {
-                return res.status(500).send({ error: "Failed to update image description." });
-            }
     
             res.status(200).send({ message: "Image description updated successfully", fileName, newDescription });
         } catch (error) {
