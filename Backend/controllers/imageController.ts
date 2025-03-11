@@ -234,15 +234,22 @@ export class imageController {
             const fileKey = `images/${key}`;
     
             // Delete from S3
-            const s3Params = { Bucket: "cpen321-photomap-images", Key: fileKey };
-            await s3.send(new DeleteObjectCommand(s3Params));
+            try {
+                await s3.send(new DeleteObjectCommand({ Bucket: "cpen321-photomap-images", Key: fileKey }));
+            } catch (s3Error) {
+                return res.status(500).send({ error: "Failed to delete image from S3." });
+            }
     
             // Delete metadata from MongoDB
-            const db = clinet.db("images");
-            const deleteResult = await db.collection("metadata").deleteOne({ fileName: key });
-    
-            if (deleteResult.deletedCount === 0) {
-                return res.status(404).send({ error: "Metadata not found in MongoDB" });
+            try {
+                const db = clinet.db("images");
+                const deleteResult = await db.collection("metadata").deleteOne({ fileName: key });
+
+                if (deleteResult.deletedCount === 0) {
+                    return res.status(404).send({ error: "Metadata not found in MongoDB" });
+                }
+            } catch (dbError) {
+                return res.status(500).send({ error: "Failed to delete metadata from MongoDB." });
             }
     
             res.status(200).send({ message: "Image deleted successfully" });
@@ -289,20 +296,25 @@ export class imageController {
             if (!fileName || !newDescription) {
                 return res.status(400).send({ error: "Both fileName and newDescription are required." });
             }
-    
-            const db = clinet.db("images");
-    
-            // Find the image
-            const image = await db.collection("metadata").findOne({ fileName });
-            if (!image) {
-                return res.status(404).send({ error: "Image not found" });
+            
+            try {
+                const db = clinet.db("images");
+        
+                // Find the image
+                const image = await db.collection("metadata").findOne({ fileName });
+                if (!image) {
+                    return res.status(404).send({ error: "Image not found" });
+                }
+        
+                // Update the description field
+                const updateResult = await db.collection("metadata").updateOne(
+                    { fileName },
+                    { $set: { description: newDescription } }
+                );
+
+            } catch (dbError) {
+                return res.status(500).send({ error: "Database operation failed." });
             }
-    
-            // Update the description field
-            const updateResult = await db.collection("metadata").updateOne(
-                { fileName },
-                { $set: { description: newDescription } }
-            );
     
             res.status(200).send({ message: "Image description updated successfully", fileName, newDescription });
         } catch (error) {
