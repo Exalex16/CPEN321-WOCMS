@@ -117,10 +117,7 @@ export class imageController {
     async getImage(req: Request, res: Response, next: NextFunction) {
         try {
             const { key } = req.params;
-            if (!key) {
-                return res.status(400).send({ error: "Image key is required" });
-            }
-    
+            
             const db = clinet.db("images");
             const image = await db.collection("metadata").findOne({ fileName: key });
     
@@ -167,11 +164,14 @@ export class imageController {
     async getImagesByUploader(req: Request, res: Response, next: NextFunction) {
         try {
             const { uploaderEmail } = req.params;
-            if (!uploaderEmail) {
-                return res.status(400).send({ error: "Uploader email is required." });
-            }
-    
+        
             const db = clinet.db("images");
+            const userDb = clinet.db("User");
+
+            const userExists = await userDb.collection("users").findOne({ googleEmail: uploaderEmail });
+            if (!userExists) {
+                return res.status(404).send({ error: "User not found" });
+            }
     
             // Fetch images that were either uploaded by the user OR shared with them
             const userImages = await db.collection("metadata").find({
