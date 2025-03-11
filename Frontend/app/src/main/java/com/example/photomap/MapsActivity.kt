@@ -353,11 +353,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 location = cityName,
                 photoAtCurrentMarker = arrayListOf()
             )
+            Log.d("MapsActivity", "current Marker data before match: $currentMarker")
 
-            val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
+            val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title && it.lat == currentMarker!!.lat && it.lng == currentMarker!!.lng}
+            currentMarker = matchedMarker
 
-            //set currMarker to point to the correct googlemapmarker.
-            currentMarker?.drawnMarker = marker
+            Log.d("MapsActivity", "current Marker data after match: $currentMarker")
 
             matchedMarker?.let { markerInstance ->
                 val photos = markerInstance.photoAtCurrentMarker
@@ -378,8 +379,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         fabDeleteMarker.setOnClickListener {
-            deleteMarker()
-            Toast.makeText(this, "Delete marker clicked", Toast.LENGTH_SHORT).show()
+
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Warning")
+            builder.setMessage("If you delete this marker, all images tagged at this marker will also be deleted. Do you wish to proceed?")
+            // Set the positive button action: user confirms deletion
+            builder.setPositiveButton("Yes") { dialog, _ ->
+                deleteMarker()  // Execute the deletion function
+                Toast.makeText(this, "Marker deleted", Toast.LENGTH_SHORT).show()
+                Log.d("MapsActivity", "Alert dialog confirm: marker deleted.")
+            }
+
+            // Set the negative button action: user cancels deletion
+            builder.setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()  // Simply dismiss the dialog
+                Toast.makeText(this, "Deletion cancelled", Toast.LENGTH_SHORT).show()
+            }
+
+            // Build and show the dialog
+            val alertDialog = builder.create()
+            alertDialog.show()
         }
     }
 
@@ -405,16 +424,35 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 // Retrieve user email from SharedPreferences
                 val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
                 val userEmail = prefs.getString("user_email", null) ?: "anonymous@example.com"
-
                 Log.d("MapsActivity", "User email: $userEmail")
 
-                // Call the deleteMarker endpoint, appending the email to the URL path
                 val response = RetrofitClient.api.deleteMarker(userEmail, locationBody)
                 if (response.isSuccessful) {
-                    // Remove the marker from the list and update UI
-                    Log.d("MapsActivity", "Marker deleted successfully")
-                    currentMarker?.drawnMarker?.remove()
+                    Log.d("MapsActivity", "Marker delete successful from DB. Now deleting images.")
+                    Log.d("MapsActivity", "Photos at current marker before: ${currentMarker?.photoAtCurrentMarker}")
+
+
+                    currentMarker?.photoAtCurrentMarker?.let { photos ->
+                        // Delete each photo in the list
+                        for (photo in photos) {
+                            try {
+                                deleteImage(photo.fileName)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                        // Clear the list after all deletions
+                        photos.clear()
+                    }
+
+                    Log.d("MapsActivity", "Photos at current marker after: ${currentMarker?.photoAtCurrentMarker}")
+
+                    currentMarker?.drawnMarker?.remove() // Remove the marker from the map
+
+                    Log.d("MapsActivity", "Marker list before: ${mapContent.markerList}")
                     mapContent.markerList.remove(currentMarker)
+                    hideGallery()
+                    Log.d("MapsActivity", "Marker list after: ${mapContent.markerList}")
                     Toast.makeText(this@MapsActivity, "Marker deleted successfully", Toast.LENGTH_SHORT).show()
                 } else {
                     // Handle error response
@@ -428,6 +466,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
+
+    private fun deleteImage(fileName: String) {
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.api.deleteImage(fileName)
+                if (response.isSuccessful) {
+                    Log.d("MapsActivity", "Image $fileName deleted successfully")
+                } else {
+                    // Handle error response
+                    val errorMsg = response.errorBody()?.string()
+                    Log.e("MapsActivity", "Failed to delete image: $fileName, Error: $errorMsg")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this@MapsActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
 
     private fun showGallery(imageUrls: List<PhotoInstance>) {
         if (imageUrls.isEmpty()) {
@@ -543,12 +600,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     Log.d("MapsActivity", "Upload filename: ${uploadData?.fileName}")
 
-                    val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
-                    matchedMarker?.photoAtCurrentMarker?.add(PhotoInstance(
+                    //val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
+
+                    currentMarker?.photoAtCurrentMarker?.add(PhotoInstance(
                         imageURL = uploadData?.presignedUrl?: "no url available.",
                         time = Instant.now(),
                         fileName = uploadData?.fileName?: "no file name available."
                     ))
+
+                    //refresh, update view
+                    currentMarker?.let { markerInstance ->
+                        val photos = markerInstance.photoAtCurrentMarker
+                        showGallery(photos)
+                    } ?: run {
+                        hideGallery()
+                    }
 
                     Log.d("MapsActivity", "Upload response: $uploadData")
 

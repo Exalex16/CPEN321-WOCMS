@@ -55,7 +55,12 @@ interface ApiService {
     suspend fun deleteMarker(
         @Path("email") userEmail: String,
         @Body location: RequestBody
-    ): Response<DeleteResponse>
+    ): Response<DeleteMarkerResponse>
+
+    @DELETE("image/{fileName}")
+    suspend fun deleteImage(
+        @Path("fileName") fileName: String
+    ): Response<DeleteImageResponse>
 }
 
 interface GooglePlacesApi {

@@ -121,7 +121,11 @@ data class MarkerInstance(
     var drawnMarker: Marker? = null
 )
 
-data class DeleteResponse(
+data class DeleteMarkerResponse(
+    val message: String
+)
+
+data class DeleteImageResponse(
     val message: String
 )
 
