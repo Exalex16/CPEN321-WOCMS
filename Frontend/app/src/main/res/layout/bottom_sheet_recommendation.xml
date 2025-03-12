@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bottomSheetContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Summary Text -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:background="@android:color/transparent"/>
+
+    <TextView
+        android:id="@+id/tvSummary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="8dp"
+        android:text="Summary goes here"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:background="@android:color/transparent"/>
+
+    <!-- RecyclerView for suggested places -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSuggestedPlaces"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
+    <!-- No places message -->
+    <TextView
+        android:id="@+id/tvNoPlacesMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Looks like there is no location near your markers that matches your photo preferences."
+        android:visibility="gone"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:gravity="center_horizontal"
+        android:paddingTop="8dp"/>
+
+</LinearLayout>

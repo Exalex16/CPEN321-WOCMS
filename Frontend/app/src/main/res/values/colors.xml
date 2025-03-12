@@ -3,4 +3,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="gray">#B0B0B0</color>  <!-- Light gray example -->
+    <color name="light_blue">#C5E1E4</color>
+    <color name="light_green">#D5E6CE</color>
 </resources>

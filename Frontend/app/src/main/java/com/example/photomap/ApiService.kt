@@ -55,7 +55,12 @@ interface ApiService {
     suspend fun deleteMarker(
         @Path("email") userEmail: String,
         @Body location: RequestBody
-    ): Response<DeleteResponse>
+    ): Response<DeleteMarkerResponse>
+
+    @DELETE("image/{fileName}")
+    suspend fun deleteImage(
+        @Path("fileName") fileName: String
+    ): Response<DeleteImageResponse>
 }
 
 interface GooglePlacesApi {
@@ -65,5 +70,5 @@ interface GooglePlacesApi {
         @Query("radius") radius: Int,           // in meters
         @Query("keyword") keyword: String,            // e.g., "park"
         @Query("key") apiKey: String
-    ): PlacesResponse  // Define this data class to match the JSON response structure
+    ): Response<PlacesResponse>  // Define this data class to match the JSON response structure
 }
