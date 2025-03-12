@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 import sharp from "sharp";
 import { RekognitionClient, DetectLabelsCommand, DetectModerationLabelsCommand } from "@aws-sdk/client-rekognition";
 
-const rekognition = new RekognitionClient({ region: "us-west-2" });
+export const rekognition = new RekognitionClient({ region: "us-west-2" });
 
 export class imageController {
     
@@ -69,6 +69,7 @@ export class imageController {
                     labels = await analyzeImageLabels("cpen321-photomap-images", `images/${rawFileName}`);
                     moderationLabels = await analyzeImageModeration("cpen321-photomap-images", `images/${rawFileName}`);
                 } catch (rekognitionError) {
+                    console.log("🔴 Image analysis error detected!");
                     return res.status(500).send({ error: "Image analysis failed." });
                 }
 
@@ -80,7 +81,7 @@ export class imageController {
                         new GetObjectCommand({ Bucket: "cpen321-photomap-images", Key: `images/${rawFileName}` }),
                         { expiresIn: 604800 }
                     );
-                } catch (s3Error) {
+                } catch (s3ErrorURL) {
                     return res.status(500).send({ error: "Failed to generate presigned URL." });
                 }
     
@@ -601,7 +602,7 @@ async function processImage(file: Express.Multer.File) {
     };
 }
 
-async function analyzeImageLabels(s3Bucket: string, imageKey: string) {
+export async function analyzeImageLabels(s3Bucket: string, imageKey: string) {
     try {
         const labelCommand = new DetectLabelsCommand({
             Image: { S3Object: { Bucket: s3Bucket, Name: imageKey } },
@@ -610,18 +611,18 @@ async function analyzeImageLabels(s3Bucket: string, imageKey: string) {
         });
 
         const labelResponse = await rekognition.send(labelCommand);
-        console.log("🔹 Rekognition Labels Response:", JSON.stringify(labelResponse, null, 2));
+        // console.log("🔹 Rekognition Labels Response:", JSON.stringify(labelResponse, null, 2));
 
         const labels = labelResponse.Labels?.map(label => label.Name) || [];
 
         return labels;
     } catch (error) {
         console.error("Rekognition Label Detection Error:", error);
-        return [];
+        throw new Error("Image analysis failed");
     }
 }
 
-async function analyzeImageModeration(s3Bucket: string, imageKey: string) {
+export async function analyzeImageModeration(s3Bucket: string, imageKey: string) {
     try {
         const moderationCommand = new DetectModerationLabelsCommand({
             Image: { S3Object: { Bucket: s3Bucket, Name: imageKey } },
@@ -634,6 +635,6 @@ async function analyzeImageModeration(s3Bucket: string, imageKey: string) {
         return moderationLabels;
     } catch (error) {
         console.error("Rekognition Moderation Detection Error:", error);
-        return [];
+        throw new Error("Image analysis failed");
     }
 }
