@@ -46,6 +46,7 @@ import java.util.Locale
 import com.example.photomap.MainActivity.mapContent
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.selects.select
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -54,7 +55,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val TAG: String = "MapsActivity"
     private val PLACE_SEARCH_RADIUS: Int = 10000
 
+    private val addedPlaces = mutableListOf<Place>()
 
+    private lateinit var USER_EMAIL: String
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fabActions: FloatingActionButton
@@ -62,7 +65,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var galleryContainer: FrameLayout
     private lateinit var noImagesText: TextView
     private lateinit var imageGalleryRecycler: RecyclerView
-
 
     private var selectedImageUri: Uri? = null
     private var previewImageView: ImageView? = null
@@ -114,12 +116,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun fetchRecommendation() {
         lifecycleScope.launch {
             try {
-                // Make the network request on the IO thread
-
-                val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
-                val email = prefs.getString("user_email", null) ?: "anonymous@example.com"
-
-                val response = RetrofitClient.api.getPopularLocations(email)
+                val response = RetrofitClient.api.getPopularLocations(USER_EMAIL)
 
                 if (response.isSuccessful && response.body() != null) {
                     val popularLocation = response.body()!!.popularLocation
@@ -134,24 +131,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         val lng = popularLocation.position.lng
                         val tags = popularLocation.tags
 
-                        mMap.addMarker(MarkerOptions().
-                            position(LatLng(lat, lng)).
-                            title("Recommended Location").
-                            icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor("violet"))))
-
-                        mMap.moveCamera(
-                            CameraUpdateFactory.newLatLngZoom(
-                                LatLng(lat, lng),
-                                15f
-                            )
-                        )
-
                         Toast.makeText(this@MapsActivity, "Got recommendation", Toast.LENGTH_SHORT).show()
                         Log.d("MapsActivity", "Got recommendation at ($lat, $lng), with tags: $tags")
 
-                        //Call Places API to get recommendation
-                        val keywordQuery = tags.firstOrNull() ?: ""
-                        fetchNearbyPlaces("$lat,$lng", keywordQuery, lat, lng, tags)
+                        fetchNearbyPlaces("$lat,$lng", lat, lng, tags)
                     }
                 } else {
                     val errorMsg = response.errorBody()?.string()
@@ -169,7 +152,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     // Uses Places API to get nearby places
-    private fun fetchNearbyPlaces(coordinate: String, keyword: String, lat: Double, lng: Double, tags: List<String>) {
+    private fun fetchNearbyPlaces(coordinate: String, lat: Double, lng: Double, tags: List<String>) {
         lifecycleScope.launch {
 
             val finalPlacesList = mutableListOf<Place>()
@@ -206,6 +189,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             // Optionally, deduplicate results based on a unique property such as place id
             var uniquePlaces = finalPlacesList.distinctBy { it.placeId }.take(MAX_REC_PLACES)
 
+            uniquePlaces = uniquePlaces.filterNot { place -> addedPlaces.any { it.placeId == place.placeId } }
+
             Log.d("MapsActivity", "Final places list size: ${uniquePlaces.size}")
 
             showRecommendationBottomSheet(lat, lng, tags, uniquePlaces)
@@ -241,13 +226,63 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             tvNoPlacesMessage.visibility = View.GONE
             rvSuggestedPlaces.visibility = View.VISIBLE
             // Set up the adapter for the list of places
-            val adapter = PlaceAdapter(this, places)
+            val adapter = PlaceAdapter(this, places, { selectedPlace ->
+                addRecommendationMarkerOnMap(selectedPlace)
+                bottomSheetDialog.dismiss() // Close BottomSheet
+            })
             rvSuggestedPlaces.layoutManager = LinearLayoutManager(this)
             rvSuggestedPlaces.adapter = adapter
         }
 
         // Finally, show the BottomSheet
         bottomSheetDialog.show()
+    }
+
+    private fun addRecommendationMarkerOnMap(selectedPlace: Place) {
+
+        val lat = selectedPlace.geometry.location.lat
+        val lng = selectedPlace.geometry.location.lng
+        val latLng = LatLng(lat, lng)
+
+        if (mapContent.markerList.any { it.lat == lat && it.lng == lng }) {
+            Log.d(TAG, "Marker already exists at this location, skipping duplicate.")
+            return
+        }
+
+        val markerTitle = "Popular - " + selectedPlace.name
+        val selectedColor = "azure"
+        val hue = getHueFromColor(selectedColor)
+
+        // Marker attributes: push this information to DB
+        val marker = mMap.addMarker(
+            MarkerOptions()
+                .position(latLng)
+                .title(markerTitle)
+                .icon(BitmapDescriptorFactory.defaultMarker(hue))
+        )
+
+        // Tag marker color for map use
+        marker?.tag = selectedColor
+        val cityName = getCityName(this, lat, lng)
+
+        // Store the marker data
+        currentMarker = MarkerInstance(
+            lat = lat,
+            lng = lng,
+            title = markerTitle,
+            color = selectedColor,
+            location = cityName,
+            photoAtCurrentMarker = arrayListOf(),
+            drawnMarker = marker
+        )
+
+        Log.d(TAG, "Current recommendation marker data: $currentMarker")
+        sendMarkerUpdate(USER_EMAIL, currentMarker!!)
+        mapContent.markerList.add(currentMarker!!)
+        addedPlaces.add(selectedPlace)
+
+        // Move camera to the selected location
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
     }
 
     /**
@@ -260,12 +295,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      * installed Google Play services and returned to the app.
      */
     override fun onMapReady(googleMap: GoogleMap) {
+
+        // Init global fields
         mMap = googleMap
+        USER_EMAIL = getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", null) ?: "anonymous@example.com"
+        Log.d(TAG, "User email fetched on map creation: $USER_EMAIL")
 
         // Load the style from the raw resource folder
         try {
-
-            // Styling for map display
             val success = mMap.setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style)
             )
@@ -289,7 +326,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     .icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor(marker.color)))
             )
 
-            //Remember when first creating the marker, add the tag to it!!!!!
+            //Remember when first creating the marker, add tag to color and ref to google marker.
             drawnMarker?.tag = marker.color
             marker.drawnMarker = drawnMarker
         }
@@ -359,16 +396,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         drawnMarker = marker
                     )
 
-                    sendMarkerUpdate(getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", "")?: "anonymous@example.com", currentMarker!!)
+                    sendMarkerUpdate(USER_EMAIL, currentMarker!!)
                     mapContent.markerList.add(currentMarker!!)
 
 
                     Log.d("MapsActivity", "Marker data: $currentMarker")
-                    for(i in 0 until mapContent.markerList.size){
-                        Log.d("MapsActivity", "Marker data in list: ${mapContent.markerList[i]}")
-                    }
-                    //Log.d("MapsActivity", mapContent.markerList.toString())
-
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -462,8 +494,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
 
                 // Retrieve user email from SharedPreferences
-                val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
-                val userEmail = prefs.getString("user_email", null) ?: "anonymous@example.com"
+                val userEmail = USER_EMAIL
                 Log.d("MapsActivity", "User email: $userEmail")
 
                 val response = RetrofitClient.api.deleteMarker(userEmail, locationBody)
@@ -610,14 +641,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     put("icon", currentMarker?.color ?: "red")
                 }.toString()
                 val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
-
-                val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
-                val userEmail = prefs.getString("user_email", null) // could be null
-                val userEmailReqBody = (userEmail ?: "anonymous@example.com")
-                    .toRequestBody("text/plain".toMediaTypeOrNull())
-
-                Log.d("MapsActivity", "User email: $userEmail")
-
+                val userEmailReqBody = (USER_EMAIL).toRequestBody("text/plain".toMediaTypeOrNull())
                 val sharedToBody = "[]".toRequestBody("application/json".toMediaTypeOrNull())
                 val sharedBody = "false".toRequestBody("text/plain".toMediaTypeOrNull())
                 val sharedByBody = "".toRequestBody("text/plain".toMediaTypeOrNull())
@@ -697,6 +721,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             "yellow" -> BitmapDescriptorFactory.HUE_YELLOW
             "orange" -> BitmapDescriptorFactory.HUE_ORANGE
             "violet" -> BitmapDescriptorFactory.HUE_VIOLET
+            "azure" -> BitmapDescriptorFactory.HUE_AZURE
             else -> BitmapDescriptorFactory.HUE_RED  // Default color if none match
         }
     }
