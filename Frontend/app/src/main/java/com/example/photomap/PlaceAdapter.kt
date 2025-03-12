@@ -11,13 +11,16 @@ import androidx.recyclerview.widget.RecyclerView
 import java.io.IOException
 import java.util.Locale
 
-class PlaceAdapter(private val context: Context, private val places: List<Place>) : RecyclerView.Adapter<PlaceAdapter.PlaceViewHolder>() {
+class PlaceAdapter(private val context: Context,
+                   private val places: List<Place>,
+                   private val onItemClick: (Place) -> Unit ) : RecyclerView.Adapter<PlaceAdapter.PlaceViewHolder>() {
 
     inner class PlaceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvPlaceName: TextView = itemView.findViewById(R.id.tvPlaceName)
         val tvCityName: TextView = itemView.findViewById(R.id.tvCityName)
         val tvRating: TextView = itemView.findViewById(R.id.tvRating)
         val tvVicinity: TextView = itemView.findViewById(R.id.tvVicinity)
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaceViewHolder {
@@ -41,6 +44,10 @@ class PlaceAdapter(private val context: Context, private val places: List<Place>
             else
                 ContextCompat.getColor(context, R.color.light_green)
         )
+
+        holder.itemView.setOnClickListener {
+            onItemClick(place) // Pass the clicked place to the callback function
+        }
     }
 
     override fun getItemCount(): Int = places.size
