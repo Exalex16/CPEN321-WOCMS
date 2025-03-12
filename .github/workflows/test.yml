@@ -49,6 +49,15 @@ jobs:
           AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
+      - name: Create .env file
+        run: |
+          echo DB_URI=${{ secrets.DB_URI_TEST }} >> Backend/.env
+          echo PORT=${{ secrets.PORT_TEST }} >> Backend/.env
+          echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> Backend/.env
+          echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> Backend/.env
+          echo AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }} >> Backend/.env
+          echo AWS_REGION=${{ secrets.AWS_REGION }} >> Backend/.env
+
       - name: Run Tests
         run: |
           cd Backend  # ✅ Move into the Backend folder

@@ -3,6 +3,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { RequestHandler } from "express";
 import multer from "multer";
 
+require('dotenv').config();
 
 // MongoDB Connection
 export const clinet = new MongoClient(process.env.DB_URI ?? "mongodb://localhost:27017")
