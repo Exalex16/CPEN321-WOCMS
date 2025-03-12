@@ -29,9 +29,14 @@ jobs:
           npm install
 
       - name: Set Environment Variables
-        run: |
-          echo "DB_URI=${{ secrets.DB_URI_TEST }}" >> $GITHUB_ENV
-          echo "PORT=${{ secrets.PORT_TEST }}" >> $GITHUB_ENV
+        env:
+          DB_URI: ${{ secrets.DB_URI_TEST }}
+          PORT: ${{ secrets.PORT_TEST }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: echo "Environment variables set."
 
       - name: Run Tests
         run: |
