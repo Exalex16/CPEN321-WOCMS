@@ -135,8 +135,13 @@ export class imageController {
         try {
             const { key } = req.params;
             
-            const db = clinet.db("images");
-            const image = await db.collection("metadata").findOne({ fileName: key });
+            let image;
+            try {
+                const db = clinet.db("images");
+                image = await db.collection("metadata").findOne({ fileName: key });
+            } catch (dbError) {
+                return res.status(500).send({ error: "Failed to retrieve image metadata from MongoDB." });
+            }
     
             if (!image) {
                 return res.status(404).send({ error: "Image not found" });
@@ -156,14 +161,16 @@ export class imageController {
             : null; 
     
             // Generate a presigned URL valid for 1 hour
-            const presignedUrl = await getSignedUrl(
-                s3,
-                new GetObjectCommand({
-                    Bucket: "cpen321-photomap-images",
-                    Key: `images/${key}`,
-                }),
-                { expiresIn: 604800 }
-            );
+            let presignedUrl;
+            try {
+                presignedUrl = await getSignedUrl(
+                    s3,
+                    new GetObjectCommand({ Bucket: "cpen321-photomap-images", Key: `images/${key}` }),
+                    { expiresIn: 604800 }
+                );
+            } catch (s3Error) {
+                return res.status(500).send({ error: "Failed to generate presigned URL." });
+            }
             
             res.status(200).send({
                 ...image, 
@@ -181,44 +188,56 @@ export class imageController {
     async getImagesByUploader(req: Request, res: Response, next: NextFunction) {
         try {
             const { uploaderEmail } = req.params;
-        
-            const db = clinet.db("images");
-            const userDb = clinet.db("User");
 
-            const userExists = await userDb.collection("users").findOne({ googleEmail: uploaderEmail });
+            let userExists;
+            try {
+                const userDb = clinet.db("User");
+                userExists = await userDb.collection("users").findOne({ googleEmail: uploaderEmail });
+            } catch (dbErroruser) {
+                return res.status(500).send({ error: "Failed to check user existence in MongoDB." });
+            }
+
             if (!userExists) {
                 return res.status(404).send({ error: "User not found" });
             }
     
             // Fetch images that were either uploaded by the user OR shared with them
-            const userImages = await db.collection("metadata").find({
-                $or: [
-                    { uploadedBy: uploaderEmail },  // Images the user uploaded
-                    { sharedTo: uploaderEmail }     // Images shared with the user
-                ]
-            }).toArray();
+            let userImages;
+            try {
+                const db = clinet.db("images");
+                userImages = await db.collection("metadata").find({
+                    $or: [{ uploadedBy: uploaderEmail }, { sharedTo: uploaderEmail }]
+                }).toArray();
+            } catch (dbErrorimage) {
+                return res.status(500).send({ error: "Failed to retrieve images from MongoDB." });
+            }
     
             // Generate pre-signed URLs for each image
-            const imagesWithPresignedUrls = await Promise.all(
-                userImages.map(async (image) => {
-                    const presignedUrl = await getSignedUrl(
-                        s3,
-                        new GetObjectCommand({
-                            Bucket: "cpen321-photomap-images",
-                            Key: `images/${image.fileName}`,
-                        }),
-                        { expiresIn: 604800 } // 7-day expiration
-                    );
-    
-                    return {
-                        ...image,
-                        presignedUrl, // Include presigned URL
-                        location: image.location, // Ensure location is included
-                    };
-                })
-            );
-    
-            res.status(200).send({ images: imagesWithPresignedUrls });
+            try {
+                // Generate pre-signed URLs for each image
+                const imagesWithPresignedUrls = await Promise.all(
+                    userImages.map(async (image) => {
+                        const presignedUrl = await getSignedUrl(
+                            s3,
+                            new GetObjectCommand({
+                                Bucket: "cpen321-photomap-images",
+                                Key: `images/${image.fileName}`,
+                            }),
+                            { expiresIn: 604800 }
+                        );
+
+                        return {
+                            ...image,
+                            presignedUrl, // Include presigned URL
+                            location: image.location, // Ensure location is included
+                        };
+                    })
+                );
+
+                res.status(200).send({ images: imagesWithPresignedUrls });
+            } catch (s3Error) {
+                return res.status(500).send({ error: "Failed to generate presigned URLs." });
+            }
         } catch (error) {
             next(error);
         }
@@ -260,30 +279,39 @@ export class imageController {
 
     async getAllImages(req: Request, res: Response, next: NextFunction) {
         try {
-            const db = clinet.db("images");
-            const images = await db.collection("metadata").find().toArray(); // Fetch all images
+            let images;
+            try {
+                const db = clinet.db("images");
+                images = await db.collection("metadata").find().toArray();
+            } catch (dbError) {
+                return res.status(500).send({ error: "Failed to retrieve all images from MongoDB." });
+            }
     
             // Generate presigned URLs for each image
-            const imagesWithPresignedUrls = await Promise.all(
-                images.map(async (image) => {
-                    const presignedUrl = await getSignedUrl(
-                        s3,
-                        new GetObjectCommand({
-                            Bucket: "cpen321-photomap-images",
-                            Key: `images/${image.fileName}`,
-                        }),
-                        { expiresIn: 604800 } 
-                    );
-    
-                    return {
-                        ...image, 
-                        presignedUrl,
-                        location: image.location, 
-                    };
-                })
-            );
-    
-            res.status(200).send({ images: imagesWithPresignedUrls });
+            try {
+                const imagesWithPresignedUrls = await Promise.all(
+                    images.map(async (image) => {
+                        const presignedUrl = await getSignedUrl(
+                            s3,
+                            new GetObjectCommand({ 
+                                Bucket: "cpen321-photomap-images", 
+                                Key: `images/${image.fileName}` 
+                            }),
+                            { expiresIn: 604800 }
+                        );
+
+                        return {
+                            ...image,
+                            presignedUrl,
+                            location: image.location,  // Ensure location is included
+                        };
+                    })
+                );
+
+                res.status(200).send({ images: imagesWithPresignedUrls });
+            } catch (s3Error) {
+                return res.status(500).send({ error: "Failed to generate presigned URLs." });
+            }
         } catch (error) {
             next(error);
         }
@@ -296,7 +324,7 @@ export class imageController {
             if (!fileName || !newDescription) {
                 return res.status(400).send({ error: "Both fileName and newDescription are required." });
             }
-            
+
             try {
                 const db = clinet.db("images");
         
@@ -325,30 +353,35 @@ export class imageController {
     async deleteAllImagesByUser(req: Request, res: Response, next: NextFunction) {
         try {
             const { userEmail } = req.params;
-            if (!userEmail) {
-                return res.status(400).send({ error: "User email is required." });
-            }
     
-            const db = clinet.db("images");
-    
-            // Find all images uploaded by the user
-            const images = await db.collection("metadata").find({ uploadedBy: userEmail }).toArray();
-    
-            if (images.length === 0) {
-                return res.status(404).send({ error: "No images found for this user." });
+            let images;
+            try {
+                const db = clinet.db("images");
+                images = await db.collection("metadata").find({ uploadedBy: userEmail }).toArray();
+            } catch (dbErrorimage) {
+                return res.status(500).send({ error: "Failed to retrieve user's images from MongoDB." });
             }
     
             // Delete images from S3
-            for (const image of images) {
-                const fileKey = `images/${image.fileName}`;
-                await s3.send(new DeleteObjectCommand({ Bucket: "cpen321-photomap-images", Key: fileKey }));
+            try {
+                for (const image of images) {
+                    const fileKey = `images/${image.fileName}`;
+                    await s3.send(new DeleteObjectCommand({ Bucket: "cpen321-photomap-images", Key: fileKey }));
+                }
+            } catch (s3Error) {
+                return res.status(500).send({ error: "Failed to delete images from S3." });
             }
     
             // Remove image metadata from MongoDB
-            const deleteResult = await db.collection("metadata").deleteMany({ uploadedBy: userEmail });
+            try {
+                const db = clinet.db("images");
+                await db.collection("metadata").deleteMany({ uploadedBy: userEmail });
+            } catch (dbErrordelete) {
+                return res.status(500).send({ error: "Failed to delete image metadata from MongoDB." });
+            }
     
             res.status(200).send({
-                message: `Successfully deleted ${deleteResult.deletedCount} images for user ${userEmail}.`,
+                message: `Successfully deleted ${images.length} images for user ${userEmail}.`,
             });
         } catch (error) {
             next(error);
@@ -365,10 +398,14 @@ export class imageController {
                 return res.status(400).send({ error: "Recipient email, image key, and sender email are required" });
             }
     
-            const db = clinet.db("images");
-    
-            // Find the image
-            const image = await db.collection("metadata").findOne({ fileName: imageKey });
+            let image;
+            try {
+                const db = clinet.db("images");
+                image = await db.collection("metadata").findOne({ fileName: imageKey });
+            } catch (dbErrorimage) {
+                return res.status(500).send({ error: "Failed to retrieve image metadata from MongoDB." });
+            }
+
             if (!image) {
                 return res.status(404).send({ error: "Image not found" });
             }
@@ -384,41 +421,46 @@ export class imageController {
             }
     
             // Update the image metadata
-            const updateResult = await db.collection("metadata").updateOne(
-                { fileName: imageKey },
-                {
-                    $addToSet: { sharedTo: recipientEmail }, // Add recipient to shared list
-                    $set: { shared: true, sharedBy: senderEmail }
-                }
-            );
-    
-            if (updateResult.matchedCount === 0) {
-                return res.status(500).send({ error: "Failed to share image" });
+            try {
+                const db = clinet.db("images");
+                await db.collection("metadata").updateOne(
+                    { fileName: imageKey },
+                    {
+                        $addToSet: { sharedTo: recipientEmail },
+                        $set: { shared: true, sharedBy: senderEmail }
+                    }
+                );
+            } catch (dbErrorUpdate) {
+                return res.status(500).send({ error: "Failed to update image metadata in MongoDB." });
             }
     
             // Check if the recipient already has the location
-            const userDb = clinet.db("User");
-            const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
-    
             let locationAdded = false;
-            if (image.location) {
-                const alreadyHasLocation = recipient?.locations?.some(
-                    (loc: any) => loc.position.lat === image.location.position.lat && loc.position.lng === image.location.position.lng
-                );
-    
-                if (!alreadyHasLocation) {
-                    await userDb.collection("users").updateOne(
-                        { googleEmail: recipientEmail },
-                        { $addToSet: { locations: image.location } }
-                    );
-                    locationAdded = true;
+            try {
+                if (image.location) {
+                    const userDb = clinet.db("User");
+                    const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
+
+                    if (!recipient?.locations?.some((loc: any) => 
+                        loc.position.lat === image.location.position.lat && 
+                        loc.position.lng === image.location.position.lng
+                    )) {
+                        await userDb.collection("users").updateOne(
+                            { googleEmail: recipientEmail },
+                            { $addToSet: { locations: image.location } }
+                        );
+                        locationAdded = true;
+                    }
                 }
+            } catch (dbErrorLocation) {
+                return res.status(500).send({ error: "Failed to update recipient's location history in MongoDB." });
             }
     
             res.status(200).send({ 
                 message: "Image shared successfully", 
                 sharedTo: recipientEmail, 
-                locationAdded
+                locationAdded,
+                location: image.location,
             });
         } catch (error) {
             next(error);
@@ -428,41 +470,42 @@ export class imageController {
     async getSharedImages(req: Request, res: Response, next: NextFunction) {
         try {
             const { userEmail } = req.params;
-            if (!userEmail) {
-                return res.status(400).send({ error: "User email is required." });
+    
+            let sharedImages;
+            try {
+                const db = clinet.db("images");
+                sharedImages = await db.collection("metadata").find({
+                    $or: [{ sharedBy: userEmail }, { sharedTo: userEmail }]
+                }).toArray();
+            } catch (dbError) {
+                return res.status(500).send({ error: "Failed to retrieve shared images from MongoDB." });
             }
     
-            const db = clinet.db("images");
-    
-            // Fetch images that the user shared OR received as a shared image
-            const sharedImages = await db.collection("metadata").find({
-                $or: [
-                    { sharedBy: userEmail }, // Images the user shared
-                    { sharedTo: userEmail }  // Images shared to the user
-                ]
-            }).toArray();
-    
             // Generate pre-signed URLs for each shared image
-            const sharedImagesWithPresignedUrls = await Promise.all(
-                sharedImages.map(async (image) => {
-                    const presignedUrl = await getSignedUrl(
-                        s3,
-                        new GetObjectCommand({
-                            Bucket: "cpen321-photomap-images",
-                            Key: `images/${image.fileName}`,
-                        }),
-                        { expiresIn: 604800 } // 7-day expiration
-                    );
-    
-                    return {
-                        ...image,
-                        presignedUrl, // Include presigned URL
-                        location: image.location, // Ensure location is included
-                    };
-                })
-            );
-    
-            res.status(200).send({ sharedImages: sharedImagesWithPresignedUrls });
+            try {
+                const sharedImagesWithPresignedUrls = await Promise.all(
+                    sharedImages.map(async (image) => {
+                        const presignedUrl = await getSignedUrl(
+                            s3,
+                            new GetObjectCommand({ 
+                                Bucket: "cpen321-photomap-images", 
+                                Key: `images/${image.fileName}` 
+                            }),
+                            { expiresIn: 604800 }
+                        );
+
+                        return {
+                            ...image,
+                            presignedUrl,
+                            location: image.location,  // Ensure location is included
+                        };
+                    })
+                );
+
+                res.status(200).send({ sharedImages: sharedImagesWithPresignedUrls });
+            } catch (s3Error) {
+                return res.status(500).send({ error: "Failed to generate presigned URLs." });
+            }
         } catch (error) {
             next(error);
         }
@@ -475,10 +518,14 @@ export class imageController {
                 return res.status(400).send({ error: "Image key and sender email are required" });
             }
     
-            const db = clinet.db("images");
-    
-            // Find the image
-            const image = await db.collection("metadata").findOne({ fileName: imageKey });
+            let image;
+            try {
+                const db = clinet.db("images");
+                image = await db.collection("metadata").findOne({ fileName: imageKey });
+            } catch (dbErrorimage) {
+                return res.status(500).send({ error: "Failed to retrieve image metadata from MongoDB." });
+            }
+
             if (!image) {
                 return res.status(404).send({ error: "Image not found" });
             }
@@ -492,29 +539,35 @@ export class imageController {
             const sharedUsers = image.sharedTo || [];
     
             // Reset the shared attributes
-            const updateResult = await db.collection("metadata").updateOne(
-                { fileName: imageKey },
-                { $set: { shared: false, sharedBy: null, sharedTo: [] } }
-            );
-    
-            if (updateResult.modifiedCount === 0) {
-                return res.status(500).send({ error: "Failed to cancel sharing" });
+           try {
+                const db = clinet.db("images");
+                await db.collection("metadata").updateOne(
+                    { fileName: imageKey },
+                    { $set: { shared: false, sharedBy: null, sharedTo: [] } }
+                );
+            } catch (dbErrorReset) {
+                return res.status(500).send({ error: "Failed to update image metadata in MongoDB." });
             }
     
             // Remove shared location from users if they have no other shared images at that location
-            const userDb = clinet.db("User");
-            for (const userEmail of sharedUsers) {
-                const userImages = await db.collection("metadata").find({
-                    sharedTo: userEmail,
-                    "location.position": image.location.position
-                }).toArray();
-    
-                if (userImages.length === 0) {
-                    await userDb.collection("users").updateOne(
-                        { googleEmail: userEmail },
-                        { $pull: { locations: image.location } }
-                    );
+            try {
+                const db = clinet.db("images");
+                const userDb = clinet.db("User");
+                for (const userEmail of sharedUsers) {
+                    const userImages = await db.collection("metadata").find({
+                        sharedTo: userEmail,
+                        "location.position": image.location.position
+                    }).toArray();
+
+                    if (userImages.length === 0) {
+                        await userDb.collection("users").updateOne(
+                            { googleEmail: userEmail },
+                            { $pull: { locations: image.location } }
+                        );
+                    }
                 }
+            } catch (dbErrorRemoveL) {
+                return res.status(500).send({ error: "Failed to update users' location history in MongoDB." });
             }
     
             res.status(200).send({ message: "Sharing canceled successfully", imageKey });
