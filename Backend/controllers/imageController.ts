@@ -302,6 +302,13 @@ export class imageController {
             return res.status(404).send({ error: "Image not found" });
         }
 
+        // ✅ Check if the recipient exists
+        const userDb = clinet.db("User");
+        const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
+        if (!recipient) {
+            return res.status(404).send({ error: "Recipient user not found" });
+        }
+
         // Ensure the sender is the owner of the image
         if (!image.uploadedBy.includes(senderEmail)) {
             return res.status(403).send({ error: "Only the owner can share this image" });
@@ -325,7 +332,6 @@ export class imageController {
         // Check if the recipient already has the location
         let locationAdded = false;
         if (image.location) {
-            const userDb = clinet.db("User");
             const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
 
             if (!recipient?.locations?.some((loc: any) => 

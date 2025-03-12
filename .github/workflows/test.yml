@@ -28,6 +28,11 @@ jobs:
           cd Backend  # ✅ Move into the Backend folder
           npm install
 
+      - name: Set Environment Variables
+        run: |
+          echo "DB_URI=${{ secrets.DB_URI_TEST }}" >> $GITHUB_ENV
+          echo "PORT=${{ secrets.PORT_TEST }}" >> $GITHUB_ENV
+
       - name: Run Tests
         run: |
           cd Backend  # ✅ Move into the Backend folder
