@@ -12,10 +12,6 @@ export class imageController {
     
     async uploadImage(req: Request, res: Response, next: NextFunction) {
         uploadMiddleware(req, res, async (err) => {
-            if (err) {
-                return res.status(400).send({ error: "Multer Error: " + err.message });
-            }
-
             if (!req.file) {
                 return res.status(400).send({ error: "No file uploaded" });
             }
