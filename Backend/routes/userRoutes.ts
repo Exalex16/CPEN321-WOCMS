@@ -38,15 +38,6 @@ export const userRoutes = [
         validation: [],
     },
     {
-        method: "post",
-        route: "/supervise",
-        action: controller.superviseAction,
-        validation: [
-            body("googleEmail").isString(),
-            body("action").isIn(["ban", "unban"]),
-        ],
-    },
-    {
         method: "delete",
         route: "/user/:googleEmail",
         action: controller.deleteUser,
