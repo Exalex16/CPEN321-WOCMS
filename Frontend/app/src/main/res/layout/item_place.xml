@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/item_border"
+    android:layout_margin="8dp">
+
+    <!-- Place Name -->
+    <TextView
+        android:id="@+id/tvPlaceName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Place Name"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor = "@android:color/black"/>
+
+    <!-- City Name or Region -->
+    <TextView
+        android:id="@+id/tvCityName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="City Name"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp"
+        android:textColor = "@android:color/black"/>
+
+    <TextView
+        android:id="@+id/tvVicinity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Vicinity"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp"
+        android:textColor = "@android:color/black"/>
+
+    <!-- Rating -->
+    <TextView
+        android:id="@+id/tvRating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rating"
+        android:textSize="14sp"
+        android:layout_marginTop="4dp"
+        android:textColor = "@android:color/black"/>
+</LinearLayout>

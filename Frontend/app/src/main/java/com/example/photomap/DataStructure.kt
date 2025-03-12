@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import java.time.Instant
 import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.Marker
+import com.google.gson.annotations.SerializedName
 
 
 class GalleryAdapter(
@@ -51,6 +52,22 @@ data class PopularLocationResponse(
     val popularLocation: PopularLocation
 )
 
+data class Place(
+    @SerializedName("place_id")
+    val placeId: String,
+    val name: String,
+    val geometry: Geometry,
+    val vicinity: String?,
+    val rating: Double?,
+    val types: List<String>?
+)
+
+data class PlacesResponse(
+    val status: String,
+    val results: List<Place>
+)
+
+
 data class PopularLocation(
     val position: Position,
     val tags: List<String>
@@ -90,17 +107,6 @@ data class UserPostRequest(
     val googleName: String
 )
 
-//BestPlaces Response
-data class PlacesResponse(
-    val results: List<PlaceResult>,
-    val status: String
-)
-
-data class PlaceResult(
-    val name: String,
-    val geometry: Geometry,
-    val types: List<String>
-)
 
 data class Geometry(
     val location: Location

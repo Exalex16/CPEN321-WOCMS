@@ -1,5 +1,6 @@
 package com.example.photomap
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.location.Geocoder
@@ -17,6 +18,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -42,8 +44,16 @@ import java.time.Instant
 import java.util.Locale
 
 import com.example.photomap.MainActivity.mapContent
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
+
+    // Constants
+    private val MAX_REC_PLACES: Int = 20
+    private val TAG: String = "MapsActivity"
+    private val PLACE_SEARCH_RADIUS: Int = 10000
+
 
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
@@ -109,8 +119,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE)
                 val email = prefs.getString("user_email", null) ?: "anonymous@example.com"
 
-
-
                 val response = RetrofitClient.api.getPopularLocations(email)
 
                 if (response.isSuccessful && response.body() != null) {
@@ -126,12 +134,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         val lng = popularLocation.position.lng
                         val tags = popularLocation.tags
 
+                        mMap.addMarker(MarkerOptions().
+                            position(LatLng(lat, lng)).
+                            title("Recommended Location").
+                            icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor("violet"))))
+
+                        mMap.moveCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(lat, lng),
+                                15f
+                            )
+                        )
+
                         Toast.makeText(this@MapsActivity, "Got recommendation", Toast.LENGTH_SHORT).show()
                         Log.d("MapsActivity", "Got recommendation at ($lat, $lng), with tags: $tags")
 
                         //Call Places API to get recommendation
                         val keywordQuery = tags.firstOrNull() ?: ""
-                        fetchNearbyPlaces("$lat,$lng", keywordQuery)
+                        fetchNearbyPlaces("$lat,$lng", keywordQuery, lat, lng, tags)
                     }
                 } else {
                     val errorMsg = response.errorBody()?.string()
@@ -149,46 +169,85 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     // Uses Places API to get nearby places
-    private fun fetchNearbyPlaces(coordinate: String, keyword: String) {
+    private fun fetchNearbyPlaces(coordinate: String, keyword: String, lat: Double, lng: Double, tags: List<String>) {
         lifecycleScope.launch {
-            try {
-                val response = RetrofitPlacesClient.api.nearbySearch(
-                    location = coordinate,
-                    radius = 1500, // can adjust
-                    keyword = keyword,
-                    apiKey = MAPS_API_KEY
-                )
-                if (response.status == "OK") {
-                    // Choose top tag
-                    val bestPlace = response.results.firstOrNull()
-                    bestPlace?.let {
-                        val lat = it.geometry.location.lat
-                        val lng = it.geometry.location.lng
-                        // Add a marker on the map at these coordinates
-                        mMap.addMarker(MarkerOptions().
-                            position(LatLng(lat, lng)).
-                            title(it.name).
-                            icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor("violet"))))
 
-                        // Move the camera to the new location
-                        mMap.moveCamera(
-                            CameraUpdateFactory.newLatLngZoom(
-                                LatLng(lat, lng),
-                                15f
-                            )
+            val finalPlacesList = mutableListOf<Place>()
+
+            // Launch async calls for the top 3 tags concurrently
+            val deferredResults = tags.map { tag ->
+                async {  // Specify that this async returns a List<Place>
+                    try {
+                        val response = RetrofitPlacesClient.api.nearbySearch(
+                            location = coordinate,
+                            radius = PLACE_SEARCH_RADIUS, // adjust as needed
+                            keyword = tag,
+                            apiKey = MAPS_API_KEY
                         )
+                        Log.d("MapsActivity", "Tag used: $tag")
+                        if (response.isSuccessful) {
+                            response.body()!!.results // Ensure this is a List<Place>
+                        } else {
+                            Log.e("MapsActivity", "Zero response found??")
+                            emptyList()
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        emptyList()
                     }
-
-                    Log.d("MapsActivity", "Nearby places added on map.")
-                } else {
-                    // Handle API error (e.g., OVER_QUERY_LIMIT, REQUEST_DENIED, etc.)
-                    Log.e("MapsActivity", "Error: ${response.status}")
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.e("MapsActivity", "Network request failed.", e)
             }
+
+            // Await all results and combine them into the final list
+            deferredResults.awaitAll().forEach { results ->
+                finalPlacesList.addAll(results)
+            }
+
+            // Optionally, deduplicate results based on a unique property such as place id
+            var uniquePlaces = finalPlacesList.distinctBy { it.placeId }.take(MAX_REC_PLACES)
+
+            Log.d("MapsActivity", "Final places list size: ${uniquePlaces.size}")
+
+            showRecommendationBottomSheet(lat, lng, tags, uniquePlaces)
         }
+    }
+
+    private fun showRecommendationBottomSheet(lat: Double, lng: Double, tags: List<String>, places: List<Place>) {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_recommendation, null)
+        bottomSheetDialog.setContentView(view)
+
+        // Get references to UI elements in the BottomSheet
+        val tvSummary = view.findViewById<TextView>(R.id.tvSummary)
+        val rvSuggestedPlaces = view.findViewById<RecyclerView>(R.id.rvSuggestedPlaces)
+        val tvNoPlacesMessage = view.findViewById<TextView>(R.id.tvNoPlacesMessage)
+
+        // Construct a summary string with the recommendation details
+        val tagsString = if (tags.isNotEmpty()) tags.joinToString(", ") else "No tags available"
+        val cityName = getCityName(this, lat, lng)
+        val summaryText = HtmlCompat.fromHtml(
+            "<b>You appear to be most active around:</b><br> $cityName <br><br>" +
+                    "<b>Your uploaded photos commonly feature these objects or themes:</b><br> $tagsString <br><br>" +
+                    "Here is a list of locations matching your photo themes that might pique your interest!",
+            HtmlCompat.FROM_HTML_MODE_LEGACY
+        )
+        tvSummary.text = summaryText
+
+        // Configure the RecyclerView based on whether there are suggested places
+        if (places.isEmpty()) {
+            tvNoPlacesMessage.visibility = View.VISIBLE
+            rvSuggestedPlaces.visibility = View.GONE
+        } else {
+            tvNoPlacesMessage.visibility = View.GONE
+            rvSuggestedPlaces.visibility = View.VISIBLE
+            // Set up the adapter for the list of places
+            val adapter = PlaceAdapter(this, places)
+            rvSuggestedPlaces.layoutManager = LinearLayoutManager(this)
+            rvSuggestedPlaces.adapter = adapter
+        }
+
+        // Finally, show the BottomSheet
+        bottomSheetDialog.show()
     }
 
     /**
@@ -287,17 +346,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     val lat = latLng.latitude
                     val lng = latLng.longitude
 
-                    // Obtain location string
-                    val geocoder = Geocoder(this, Locale.getDefault())
-                    var cityName = "Unknown"
-                    try {
-                        val addresses = geocoder.getFromLocation(lat, lng, 1)
-                        if (!addresses.isNullOrEmpty()) {
-                            cityName = addresses[0].locality ?: "Unknown"
-                        }
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
+                   var cityName = getCityName(this, lat, lng)
 
                     // Store the marker data
                     currentMarker = MarkerInstance(
@@ -333,16 +382,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val markerColor = marker.tag ?: "unknown Color"
 
             // Obtain location string
-            val geocoder = Geocoder(this, Locale.getDefault())
-            var cityName = "Unknown"
-            try {
-                val addresses = geocoder.getFromLocation(lat, lng, 1)
-                if (!addresses.isNullOrEmpty()) {
-                    cityName = addresses[0].locality ?: "Unknown"
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
+            var cityName = getCityName(this, lat, lng)
+            Log.d("MapsActivity", "current city name: $cityName")
 
             // 3) Store the marker data
             currentMarker = MarkerInstance(
@@ -375,14 +416,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         fabActions.setOnClickListener {
             showUploadBottomSheet()
-            Toast.makeText(this, "FAB clicked", Toast.LENGTH_SHORT).show()
         }
 
         fabDeleteMarker.setOnClickListener {
 
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Warning")
-            builder.setMessage("If you delete this marker, all images tagged at this marker will also be deleted. Do you wish to proceed?")
+            builder.setMessage("If you delete this marker, all images tagged to this marker will also be deleted. Do you wish to proceed?")
             // Set the positive button action: user confirms deletion
             builder.setPositiveButton("Yes") { dialog, _ ->
                 deleteMarker()  // Execute the deletion function
@@ -601,7 +641,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     Log.d("MapsActivity", "Upload filename: ${uploadData?.fileName}")
 
                     //val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
-
                     currentMarker?.photoAtCurrentMarker?.add(PhotoInstance(
                         imageURL = uploadData?.presignedUrl?: "no url available.",
                         time = Instant.now(),
@@ -659,6 +698,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             "orange" -> BitmapDescriptorFactory.HUE_ORANGE
             "violet" -> BitmapDescriptorFactory.HUE_VIOLET
             else -> BitmapDescriptorFactory.HUE_RED  // Default color if none match
+        }
+    }
+
+    fun getCityName(context: Context, lat: Double, lng: Double): String {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        return try {
+            val addresses = geocoder.getFromLocation(lat, lng, 1)
+            addresses?.firstOrNull()?.locality ?: "Unknown"
+        } catch (e: IOException) {
+            e.printStackTrace()
+            "Unknown"
         }
     }
 
