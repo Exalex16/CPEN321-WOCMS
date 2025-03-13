@@ -69,10 +69,6 @@ describe("Mocked API Tests - post /user", () => {
         jest.clearAllMocks();
     });
 
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
-    });
-
     test("❌ 500 - Rekognition Label Detection Error", async () => {
         jest.spyOn(s3, "send").mockResolvedValueOnce(Promise.resolve({}) as never);
 
@@ -211,10 +207,6 @@ describe("🛠️ Mocked API Tests - get /metadata/:key", () => {
         jest.clearAllMocks();
     });
 
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
-    });
-
     test("❌ 500 - MongoDB Failure on getImage", async () => {
         // ✅ Spy on `findOne` and force a failure
         jest.spyOn(clinet.db("images").collection("metadata"), "findOne")
@@ -252,10 +244,6 @@ describe("🛠️ Mocked API Tests - get /images/uploader/:uploaderEmail", () =>
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
-    });
-
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
     });
 
     test("❌ 500 - MongoDB Failure on User Lookup", async () => {
@@ -299,10 +287,6 @@ describe("🛠️ Mocked API Tests - delete /image/:key", () => {
         jest.clearAllMocks();
     });
 
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
-    });
-
     test("❌ 500 - MongoDB Failure on deleteImage", async () => {
         // ✅ Spy on MongoDB `deleteOne` and force failure
         jest.spyOn(clinet.db("images").collection("metadata"), "deleteOne")
@@ -332,10 +316,6 @@ describe("🛠️ Mocked API Tests - get /images", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
-    });
-
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
     });
 
     test("❌ 500 - MongoDB Failure on getAllImages", async () => {
@@ -374,10 +354,6 @@ describe("🛠️ Mocked API Tests - put /image/update-description", () => {
         jest.clearAllMocks();
     });
 
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
-    });
-
     test("❌ 500 - MongoDB Failure on updateImageDescription", async () => {
         // ✅ Spy on `updateOne()` and force a failure
         jest.spyOn(clinet.db("images").collection("metadata"), "updateOne")
@@ -402,10 +378,6 @@ describe("🛠️ Mocked API Tests - delete /image/delete-all/:userEmail", () =>
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
-    });
-
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
     });
 
     test("❌ 500 - MongoDB Failure on deleteAllImagesByUser", async () => {
@@ -444,10 +416,6 @@ describe("🛠️ Mocked API Tests - post /image/share", () => {
         jest.clearAllMocks();
     });
 
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
-    });
-
     test("❌ 500 - MongoDB Failure on Finding Image", async () => {
         // ✅ Mock `findOne` for images to throw an error
         jest.spyOn(clinet.db("images").collection("metadata"), "findOne")
@@ -468,10 +436,6 @@ describe("🛠️ Mocked API Tests - get /image/shared/:userEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
-    });
-
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
     });
 
     test("❌ 500 - MongoDB Failure on getSharedImages", async () => {
@@ -508,10 +472,6 @@ describe("🛠️ Mocked API Tests - post /image/cancel-share", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
-    });
-
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
     });
 
     test("❌ 500 - MongoDB Failure on cancelShare", async () => {

@@ -9,9 +9,6 @@ export class mapController {
      */
     async getRecommendation(req: Request, res: Response, next: NextFunction) {
         const { userEmail } = req.params;
-        if (!userEmail) {
-            return res.status(400).send({ error: "User email is required" });
-        }
 
         const db = clinet.db("images");
 
@@ -83,11 +80,6 @@ export class mapController {
         // Get the largest cluster's data
         largestCluster = largestClusterId ? clusterData[largestClusterId].positions : [];
         const allTagsInLargestCluster = largestClusterId ? clusterData[largestClusterId].tags : [];
-
-        if (largestCluster.length === 0) {
-            console.log(`📌 DBSCAN found no clusters for user: ${userEmail}.`);
-            return res.status(200).send({ popularLocation: null, message: "No meaningful clusters found. Cannot generate recommendation." });
-        }
 
         // Compute average lat/lng for the largest cluster
         const avgPosition: [number, number] = largestCluster.reduce(
