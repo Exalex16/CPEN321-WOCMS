@@ -123,8 +123,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     if (popularLocation == null) {
                         //Display custom backend message for no recommendation
-                        Toast.makeText(this@MapsActivity, "No recommendation available: Did you upload enough photos?.", Toast.LENGTH_LONG).show()
-                        Log.e("MapsActivity", "No recommendation available: insufficient images or bad location")
+                        Toast.makeText(this@MapsActivity, "No recommendation available: Did you add enough markers and photos?", Toast.LENGTH_LONG).show()
+                        Log.e("MapsActivity", "No recommendation available: insufficient images or markers. ")
 
                     } else {
                         val lat = popularLocation.position.lat
@@ -251,18 +251,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val markerTitle = "Popular - " + selectedPlace.name
         val selectedColor = "azure"
-        val hue = getHueFromColor(selectedColor)
-
-        // Marker attributes: push this information to DB
-        val marker = mMap.addMarker(
-            MarkerOptions()
-                .position(latLng)
-                .title(markerTitle)
-                .icon(BitmapDescriptorFactory.defaultMarker(hue))
-        )
-
-        // Tag marker color for map use
-        marker?.tag = selectedColor
         val cityName = getCityName(this, lat, lng)
 
         // Store the marker data
@@ -272,17 +260,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             title = markerTitle,
             color = selectedColor,
             location = cityName,
-            photoAtCurrentMarker = arrayListOf(),
-            drawnMarker = marker
+            photoAtCurrentMarker = arrayListOf()
         )
 
-        Log.d(TAG, "Current recommendation marker data: $currentMarker")
-        sendMarkerUpdate(USER_EMAIL, currentMarker!!)
-        mapContent.markerList.add(currentMarker!!)
-        addedPlaces.add(selectedPlace)
-
-        // Move camera to the selected location
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+        sendMarkerUpdate(USER_EMAIL, currentMarker!!){
+            Toast.makeText(this@MapsActivity, "Add Marker Successful!", Toast.LENGTH_SHORT).show()
+            addedPlaces.add(selectedPlace)
+        }
     }
 
     /**
@@ -367,24 +351,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 .setPositiveButton("Add") { _, _ ->
                     val markerTitle = titleEditText.text.toString()
                     val selectedColor = colorSpinner.selectedItem.toString()
-                    val hue = getHueFromColor(selectedColor)
-
-                    // Marker attributes: push this information to DB
-                    val marker = mMap.addMarker(
-                            MarkerOptions()
-                            .position(latLng)
-                            .title(markerTitle)
-                            .icon(BitmapDescriptorFactory.defaultMarker(hue))
-                    )
-
-                    // Tag marker color for map use
-                    marker?.tag = selectedColor
-
                     val lat = latLng.latitude
                     val lng = latLng.longitude
-
-                   var cityName = getCityName(this, lat, lng)
-
+                    val cityName = getCityName(this, lat, lng)
                     // Store the marker data
                     currentMarker = MarkerInstance(
                         lat = lat,
@@ -393,14 +362,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         color = selectedColor,
                         location = cityName,
                         photoAtCurrentMarker = arrayListOf(),
-                        drawnMarker = marker
                     )
 
-                    sendMarkerUpdate(USER_EMAIL, currentMarker!!)
-                    mapContent.markerList.add(currentMarker!!)
-
-
-                    Log.d("MapsActivity", "Marker data: $currentMarker")
+                    sendMarkerUpdate(USER_EMAIL, currentMarker!!){
+                        Toast.makeText(this@MapsActivity, "Add Marker Successful!", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 .setNegativeButton("Cancel", null)
                 .show()
@@ -414,9 +380,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             val markerColor = marker.tag ?: "unknown Color"
 
             // Obtain location string
-            var cityName = getCityName(this, lat, lng)
-            Log.d("MapsActivity", "current city name: $cityName")
-
+            val cityName = getCityName(this, lat, lng)
             // 3) Store the marker data
             currentMarker = MarkerInstance(
                 lat = lat,
@@ -440,7 +404,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 hideGallery()
             }
 
-            Log.d("MapsActivity", "Marker data: $currentMarker")
             fabActions.visibility = View.VISIBLE
             fabDeleteMarker.visibility = View.VISIBLE
             false  // Return false to allow default behavior (e.g., info window display)
@@ -456,7 +419,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             builder.setTitle("Warning")
             builder.setMessage("If you delete this marker, all images tagged to this marker will also be deleted. Do you wish to proceed?")
             // Set the positive button action: user confirms deletion
-            builder.setPositiveButton("Yes") { dialog, _ ->
+            builder.setPositiveButton("Yes") { _, _ ->
                 deleteMarker()  // Execute the deletion function
                 Toast.makeText(this, "Marker deleted", Toast.LENGTH_SHORT).show()
                 Log.d("MapsActivity", "Alert dialog confirm: marker deleted.")
@@ -726,7 +689,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    fun getCityName(context: Context, lat: Double, lng: Double): String {
+    private fun getCityName(context: Context, lat: Double, lng: Double): String {
         val geocoder = Geocoder(context, Locale.getDefault())
         return try {
             val addresses = geocoder.getFromLocation(lat, lng, 1)
@@ -738,7 +701,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     // Send newly create marker to server
-    private fun sendMarkerUpdate(email: String, markerData: MarkerInstance) {
+    private fun sendMarkerUpdate(email: String, markerData: MarkerInstance,  onSuccess: (() -> Unit)? = null) {
         lifecycleScope.launch {
             try {
                 val locationJson = JSONObject().apply {
@@ -762,9 +725,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if (response.isSuccessful) {
                     val responseBody = response.body()
-
                     val message = responseBody?.message ?: "No message"
                     val addedLocation = responseBody?.addedLocation
+                    val latlng = LatLng(markerData.lat, markerData.lng)
+                    val hue = getHueFromColor(markerData.color)
 
                     Log.d("MapsActivity", "Marker update response: $message")
                     addedLocation?.let {
@@ -772,12 +736,32 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         Log.d("MapsActivity", "Added Location: ${it.title}, ${it.position.lat}, ${it.position.lng}")
                         // Update UI or map marker here
                     }
+                    // Marker attributes: push this information to DB
+                    val marker = mMap.addMarker(
+                        MarkerOptions()
+                            .position(latlng)
+                            .title(markerData.title)
+                            .icon(BitmapDescriptorFactory.defaultMarker(hue))
+                    )
+
+                    // Tag marker color for map use
+                    marker?.tag = markerData.color
+                    currentMarker!!.drawnMarker = marker
+                    Log.d("MapsActivity", "After save to db, current marker data: $currentMarker")
+                    // On success, add the markers
+                    mapContent.markerList.add(currentMarker!!)
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 15f))
+
+                    // Trigger Callback for Frontend Success Display.
+                    onSuccess?.invoke()
                 } else {
+                    Toast.makeText(this@MapsActivity, "Error: Marker save to backend failed.", Toast.LENGTH_LONG).show()
                     Log.e("MapsActivity", "Failed to update marker: ${response.errorBody()?.string()}")
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
+                Toast.makeText(this@MapsActivity, "Error: Network error, check internet.", Toast.LENGTH_LONG).show()
                 Log.e("MapsActivity", "Network request failed.", e)
             }
         }
