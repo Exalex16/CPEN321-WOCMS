@@ -55,9 +55,10 @@ clinet.connect().then(() => {
 
 export const closeServer = async () => {
     if (server) {
-        server.close();
+        await new Promise((resolve) => setTimeout(() => server.close(resolve), 500)); // Delay closing server
     }
-    await clinet.close(); // ✅ Ensure MongoDB connection is also closed
+    if (clinet) {
+        await clinet.close();
+    }
 };
-
 export { server };

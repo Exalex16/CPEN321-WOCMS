@@ -43,9 +43,6 @@ export class userController {
      */
     async getProfileInfo(req: Request, res: Response, next: NextFunction) {
         const { googleEmail  } = req.params;
-        if (!googleEmail ) {
-            return res.status(400).send({ error: "Google ID is required" });
-        }
 
         const db = clinet.db("User");
         const user = await db.collection("users").findOne({ googleEmail  });
@@ -63,10 +60,8 @@ export class userController {
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         await new Promise<void>((resolve, reject) => {
             formDataMiddleware(req, res, (err) => {
-                const { googleEmail } = req.params;
-
-                if (!googleEmail) {
-                    return res.status(400).send({ error: "Google ID is required" });
+                if (err) {
+                    return res.status(400).send({ error: "Invalid form data" });
                 }
                 resolve();
             });
@@ -74,10 +69,6 @@ export class userController {
          
         const { googleEmail } = req.params;
         let { googleName, location } = req.body; 
-
-        // if (!googleEmail) {
-        //     return res.status(400).send({ error: "Google ID is required" });
-        // }
 
         const db = clinet.db("User");
 
@@ -132,9 +123,6 @@ export class userController {
      */
     async deleteUser(req: Request, res: Response, next: NextFunction) {
         const { googleEmail } = req.params;
-        if (!googleEmail) {
-            return res.status(400).send({ error: "Google ID is required" });
-        }
 
         const db = clinet.db("User");
         const result = await db.collection("users").deleteOne({ googleEmail });
@@ -152,10 +140,8 @@ export class userController {
     async removeLocation(req: Request, res: Response, next: NextFunction) {
         await new Promise<void>((resolve, reject) => {
             formDataMiddleware(req, res, (err) => {
-                const { googleEmail } = req.params;
-
-                if (!googleEmail) {
-                    return res.status(400).send({ error: "Google ID is required." });
+                if (err) {
+                    return res.status(400).send({ error: "Invalid form data" });
                 }
                 resolve();
             });
@@ -249,9 +235,6 @@ export class userController {
 
     async getFriends(req: Request, res: Response, next: NextFunction) {
         const { googleEmail } = req.params;
-        if (!googleEmail) {
-            return res.status(400).send({ error: "User email is required" });
-        }
 
         const db = clinet.db("User");
         const user = await db.collection("users").findOne({ googleEmail }, { projection: { friends: 1 } });
@@ -260,7 +243,7 @@ export class userController {
             return res.status(404).send({ error: "User not found" });
         }
 
-        res.status(200).send({ friends: user.friends || [] });
+        res.status(200).send({ friends: user.friends });
     }
     
 }

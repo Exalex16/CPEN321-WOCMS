@@ -63,7 +63,7 @@ afterAll(async () => {
     await closeServer(); // ✅ Ensure server and DB are closed
 });
 
-describe("🛠️ Mocked API Tests - imageUpload", () => {
+describe("Mocked API Tests - post /user", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -205,7 +205,7 @@ describe("🛠️ Mocked API Tests - imageUpload", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - getImage", () => {
+describe("🛠️ Mocked API Tests - get /metadata/:key", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -248,7 +248,7 @@ describe("🛠️ Mocked API Tests - getImage", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - getImagesByUploader", () => {
+describe("🛠️ Mocked API Tests - get /images/uploader/:uploaderEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -293,7 +293,7 @@ describe("🛠️ Mocked API Tests - getImagesByUploader", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - deleteImage", () => {
+describe("🛠️ Mocked API Tests - delete /image/:key", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -328,7 +328,7 @@ describe("🛠️ Mocked API Tests - deleteImage", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - getAllImages", () => {
+describe("🛠️ Mocked API Tests - get /images", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -368,7 +368,7 @@ describe("🛠️ Mocked API Tests - getAllImages", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - updateImageDescription", () => {
+describe("🛠️ Mocked API Tests - put /image/update-description", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -398,7 +398,7 @@ describe("🛠️ Mocked API Tests - updateImageDescription", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - deleteAllImagesByUser", () => {
+describe("🛠️ Mocked API Tests - delete /image/delete-all/:userEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -438,7 +438,7 @@ describe("🛠️ Mocked API Tests - deleteAllImagesByUser", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - shareImage", () => {
+describe("🛠️ Mocked API Tests - post /image/share", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -464,7 +464,7 @@ describe("🛠️ Mocked API Tests - shareImage", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - getSharedImages", () => {
+describe("🛠️ Mocked API Tests - get /image/shared/:userEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
@@ -504,7 +504,7 @@ describe("🛠️ Mocked API Tests - getSharedImages", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - cancelShare", () => {
+describe("🛠️ Mocked API Tests - post /image/cancel-share", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();

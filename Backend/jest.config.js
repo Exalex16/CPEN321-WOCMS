@@ -9,6 +9,7 @@ module.exports = {
         "controllers/**/*.ts", // ✅ Include all backend controllers
         "routes/**/*.ts",      // ✅ Include all route files
         "index.ts",
+        "services.ts",
         "!**/*.test.ts", // Exclude test files
         "!**/node_modules/**", // Exclude node_modules
     ],

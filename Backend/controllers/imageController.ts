@@ -17,6 +17,9 @@ export class imageController {
                     res.status(400).send({ error: "No file uploaded" });
                     return;
                 }
+                if (err) {
+                    return res.status(400).send({ error: "Invalid form data" });
+                }
                 resolve();
             });
         });

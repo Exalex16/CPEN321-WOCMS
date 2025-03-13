@@ -1,6 +1,3 @@
-import axios from "axios";
-import fs from "fs";
-import FormData from "form-data";
 import path from "path";
 import "../../controllers/imageController";
 import "../../routes/imageRoutes";
@@ -36,11 +33,7 @@ afterAll(async () => {
     await closeServer(); // ✅ Ensure server and DB are closed
 });
 
-describe("Unmocked API Tests - imageController", () => {
-    afterAll(() => {
-        server.close(); // ✅ Properly shut down the server after tests
-    });
-
+describe("Unmocked API Tests - post /user", () => {
     test("✅ Ensure Test User Exists", async () => {
         const res = await request(app)
             .post("/user")
@@ -113,6 +106,20 @@ describe("Unmocked API Tests - imageController", () => {
         expect(res.body.error).toBe("Invalid location format. Ensure it's valid JSON.");
     });
 
+    test("❌ 400 - Invalid Form Data (Incorrect File Type)", async () => {
+        const res = await request(app)
+            .post("/upload")
+            .field("uploadedBy", TEST_USER) // ✅ Required field
+            .field("description", "Test invalid upload")
+            .attach("image", Buffer.from("invalid file content"), "test.jpg") // ❌ Invalid type for uploadMiddleware
+            .attach("nottrue", Buffer.from("invalid file content"), "test.txt"); // ❌ Invalid type for uploadMiddleware
+    
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe("Invalid form data");
+    });
+});
+
+describe("Unmocked API Tests - get /metadata/:key", () => {
     test("✅ Get Image Metadata", async () => {
         const res = await request(app).get(`/metadata/${uploadedFileName}`);
         expect(res.status).toBe(200);
@@ -123,7 +130,9 @@ describe("Unmocked API Tests - imageController", () => {
         const res = await request(app).get("/metadata/non-existing.jpg");
         expect(res.status).toBe(404);
     });
+});
 
+describe("Unmocked API Tests - get /images/uploader/:uploaderEmail", () => {
     test("✅ Get Images By Uploader", async () => {
         const res = await request(app).get(`/images/uploader/${TEST_USER}`);
         expect(res.status).toBe(200);
@@ -135,13 +144,17 @@ describe("Unmocked API Tests - imageController", () => {
         expect(res.status).toBe(404);
         expect(res.body.error).toBe("User not found");
     });
+});
 
+describe("Unmocked API Tests - get /images", () => {
     test("✅ Get All Images", async () => {
         const res = await request(app).get("/images");
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body.images)).toBe(true);
     });
+});
 
+describe("Unmocked API Tests - put /image/update-description", () => {
     test("✅ Update Image Description", async () => {
         const res = await request(app)
             .put("/image/update-description")
@@ -167,7 +180,9 @@ describe("Unmocked API Tests - imageController", () => {
         expect(res.status).toBe(400);
         expect(res.body.error).toBe("Both fileName and newDescription are required.");
     });
+});
 
+describe("Unmocked API Tests - post /image/share", () => {
     test("✅ Share Image Successfully", async () => {
         const res = await request(app)
             .post("/image/share")
@@ -244,7 +259,9 @@ describe("Unmocked API Tests - imageController", () => {
         expect(res.status).toBe(404);
         expect(res.body.error).toBe("Recipient user not found");
     });
+});
 
+describe("Unmocked API Tests - get /image/shared/:userEmail", () => {
     test("✅ Retrieve Shared Images Successfully", async () => {
         const res = await request(app)
             .get(`/image/shared/${TEST_RECIPIENT}`);
@@ -252,7 +269,9 @@ describe("Unmocked API Tests - imageController", () => {
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body.sharedImages)).toBe(true);
     });
+});
 
+describe("Unmocked API Tests - post /image/cancel-share", () => {
     test("✅ Cancel Sharing Successfully", async () => {
         const res = await request(app)
             .post("/image/cancel-share")
@@ -299,7 +318,9 @@ describe("Unmocked API Tests - imageController", () => {
         expect(res.status).toBe(404);
         expect(res.body.error).toBe("Image not found");
     });
+});
 
+describe("Unmocked API Tests - delete /image/:key", () => {
     test("✅ Delete Uploaded Image", async () => {
         const res = await request(app).delete(`/image/${uploadedFileName}`);
         expect(res.status).toBe(200);
@@ -311,7 +332,9 @@ describe("Unmocked API Tests - imageController", () => {
         expect(res.status).toBe(404);
         expect(res.body.error).toBe("Metadata not found in MongoDB");
     });
+});
 
+describe("Unmocked API Tests - delete /image/delete-all/:userEmail", () => {
     test("✅ Upload Image with Location for Delete All", async () => {
         const res = await request(app)
             .post("/upload")
@@ -332,7 +355,6 @@ describe("Unmocked API Tests - imageController", () => {
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty("message");
     });
-
 });
 
 
