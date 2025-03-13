@@ -4,7 +4,7 @@ import FormData from "form-data";
 import path from "path";
 import "../../controllers/imageController";
 import "../../routes/imageRoutes";
-import {app} from "../../index"
+import {app, server, closeServer} from "../../index"
 import request from "supertest";
 
 const TEST_IMAGE = path.join(__dirname, "../test1.png");
@@ -32,7 +32,15 @@ const TEST_LOCATION2 = JSON.stringify({
     icon: "Green"
 });
 
+afterAll(async () => {
+    await closeServer(); // ✅ Ensure server and DB are closed
+});
+
 describe("Unmocked API Tests - imageController", () => {
+    afterAll(() => {
+        server.close(); // ✅ Properly shut down the server after tests
+    });
+
     test("✅ Ensure Test User Exists", async () => {
         const res = await request(app)
             .post("/user")
@@ -72,7 +80,6 @@ describe("Unmocked API Tests - imageController", () => {
         const res = await request(app)
             .post("/upload")
             .field("uploadedBy", TEST_USER)
-            .field("description", "Test upload")
             .field("location", TEST_LOCATION)
             .attach("image", TEST_IMAGE); // ✅ Correct way to send a file
 

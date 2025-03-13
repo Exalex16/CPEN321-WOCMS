@@ -40,11 +40,12 @@ Routes.forEach((route) => {
     );
 });
 
+let server: any;
 
 clinet.connect().then(() => {
     console.log("MongoDB Client Connected: " + process.env.DB_URI);
 
-    app.listen(process.env.PORT, () => {
+    server = app.listen(process.env.PORT, () => {
         console.log("Listening on port " + process.env.PORT);
     });
 }).catch(err => {
@@ -52,4 +53,11 @@ clinet.connect().then(() => {
     clinet.close();
 });
 
+export const closeServer = async () => {
+    if (server) {
+        server.close();
+    }
+    await clinet.close(); // ✅ Ensure MongoDB connection is also closed
+};
 
+export { server };

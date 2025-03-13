@@ -482,7 +482,7 @@ export async function analyzeImageLabels(s3Bucket: string, imageKey: string) {
 
         return labels;
     } catch (error) {
-        console.error("Rekognition Label Detection Error:", error);
+        // console.error("Rekognition Label Detection Error:", error);
         throw new Error("Image analysis failed");
     }
 }
@@ -499,7 +499,7 @@ export async function analyzeImageModeration(s3Bucket: string, imageKey: string)
 
         return moderationLabels;
     } catch (error) {
-        console.error("Rekognition Moderation Detection Error:", error);
+        // console.error("Rekognition Moderation Detection Error:", error);
         throw new Error("Image analysis failed");
     }
 }
