@@ -61,54 +61,60 @@ export class userController {
      * Update user profile info.
      */
     async updateProfile(req: Request, res: Response, next: NextFunction) {
-        formDataMiddleware(req, res, async (err) => { 
-            if (err) {
-                return res.status(400).send({ error: "Multer Error: " + err.message });
-            }
+        await new Promise<void>((resolve, reject) => {
+            formDataMiddleware(req, res, (err) => {
+                const { googleEmail } = req.params;
 
-            const { googleEmail } = req.params;
-            let { googleName, location } = req.body; 
-
-            if (!googleEmail) {
-                return res.status(400).send({ error: "Google ID is required" });
-            }
-
-            const db = clinet.db("User");
-
-            // Parse `location` 
-            if (typeof location === "string") {
-                try {
-                    location = JSON.parse(location); // Convert JSON string to object
-                    location.position.lat = parseFloat(location.position.lat);
-                    location.position.lng = parseFloat(location.position.lng);
-                } catch (e) {
-                    return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+                if (!googleEmail) {
+                    return res.status(400).send({ error: "Google ID is required" });
                 }
-            }
-
-            // Build update object dynamically
-            const updateFields: any = { updatedAt: new Date() };
-            if (googleName) updateFields.googleName = googleName;
-
-            const updateQuery: any = { $set: updateFields };
-            if (location) updateQuery.$addToSet = { locations: location }; // Add location
-
-            // Execute update
-            const updateResult = await db.collection("users").updateOne(
-                { googleEmail },
-                updateQuery
-            );
-
-            if (updateResult.matchedCount === 0) {
-                return res.status(404).send({ error: "User not found" });
-            }
-
-            res.status(200).send({
-                message: "User profile updated",
-                updatedFields: updateFields,
-                addedLocation: location || null,
+                resolve();
             });
         });
+         
+        const { googleEmail } = req.params;
+        let { googleName, location } = req.body; 
+
+        // if (!googleEmail) {
+        //     return res.status(400).send({ error: "Google ID is required" });
+        // }
+
+        const db = clinet.db("User");
+
+        // Parse `location` 
+        if (typeof location === "string") {
+            try {
+                location = JSON.parse(location); // Convert JSON string to object
+                location.position.lat = parseFloat(location.position.lat);
+                location.position.lng = parseFloat(location.position.lng);
+            } catch (e) {
+                return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+            }
+        }
+
+        // Build update object dynamically
+        const updateFields: any = { updatedAt: new Date() };
+        if (googleName) updateFields.googleName = googleName;
+
+        const updateQuery: any = { $set: updateFields };
+        if (location) updateQuery.$addToSet = { locations: location }; // Add location
+
+        // Execute update
+        const updateResult = await db.collection("users").updateOne(
+            { googleEmail },
+            updateQuery
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return res.status(404).send({ error: "User not found" });
+        }
+
+        res.status(200).send({
+            message: "User profile updated",
+            updatedFields: updateFields,
+            addedLocation: location || null,
+        });
+  
     }
     
     /**
@@ -144,49 +150,50 @@ export class userController {
      * Delete user from a location.
      */
     async removeLocation(req: Request, res: Response, next: NextFunction) {
-        formDataMiddleware(req, res, async (err) => {
-            if (err) {
-                return res.status(400).send({ error: "Multer Error: " + err.message });
-            }
+        await new Promise<void>((resolve, reject) => {
+            formDataMiddleware(req, res, (err) => {
+                const { googleEmail } = req.params;
 
-            const { googleEmail } = req.params;
-            let { location } = req.body; // Extract location from form-data
-
-            if (!googleEmail) {
-                return res.status(400).send({ error: "Google ID is required." });
-            }
-
-            const db = clinet.db("User");
-
-            // ✅ Parse `location` if it's a string (handling form-data issue)
-            if (typeof location === "string") {
-                try {
-                    location = JSON.parse(location);
-                    location.position.lat = parseFloat(location.position.lat);
-                    location.position.lng = parseFloat(location.position.lng);
-                } catch (e) {
-                    return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+                if (!googleEmail) {
+                    return res.status(400).send({ error: "Google ID is required." });
                 }
-            }
-
-            // ✅ Perform the location removal from the user's document
-            const updateResult = await db.collection("users").updateOne(
-                { googleEmail },
-                { $pull: { locations: location } } // Removes the matching location
-            );
-
-            if (updateResult.matchedCount === 0) {
-                return res.status(404).send({ error: "User not found." });
-            }
-
-            if (updateResult.modifiedCount === 0) {
-                return res.status(404).send({ error: "Location not found in user's data." });
-            }
-
-            res.status(200).send({
-                message: "Location removed successfully.",
-                removedLocation: location
+                resolve();
             });
+        });
+
+        const { googleEmail } = req.params;
+        let { location } = req.body; 
+
+        const db = clinet.db("User");
+
+        // ✅ Parse `location` if it's a string (handling form-data issue)
+        if (typeof location === "string") {
+            try {
+                location = JSON.parse(location);
+                location.position.lat = parseFloat(location.position.lat);
+                location.position.lng = parseFloat(location.position.lng);
+            } catch (e) {
+                return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+            }
+        }
+
+        // ✅ Perform the location removal from the user's document
+        const updateResult = await db.collection("users").updateOne(
+            { googleEmail },
+            { $pull: { locations: location } } // Removes the matching location
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return res.status(404).send({ error: "User not found." });
+        }
+
+        if (updateResult.modifiedCount === 0) {
+            return res.status(404).send({ error: "Location not found in user's data." });
+        }
+
+        res.status(200).send({
+            message: "Location removed successfully.",
+            removedLocation: location
         });
     }
 
