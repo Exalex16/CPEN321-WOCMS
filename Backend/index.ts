@@ -27,13 +27,14 @@ Routes.forEach((route) => {
         async (req: Request, res: Response, next: NextFunction) => {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
+                console.log("Validation Error Detected")
                 return res.status(400).send({ errors: errors.array() });
             }
             try {
                 await route.action(req, res, next);
             } catch (err) {
-                console.log(err);
-                return res.sendStatus(500);
+                // console.log("Error catched!");
+                return res.status(500).send({error: "Internet Error"});
             }
         },
     );

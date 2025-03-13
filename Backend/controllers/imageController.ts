@@ -11,92 +11,97 @@ export const rekognition = new RekognitionClient({ region: "us-west-2" });
 export class imageController {
     
     async uploadImage(req: Request, res: Response, next: NextFunction) {
-        uploadMiddleware(req, res, async (err) => {
-            if (!req.file) {
-                return res.status(400).send({ error: "No file uploaded" });
-            }
-
-            // Extract metadata fields
-            const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
-            const timestamp = new Date().toISOString();
-
-            // Convert image to JPG or PNG
-            const processedImage = await processImage(req.file);
-
-            // Force file extension to match converted type
-            const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}.${processedImage.fileExtension}`;
-
-            // Extract location metadata
-            let location = null;
-            if (req.body.location) {
-                try {
-                    location = JSON.parse(req.body.location); 
-
-                    location.position.lat = parseFloat(location.position.lat);
-                    location.position.lng = parseFloat(location.position.lng);
-                } catch (e) {
-                    return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
+        await new Promise<void>((resolve, reject) => {
+            uploadMiddleware(req, res, (err) => {
+                if (!req.file) {
+                    res.status(400).send({ error: "No file uploaded" });
+                    return;
                 }
+                resolve();
+            });
+        });
+
+        const file = req.file as Express.Multer.File;
+
+        // Extract metadata fields
+        const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
+        const timestamp = new Date().toISOString();
+
+        // Convert image to JPG or PNG
+        const processedImage = await processImage(file);
+
+        // Force file extension to match converted type
+        const rawFileName = `${uploadedBy}-${timestamp.replace(/:/g, "-")}.${processedImage.fileExtension}`;
+
+        // Extract location metadata
+        let location = null;
+        if (req.body.location) {
+            try {
+                location = JSON.parse(req.body.location); 
+
+                location.position.lat = parseFloat(location.position.lat);
+                location.position.lng = parseFloat(location.position.lng);
+            } catch (e) {
+                return res.status(400).send({ error: "Invalid location format. Ensure it's valid JSON." });
             }
-            
-            // Upload image to S3
-            const s3Params = {
-                Bucket: "cpen321-photomap-images",
-                Key: `images/${rawFileName}`,
-                Body: processedImage.buffer,
-                ContentType: processedImage.mimeType,
-                Metadata: { "x-amz-meta-uploaded-by": uploadedBy, "x-amz-meta-timestamp": timestamp },
-            };
-            await s3.send(new PutObjectCommand(s3Params));
+        }
 
+        // Upload image to S3
+        const s3Params = {
+            Bucket: "cpen321-photomap-images",
+            Key: `images/${rawFileName}`,
+            Body: processedImage.buffer,
+            ContentType: processedImage.mimeType,
+            Metadata: { "x-amz-meta-uploaded-by": uploadedBy, "x-amz-meta-timestamp": timestamp },
+        };
+        await s3.send(new PutObjectCommand(s3Params));
 
-            // Send image to AWS Rekognition
-            let labels;
-            let moderationLabels;
-            labels = await analyzeImageLabels("cpen321-photomap-images", `images/${rawFileName}`);
-            moderationLabels = await analyzeImageModeration("cpen321-photomap-images", `images/${rawFileName}`);
+        // Send image to AWS Rekognition
+        let labels;
+        let moderationLabels;
+        labels = await analyzeImageLabels("cpen321-photomap-images", `images/${rawFileName}`);
+        moderationLabels = await analyzeImageModeration("cpen321-photomap-images", `images/${rawFileName}`);
 
-            // Generate a presigned URL valid for 1 hour
-            let presignedUrl;
-            presignedUrl = await getSignedUrl(
-                s3,
-                new GetObjectCommand({ Bucket: "cpen321-photomap-images", Key: `images/${rawFileName}` }),
-                { expiresIn: 604800 }
+        // Generate a presigned URL valid for 1 hour
+        let presignedUrl;
+        presignedUrl = await getSignedUrl(
+            s3,
+            new GetObjectCommand({ Bucket: "cpen321-photomap-images", Key: `images/${rawFileName}` }),
+            { expiresIn: 604800 }
+        );
+
+        // Store metadata in MongoDB 
+        const db = clinet.db("images");
+        await db.collection("metadata").insertOne({
+            fileName: rawFileName,
+            imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
+            description: req.body.description || "No description provided",
+            uploadedBy: [uploadedBy],
+            timestamp,
+            tags: labels,
+            moderationLabels,
+            location,
+            sharedTo: [],
+            shared: false,
+            sharedBy: null
+        });
+
+        // Update user database with location history
+        const userDb = clinet.db("User");
+        if (location) {
+            await userDb.collection("users").updateOne(
+                { googleEmail: uploadedBy },
+                { $addToSet: { locations: location } } 
             );
+        }
 
-            // Store metadata in MongoDB 
-            const db = clinet.db("images");
-            await db.collection("metadata").insertOne({
-                fileName: rawFileName,
-                imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
-                description: req.body.description || "No description provided",
-                uploadedBy: [uploadedBy],
-                timestamp,
-                tags: labels,
-                moderationLabels,
-                location,
-                sharedTo: [],
-                shared: false,
-                sharedBy: null
-            });
-
-            // Update user database with location history
-            const userDb = clinet.db("User");
-            if (location) {
-                await userDb.collection("users").updateOne(
-                    { googleEmail: uploadedBy },
-                    { $addToSet: { locations: location } } 
-                );
-            }
-
-            res.status(200).send({
-                message: "Upload successful",
-                fileName: rawFileName,
-                presignedUrl,
-                imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
-                metadata: { uploadedBy, timestamp,tags: labels, moderationLabels, location, sharedTo: [], shared: false,
-                    sharedBy: null},
-            });
+        res.status(200).send({
+            message: "Upload successful",
+            fileName: rawFileName,
+            presignedUrl,
+            imageUrl: `https://cpen321-photomap-images.s3.us-west-2.amazonaws.com/images/${rawFileName}`,
+            metadata: { uploadedBy, timestamp,tags: labels, moderationLabels, location, sharedTo: [], shared: false,
+                sharedBy: null},
         });
     }
     
