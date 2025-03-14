@@ -4,14 +4,10 @@ import { clinet } from "../services";
 
 
 export class mapController {
-    constructor() {
-        this.getRecommendation = this.getRecommendation.bind(this);
-    }
-
     /**
      * Get popular locations based on image density
      */
-    async getRecommendation(req: Request, res: Response, next: NextFunction) {
+    getRecommendation = async (req: Request, res: Response, next: NextFunction) => {
         const { userEmail } = req.params;
 
         const db = clinet.db("images");
