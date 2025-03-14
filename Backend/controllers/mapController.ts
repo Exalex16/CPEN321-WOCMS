@@ -4,6 +4,10 @@ import { clinet } from "../services";
 
 
 export class mapController {
+    constructor() {
+        this.getRecommendation = this.getRecommendation.bind(this);
+    }
+
     /**
      * Get popular locations based on image density
      */
