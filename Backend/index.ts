@@ -13,7 +13,7 @@ app.use(express.json())
 app.use(morgan('tiny'))
 const Routes = [ ...imageRoutes, ...userRoutes, ...mapRoutes];
 
-app.get("/", (req: Request, res: Response, nextFunction: NextFunction) => {
+app.get("/", (_: Request, res: Response) => {
     res.send("CPEN321 2024W2 PhotoMap Placeholder");
 })
 
@@ -52,7 +52,7 @@ clinet.connect().then(() => {
 
 export const closeServer = async () => {
     if (server) {
-        await new Promise((resolve) => setTimeout(() => server.close(resolve), 500)); // Delay closing server
+        await server.close(); // Delay closing server
     }
     if (clinet) {
         await clinet.close();
