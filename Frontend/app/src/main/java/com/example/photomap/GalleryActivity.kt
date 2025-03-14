@@ -35,7 +35,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,8 +54,12 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.text.TextStyle
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -249,6 +255,13 @@ class GalleryActivity : ComponentActivity() {
                                 color = Color.Gray,
                                 fontSize = 14.sp
                             )
+                            if(!(images[page].second.sharedBy.equals("null") || images[page].second.sharedBy.equals(userToken))){
+                                Text(
+                                    text = "SharedBy: ${images[page].second.sharedBy}",
+                                    color = Color.Gray,
+                                    fontSize = 12.sp
+                                )
+                            }
                         }
 
                         // Second Column (Right Side)
@@ -282,64 +295,107 @@ class GalleryActivity : ComponentActivity() {
         }
 
         var expanded by remember { mutableStateOf(false) }
-        val options = listOf("Option 1", "Option 2", "Option 3")
+        val options = MainActivity.userInfo.friends
 
         if (showDialog) {
-            Dialog(onDismissRequest = { showDialog = false }) {
+            Dialog(onDismissRequest = {
+                showDialog = false
+                userInput = ""
+                expanded = false
+            }) {
                 Box(
                     modifier = Modifier
                         .size(320.dp)
                         .background(Color.White, shape = RoundedCornerShape(16.dp))
-                        .padding(16.dp),
+                        .padding(10.dp),
 
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Spacer(Modifier.height(16.dp))
-                        Text("Shard Photo", fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+                        Spacer(Modifier.height(8.dp))
+                        Text("Share Photo", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
 
-                        Spacer(Modifier.height(16.dp))
+
+                        Spacer(Modifier.height(6.dp))
 
                         // Use ExposedDropdownMenuBox for better dropdown behavior
                         ExposedDropdownMenuBox(
                             expanded = expanded,
-                            onExpandedChange = { expanded = !expanded }
+                            onExpandedChange = { } // ✅ Prevents TextField from toggling the dropdown
                         ) {
                             TextField(
                                 value = userInput,
                                 onValueChange = { userInput = it },
                                 placeholder = { Text("Type email here") },
                                 singleLine = true,
-                                modifier = Modifier
-                                    .menuAnchor() // Ensures correct dropdown positioning
-                                    .fillMaxWidth(),
-                                readOnly = false, // Allow manual typing
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = if (!expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                        contentDescription = "Dropdown Arrow",
-                                        tint = Color.Black // Set arrow color to black
-                                    )
-                                }
+                                textStyle = TextStyle(fontSize = 16.sp),
 
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                readOnly = false, // ✅ Allows typing without affecting dropdown
+                                colors = TextFieldDefaults.colors(
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent
+                                ),
+                                trailingIcon = {
+                                    IconButton(
+                                        onClick = {
+                                            expanded = !expanded // ✅ Only the icon controls dropdown
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                                            contentDescription = "Dropdown Arrow",
+                                            tint = Color.Black
+                                        )
+                                    }
+                                }
                             )
 
                             ExposedDropdownMenu(
                                 expanded = expanded,
-                                onDismissRequest = { expanded = false }
+                                onDismissRequest = { }, // ✅ Clicking outside closes it
+                                modifier = Modifier.heightIn(max = 80.dp) // ✅ Limits dropdown height
+                                    .verticalScroll(rememberScrollState())
                             ) {
                                 options.forEach { option ->
                                     DropdownMenuItem(
-                                        text = { Text(option) },
+                                        text = { Text(option, fontSize = 16.sp) },
                                         onClick = {
                                             userInput = option // Auto-fill TextField
                                             expanded = false // Close dropdown
-                                        }
+                                        },
+                                        modifier = Modifier.height(30.dp)
                                     )
                                 }
                             }
                         }
 
-                        Spacer(Modifier.height(16.dp))
+
+                        Spacer(Modifier.height(10.dp))
+                        Text("People with Access", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
+
+                        Box(
+                            modifier = Modifier
+                                .height(80.dp)
+                                .fillMaxWidth()
+                                .then(if (images[pagerState.currentPage].second.sharedTo.size > 3) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                                .background(Color(0xFFf2f3f4))
+                                .padding(8.dp)
+                        ) {
+                            Column {
+                                repeat(images[pagerState.currentPage].second.sharedTo.size) { index ->
+                                    Text(
+                                        text = images[pagerState.currentPage].second.sharedTo[index],
+                                        modifier = Modifier.padding(vertical = 4.dp),
+                                        fontSize = 16.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(40.dp))
                         Button(
                             onClick = {
                                 coroutineScope.launch {
@@ -356,6 +412,9 @@ class GalleryActivity : ComponentActivity() {
 
                                         if (response.isSuccessful) {
                                             Log.d("DialogInput", "API Success: ${response.body()?.string()}")
+                                            images[pagerState.currentPage].second.sharedTo.add(userInput.trim())
+                                            images[pagerState.currentPage].second.shared = true
+                                            images[pagerState.currentPage].second.sharedBy = userToken.toString().trim()
                                         } else {
                                             Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
 
@@ -367,21 +426,19 @@ class GalleryActivity : ComponentActivity() {
                                 }
                                 showDialog = false
                             },
-                            modifier = Modifier.fillMaxWidth(0.4f).align(Alignment.End)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Blue,  // Background color
+                                contentColor = Color.White    // Text color
+                            ),
+                            modifier = Modifier.fillMaxWidth(0.3f).align(Alignment.End)
                         ) {
-                            Text("Submit")
+                            Text("Share")
                         }
-
-
-
-
-
+                        //new component add here
                     }
                 }
             }
         }
-
-
 
 
 
