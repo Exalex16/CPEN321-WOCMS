@@ -9,7 +9,7 @@ export const rekognition = new RekognitionClient({ region: "us-west-2" });
 
 export class imageController {
     
-    async uploadImage(req: Request, res: Response, next: NextFunction) {
+    uploadImage = async (req: Request, res: Response) => {
         await new Promise<void>((resolve, reject) => {
             uploadMiddleware(req, res, (err) => {
                 if (!req.file) {
@@ -111,7 +111,7 @@ export class imageController {
     /**
      * Get image metadata and full-size image URL.
      */
-    async getImage(req: Request, res: Response, next: NextFunction) {
+    getImage = async (req: Request, res: Response) => {
         const { key } = req.params;
         
         let image;
@@ -153,7 +153,7 @@ export class imageController {
     /**
      * Get all images uploaded by a user.
      */
-    async getImagesByUploader(req: Request, res: Response, next: NextFunction) {
+    getImagesByUploader = async (req: Request, res: Response) => {
         const { uploaderEmail } = req.params;
 
         let userExists;
@@ -197,7 +197,7 @@ export class imageController {
     /**
      * Delete image from S3 and remove metadata from MongoDB.
      */
-    async deleteImage(req: Request, res: Response, next: NextFunction) {
+    deleteImage = async (req: Request, res: Response) => {
         const { key } = req.params;
 
         const fileKey = `images/${key}`;
@@ -216,7 +216,7 @@ export class imageController {
         res.status(200).send({ message: "Image deleted successfully" });
     }
 
-    async getAllImages(req: Request, res: Response, next: NextFunction) {
+    getAllImages = async (req: Request, res: Response) => {
         let images;
         const db = clinet.db("images");
         images = await db.collection("metadata").find().toArray();
@@ -245,7 +245,7 @@ export class imageController {
         res.status(200).send({ images: imagesWithPresignedUrls });
     }
 
-    async updateImageDescription(req: Request, res: Response, next: NextFunction) {
+    updateImageDescription = async (req: Request, res: Response) => {
         const { fileName, newDescription } = req.body;
 
         if (!fileName || !newDescription) {
@@ -269,7 +269,7 @@ export class imageController {
         res.status(200).send({ message: "Image description updated successfully", fileName, newDescription });
     }
     
-    async deleteAllImagesByUser(req: Request, res: Response, next: NextFunction) {
+    deleteAllImagesByUser = async (req: Request, res: Response) => {
         const { userEmail } = req.params;
 
         let images;
@@ -294,7 +294,7 @@ export class imageController {
     /**
      * Share an image by sending an email with the image link.
      */
-    async shareImage(req: Request, res: Response, next: NextFunction) {
+    shareImage = async (req: Request, res: Response) => {
         const { recipientEmail, imageKey, senderEmail } = req.body;
         if (!recipientEmail || !imageKey || !senderEmail) {
             return res.status(400).send({ error: "Recipient email, image key, and sender email are required" });
@@ -362,7 +362,7 @@ export class imageController {
 
     }
 
-    async getSharedImages(req: Request, res: Response, next: NextFunction) {
+    getSharedImages = async (req: Request, res: Response) => {
         const { userEmail } = req.params;
 
         let sharedImages;
@@ -395,7 +395,7 @@ export class imageController {
         res.status(200).send({ sharedImages: sharedImagesWithPresignedUrls });
     }
 
-    async cancelShare(req: Request, res: Response, next: NextFunction) {
+    cancelShare = async (req: Request, res: Response) => {
         const { imageKey, senderEmail } = req.body;
         if (!imageKey || !senderEmail) {
             return res.status(400).send({ error: "Image key and sender email are required" });

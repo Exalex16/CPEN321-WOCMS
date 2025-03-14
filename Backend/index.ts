@@ -23,14 +23,14 @@ Routes.forEach((route) => {
     (app as any)[route.method](
         route.route,
         route.validation,
-        async (req: Request, res: Response, next: NextFunction) => {
+        async (req: Request, res: Response) => {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 console.log("Validation Error Detected")
                 return res.status(400).send({ errors: errors.array() });
             }
             try {
-                await route.action(req, res, next);
+                await (route.action as (req: Request, res: Response) => Promise<void>)(req, res);
             } catch (err) {
                 // console.log("Error catched!");
                 return res.status(500).send({error: "Internet Error"});
