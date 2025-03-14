@@ -4,8 +4,6 @@ import { RequestHandler } from "express";
 import multer from "multer";
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY} = process.env;
 
-require('dotenv').config();
-
 // MongoDB Connection
 export const clinet = new MongoClient(process.env.DB_URI ?? "mongodb://localhost:27017")
 

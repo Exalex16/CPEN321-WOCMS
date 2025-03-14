@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { clinet, formDataMiddleware } from "../services";
 
 export class userController {

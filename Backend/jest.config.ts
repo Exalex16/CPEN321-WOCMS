@@ -1,5 +1,6 @@
-require("dotenv").config();
-module.exports = {
+import "dotenv/config";
+
+export default {
     preset: "ts-jest",
     testEnvironment: "node",
     rootDir: __dirname,

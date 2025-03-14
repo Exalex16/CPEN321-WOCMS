@@ -9,8 +9,6 @@ import morgan from "morgan"
 
 export const app = express();
 
-require('dotenv').config();
-
 app.use(express.json()) 
 app.use(morgan('tiny'))
 const Routes = [ ...imageRoutes, ...userRoutes, ...mapRoutes];
