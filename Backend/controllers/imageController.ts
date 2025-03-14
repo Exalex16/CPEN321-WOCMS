@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { s3, clinet, uploadMiddleware } from "../services"; 
-import { PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { ObjectId } from "mongodb";
 import sharp from "sharp";
 import { RekognitionClient, DetectLabelsCommand, DetectModerationLabelsCommand } from "@aws-sdk/client-rekognition";
 
@@ -310,7 +309,7 @@ export class imageController {
             return res.status(404).send({ error: "Image not found" });
         }
 
-        // ✅ Check if the recipient exists
+        // Check if the recipient exists
         const userDb = clinet.db("User");
         const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
         if (!recipient) {

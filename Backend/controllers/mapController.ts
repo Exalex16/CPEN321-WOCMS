@@ -43,7 +43,7 @@ export class mapController {
         // console.log("Cleaned Image Locations:", points);
 
         if (points.length === 0) {
-            console.log(`📌 All images for ${userEmail} had invalid coordinates.`);
+            console.log(`All images for ${userEmail} had invalid coordinates.`);
             return res.status(200).send({ popularLocation: null, message: "No valid image locations found. Cannot generate recommendation." });
         }
 

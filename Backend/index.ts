@@ -1,5 +1,4 @@
 import express, {NextFunction, Request, Response} from "express";
-import { MongoClient } from "mongodb";
 import { clinet } from "./services";
 import { imageRoutes } from "./routes/imageRoutes";
 import { userRoutes } from "./routes/userRoutes";

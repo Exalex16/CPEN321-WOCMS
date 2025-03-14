@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { clinet, formDataMiddleware } from "../services";
-import { ObjectId } from "mongodb";
 
 export class userController {
     /**
@@ -88,7 +87,7 @@ export class userController {
         if (googleName) updateFields.googleName = googleName;
 
         const updateQuery: any = { $set: updateFields };
-        if (location) updateQuery.$addToSet = { locations: location }; // Add location
+        if (location) updateQuery.$addToSet = { locations: location }; 
 
         // Execute update
         const updateResult = await db.collection("users").updateOne(
@@ -152,7 +151,7 @@ export class userController {
 
         const db = clinet.db("User");
 
-        // ✅ Parse `location` if it's a string (handling form-data issue)
+        // Parse `location` if it's a string (handling form-data issue)
         if (typeof location === "string") {
             try {
                 location = JSON.parse(location);
@@ -163,10 +162,10 @@ export class userController {
             }
         }
 
-        // ✅ Perform the location removal from the user's document
+        // Perform the location removal from the user's document
         const updateResult = await db.collection("users").updateOne(
             { googleEmail },
-            { $pull: { locations: location } } // Removes the matching location
+            { $pull: { locations: location } } 
         );
 
         if (updateResult.matchedCount === 0) {
@@ -206,7 +205,7 @@ export class userController {
         // Add friendEmail to user's friends list (if not already added)
         await db.collection("users").updateOne(
             { googleEmail },
-            { $addToSet: { friends: friendEmail } }  // ✅ Ensures no duplicates
+            { $addToSet: { friends: friendEmail } }  
         );
 
         res.status(200).send({ message: "Friend added successfully", friendEmail });

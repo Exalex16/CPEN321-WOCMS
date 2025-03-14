@@ -1,8 +1,8 @@
 import "../../controllers/mapController";
 import "../../routes/mapRoutes";
-import { app, server, closeServer } from "../../index";
+import { app, closeServer } from "../../index";
 import request from "supertest";
-import { clinet } from "../../services"; // Ensure clinet is properly imported
+import { clinet } from "../../services"; 
 
 const TEST_USER = "exalex16@gmail.com";
 
@@ -10,14 +10,18 @@ afterAll(async () => {
     await closeServer(); 
 });
 
+// Interface: GET /map/popular-locations/:userEmail
 describe("Mocked API Tests - get /map/popular-locations/:userEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on getRecommendation", async () => {
-        // ✅ Ensure clinet.db().collection().find() is properly mocked to throw an error
+    // Input: Simulated MongoDB failure when retrieving user image locations
+    // Expected status code: 500
+    // Expected behavior: API should handle the failure and return an "Internet Error" response
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on getRecommendation", async () => {
         const mockFind = jest.fn(() => ({
             toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
         }));

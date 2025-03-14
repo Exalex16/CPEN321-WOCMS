@@ -1,6 +1,5 @@
-import { body, param } from "express-validator"
+import { param } from "express-validator"
 import { imageController} from "../controllers/imageController";
-// import { uploadMiddleware } from "../services";
 
 const controller = new imageController()
 
