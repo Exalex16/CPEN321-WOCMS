@@ -14,6 +14,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
 import java.time.ZoneId
@@ -29,6 +30,10 @@ class MainActivity : AppCompatActivity() {
     object mapContent{
         val imageList: ArrayList<PhotoInstance> = arrayListOf()
         val markerList: ArrayList<MarkerInstance> = arrayListOf()
+    }
+
+    object userInfo{
+        val friends:MutableList<String> = mutableListOf()
     }
 
 
@@ -52,12 +57,25 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 val photoResponse = withContext(Dispatchers.IO) {
                     RetrofitClient.api.getImagesByUser(userToken)
-
                 }
                 val markerResponse =  withContext(Dispatchers.IO) {
                     RetrofitClient.api.getMarkerByUser(userToken)
+                }
+
+                val friendsResponse =  withContext(Dispatchers.IO) {
+                    RetrofitClient.api.getFriendsByUser(userToken)
+                }
+
+                if(friendsResponse.isSuccessful && friendsResponse.body() != null){
+                    Log.d(TAG,  "Tiggers")
+                    val friendsList = JSONObject(friendsResponse.body()!!.string()).optJSONArray("friends") ?: JSONArray()
+                    for(i in 0 until friendsList.length()){
+                        userInfo.friends.add(friendsList.optString(i))
+                    }
+
 
                 }
+
                 if(photoResponse.isSuccessful && photoResponse.body() != null &&
                     markerResponse.isSuccessful && markerResponse.body() != null){
                     val photoJsonArr = JSONObject(photoResponse.body()!!.string()).getJSONArray("images")
@@ -94,10 +112,17 @@ class MainActivity : AppCompatActivity() {
                         val imageUrl = imageObject.getString("presignedUrl")
                         val time = Instant.parse(imageObject.getString("timestamp"))
                         val fileName = imageObject.getString("fileName")
+                        val sharedToArr = imageObject.optJSONArray("sharedTo") ?: JSONArray()
+                        val sharedTo = MutableList(sharedToArr.length()) { sharedToArr.getString(it) }
+                        val shared =imageObject.getBoolean("shared")
+                        val sharedBy = imageObject.getString("sharedBy")
                         val photo = PhotoInstance(
                             imageURL = imageUrl,
                             time = time,
-                            fileName = fileName
+                            fileName = fileName,
+                            sharedTo = sharedTo,
+                            shared = shared,
+                            sharedBy = sharedBy
                         )
 
                         mapContent.imageList.add(photo)
@@ -112,7 +137,8 @@ class MainActivity : AppCompatActivity() {
                         }
 
                     }
-                    Log.d(TAG,  mapContent.markerList.toString())
+                    Log.d(TAG,  mapContent.imageList.toString())
+                    Log.d(TAG,  userInfo.friends.toString())
                     //Log.d(TAG,  mapContent.imageList.toString())
                     //Log.d(TAG,  photoJsonArr.toString())
                     //Log.d(TAG, markerJson.toString())
@@ -122,6 +148,8 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                     finish()
                 }
+
+
             }
         }
 
