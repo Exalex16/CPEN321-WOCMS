@@ -100,6 +100,7 @@ data class PhotoInstance(
     val imageURL:  String,
     val time: Instant,
     val fileName: String
+
 )
 
 data class UserPostRequest(
@@ -133,6 +134,12 @@ data class DeleteMarkerResponse(
 
 data class DeleteImageResponse(
     val message: String
+)
+
+data class ShareImageRequest(
+    val recipientEmail: String,
+    val imageKey: String,
+    val senderEmail: String
 )
 
 

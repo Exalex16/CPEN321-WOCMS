@@ -61,6 +61,14 @@ interface ApiService {
     suspend fun deleteImage(
         @Path("fileName") fileName: String
     ): Response<DeleteImageResponse>
+
+
+    @POST("image/share")
+    suspend fun shareImage(
+        @Body request: ShareImageRequest
+    ):  Response<ResponseBody>
+
+
 }
 
 interface GooglePlacesApi {
