@@ -1,5 +1,5 @@
-import { body, param } from "express-validator"
 import { mapController } from "../controllers/mapController"
+import { Request, Response } from 'express';
 
 const controller = new mapController()
 
@@ -7,7 +7,7 @@ export const mapRoutes = [
     {
         method: "get",
         route: "/map/popular-locations/:userEmail",
-        action: controller.getRecommendation,
+        action: (req: Request, res: Response) => controller.getRecommendation(req, res),
         validation: [],
     }
 ]
