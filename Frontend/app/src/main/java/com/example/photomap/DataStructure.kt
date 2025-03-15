@@ -145,6 +145,11 @@ data class ShareImageRequest(
     val senderEmail: String
 )
 
+data class addFriendRequest(
+    val googleEmail: String,
+    val friendEmail: String,
+)
+
 
 
 

@@ -6,6 +6,7 @@ import android.graphics.drawable.BitmapDrawable
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -59,7 +60,10 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,6 +91,7 @@ class GalleryActivity : ComponentActivity() {
 
     @Composable
     fun GalleryScreen() {
+
         val imageGroups: MutableMap<MarkerInstance, MutableList<PhotoInstance>> = mutableMapOf()
         for(i in 0 until MainActivity.mapContent.markerList.size){
             if(MainActivity.mapContent.markerList[i].photoAtCurrentMarker.size != 0){
@@ -186,9 +191,15 @@ class GalleryActivity : ComponentActivity() {
 
     }
 
+    suspend fun showToast(context: Context, message: String) {
+        withContext(Dispatchers.Main) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+
+    }
 
 
-    @Composable
+        @Composable
     fun FullScreenImageViewer(images: List<Pair<MarkerInstance,PhotoInstance>>, startIndex: Int, onDismiss: () -> Unit) {
         val pagerState = rememberPagerState( // ✅ Move pageCount inside `rememberPagerState`
             initialPage = startIndex,
@@ -369,6 +380,39 @@ class GalleryActivity : ComponentActivity() {
                                         modifier = Modifier.height(30.dp)
                                     )
                                 }
+                                DropdownMenuItem(
+                                    text = { Text("Add Friend", fontSize = 16.sp) },
+                                    onClick = {
+                                        // Close dropdown
+
+                                        coroutineScope.launch {
+                                            try {
+                                                val response = RetrofitClient.api.addFriend(
+                                                    addFriendRequest(
+                                                        googleEmail = userToken.toString().trim(), // Get current image URL
+                                                        friendEmail = userInput.trim() // Use user input as description
+                                                    )
+                                                )
+
+                                                if (response.isSuccessful) {
+                                                    Log.d("DialogInput", "API Success: ${response.body()?.string()}")
+                                                    MainActivity.userInfo.friends.add(userInput.trim())
+                                                    Log.d("friends", MainActivity.userInfo.friends.toString())
+
+
+                                                } else {
+                                                    Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
+
+                                                }
+                                            } catch (e: Exception) {
+                                                Log.e("DialogInput", "API Exception: ${e.message}")
+                                            }
+                                            expanded = false
+                                        }
+
+                                    },
+                                    modifier = Modifier.height(30.dp)
+                                )
                             }
                         }
 

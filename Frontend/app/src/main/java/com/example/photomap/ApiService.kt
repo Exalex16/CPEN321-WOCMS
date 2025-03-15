@@ -71,6 +71,11 @@ interface ApiService {
         @Body request: ShareImageRequest
     ):  Response<ResponseBody>
 
+    @POST("user/add-friend")
+    suspend fun addFriend(
+        @Body request: addFriendRequest
+    ):  Response<ResponseBody>
+
 
 }
 
