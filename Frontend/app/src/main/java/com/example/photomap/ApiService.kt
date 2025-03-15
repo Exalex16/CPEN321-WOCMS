@@ -40,6 +40,9 @@ interface ApiService {
     @GET("user/{email}")
     suspend fun getMarkerByUser(@Path("email") email: String): Response<ResponseBody>
 
+    @GET("user/{email}/friends")
+    suspend fun getFriendsByUser(@Path("email") email: String): Response<ResponseBody>
+
     @GET("map/popular-locations/{username}")
     suspend fun getPopularLocations(
         @Path("username") username: String
@@ -61,6 +64,19 @@ interface ApiService {
     suspend fun deleteImage(
         @Path("fileName") fileName: String
     ): Response<DeleteImageResponse>
+
+
+    @POST("image/share")
+    suspend fun shareImage(
+        @Body request: ShareImageRequest
+    ):  Response<ResponseBody>
+
+    @POST("user/add-friend")
+    suspend fun addFriend(
+        @Body request: addFriendRequest
+    ):  Response<ResponseBody>
+
+
 }
 
 interface GooglePlacesApi {

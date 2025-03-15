@@ -1,8 +1,7 @@
-import {clinet} from "../../services";
 import "../../controllers/userController";
 import "../../routes/userRoutes";
 import request from "supertest";
-import { app, server, closeServer } from "../../index";
+import { app, closeServer } from "../../index";
 
 jest.mock("../../services", () => {
     const actualServices = jest.requireActual("../../services");
@@ -30,16 +29,22 @@ const TEST_USER = "exalex16@gmail.com";
 const TEST_USER_NAME = "Alex Example";
 
 afterAll(async () => {
-    await closeServer(); // ✅ Ensure server and DB are closed
+    await closeServer();
 });
 
+// Interface: POST /user
 describe("Mocked API Tests - post /user", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Read Failure", async () => {
+    // Mocked behavior: MongoDB read operation fails
+    // Input: Valid user email and name
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Read Failure", async () => {
         const res = await request(app)
             .post("/user")
             .send({ googleEmail: TEST_USER, googleName: TEST_USER_NAME });
@@ -49,13 +54,19 @@ describe("Mocked API Tests - post /user", () => {
     });
 });
 
+// Interface: GET /user/:googleEmail
 describe("Mocked API Tests - get /user/:googleEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on getProfileInfo", async () => {
+    // Mocked behavior: MongoDB fails to retrieve user profile info
+    // Input: Valid user email
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on getProfileInfo", async () => {
         const res = await request(app).get(`/user/${TEST_USER}`);
 
         expect(res.status).toBe(500);
@@ -63,13 +74,19 @@ describe("Mocked API Tests - get /user/:googleEmail", () => {
     });
 });
 
+// Interface: PUT /user/:googleEmail
 describe("Mocked API Tests - put /user/:googleEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on updateProfile", async () => {
+    // Mocked behavior: MongoDB update operation fails
+    // Input: Valid user email, updated user name
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on updateProfile", async () => {
         const res = await request(app)
             .put(`/user/${TEST_USER}`)
             .send({ googleName: "Updated Name" });
@@ -79,13 +96,19 @@ describe("Mocked API Tests - put /user/:googleEmail", () => {
     });
 });
 
+// Interface: GET /users
 describe("Mocked API Tests - get /users", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on getUserList", async () => {
+    // Mocked behavior: MongoDB query fails when retrieving user list
+    // Input: None
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on getUserList", async () => {
         const res = await request(app).get("/users");
 
         expect(res.status).toBe(500);
@@ -93,13 +116,19 @@ describe("Mocked API Tests - get /users", () => {
     });
 });
 
+// Interface: DELETE /user/:googleEmail
 describe("Mocked API Tests - delete /user/:googleEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on deleteUser", async () => {
+    // Mocked behavior: MongoDB delete operation fails
+    // Input: Valid user email
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on deleteUser", async () => {
         const res = await request(app).delete("/user/testuser@example.com");
 
         expect(res.status).toBe(500);
@@ -107,13 +136,19 @@ describe("Mocked API Tests - delete /user/:googleEmail", () => {
     });
 });
 
+// Interface: POST /user/:googleEmail/location
 describe("Mocked API Tests - post /user/:googleEmail/location", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on removeLocation", async () => {
+    // Mocked behavior: MongoDB fails to remove location
+    // Input: Valid user email, valid location JSON
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on removeLocation", async () => {
         const res = await request(app)
             .post("/user/testuser@example.com/location")
             .send({ location: JSON.stringify({ position: { lat: 49.195, lng: -122.699 }, title: "Test" }) });
@@ -123,13 +158,19 @@ describe("Mocked API Tests - post /user/:googleEmail/location", () => {
     });
 });
 
+// Interface: POST /user/add-friend
 describe("Mocked API Tests - post /user/add-friend", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on addFriend", async () => {
+    // Mocked behavior: MongoDB query fails when adding a friend
+    // Input: Valid user email and friend email
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on addFriend", async () => {
         const res = await request(app)
             .post("/user/add-friend")
             .send({ googleEmail: "testuser@example.com", friendEmail: "friend@example.com" });
@@ -139,13 +180,19 @@ describe("Mocked API Tests - post /user/add-friend", () => {
     });
 });
 
+// Interface: GET /user/:googleEmail/friends
 describe("Mocked API Tests - get /user/:googleEmail/friends", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on getFriends", async () => {
+    // Mocked behavior: MongoDB query fails when retrieving the friends list
+    // Input: Valid user email
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on getFriends", async () => {
         const res = await request(app).get("/user/testuser@example.com/friends");
 
         expect(res.status).toBe(500);
@@ -153,13 +200,19 @@ describe("Mocked API Tests - get /user/:googleEmail/friends", () => {
     });
 });
 
+// Interface: POST /user/delete-friend
 describe("Mocked API Tests - post /user/delete-friend", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on deleteFriend", async () => {
+    // Mocked behavior: MongoDB fails when removing a friend
+    // Input: Valid user email and friend email
+    // Expected status code: 500
+    // Expected behavior: Returns an internal server error
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on deleteFriend", async () => {
         const res = await request(app)
             .post("/user/delete-friend")
             .send({ googleEmail: "testuser@example.com", friendEmail: "friend@example.com" });

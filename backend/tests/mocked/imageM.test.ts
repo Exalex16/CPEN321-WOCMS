@@ -4,9 +4,8 @@ import "../../controllers/imageController";
 import "../../routes/imageRoutes";
 import { rekognition } from "../../controllers/imageController";
 import request from "supertest";
-import { app, server, closeServer } from "../../index";
+import { app, closeServer } from "../../index";
 import * as ImageController from "../../controllers/imageController";
-
 
 jest.mock("../../services", () => {
     const actualServices = jest.requireActual("../../services");
@@ -31,7 +30,7 @@ jest.mock("../../services", () => {
         s3: {
             send: jest.fn().mockImplementation((command) => {
                 if (command instanceof PutObjectCommand) {
-                    return Promise.reject(new Error("S3 Upload Failed")); // ✅ Force failure
+                    return Promise.reject(new Error("S3 Upload Failed"));
                 }
                 return Promise.resolve({});
             }),
@@ -51,7 +50,7 @@ jest.mock("@aws-sdk/s3-request-presigner", () => ({
 }));
 
 const TEST_USER = "exalex16@gmail.com";
-const TEST_IMAGE = Buffer.from("fake_image_data"); // Simulated image
+const TEST_IMAGE = Buffer.from("fake_image_data"); 
 const TEST_LOCATION = JSON.stringify({
     position: { lat: 49.1957796162, lng: -122.69934184 },
     title: "Test Location",
@@ -60,19 +59,24 @@ const TEST_LOCATION = JSON.stringify({
 });
 
 afterAll(async () => {
-    await closeServer(); // ✅ Ensure server and DB are closed
+    await closeServer(); 
 });
 
-describe("Mocked API Tests - post /user", () => {
+// Interface: POST /upload
+describe("Mocked API Tests - post /upload", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - Rekognition Label Detection Error", async () => {
+    // Mocked behavior: Rekognition label detection fails
+    // Input: Image upload request with valid location
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - Rekognition Label Detection Error", async () => {
         jest.spyOn(s3, "send").mockResolvedValueOnce(Promise.resolve({}) as never);
 
-        // ✅ Make Rekognition fail at first label detection step
         jest.spyOn(rekognition, "send")
             .mockRejectedValueOnce(new Error("Rekognition Label Detection Error") as never);
 
@@ -85,10 +89,14 @@ describe("Mocked API Tests - post /user", () => {
         expect(res.body).toHaveProperty("error", "Internet Error");
     });
     
-    test("❌ 500 - Rekognition Moderation Detection Error", async () => {
+    // Mocked behavior: Rekognition moderation detection fails
+    // Input: Image upload request with valid location
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - Rekognition Moderation Detection Error", async () => {
         jest.spyOn(s3, "send").mockResolvedValueOnce(Promise.resolve({}) as never);
 
-        // ✅ First Rekognition call succeeds (for analyzeImageLabels)
         jest.spyOn(rekognition, "send")
             .mockResolvedValueOnce({ Labels: [{ Name: "TestLabel", Confidence: 99 }] } as never) 
             .mockRejectedValueOnce(new Error("Rekognition Moderation Detection Error") as never); 
@@ -104,12 +112,17 @@ describe("Mocked API Tests - post /user", () => {
         expect(res.body).toHaveProperty("error", "Internet Error");
     });
 
-    test("✅ Cover Moderation Labels Extraction", async () => {
+    // Mocked behavior: Coever Moderation and Normal Labels Extraction, amd 
+    // Input: Image upload request with valid location
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("Cover Moderation Labels Extraction", async () => {
         jest.spyOn(s3, "send").mockResolvedValueOnce(Promise.resolve({}) as never);
     
         jest.spyOn(rekognition, "send")
             .mockResolvedValueOnce({ Labels: [{ Name: "TestLabel", Confidence: 99 }] } as never) 
-            .mockResolvedValueOnce({ ModerationLabels: [{ Name: "Explicit Content", Confidence: 95 }] } as never); // ✅ Ensure ModerationLabels exists
+            .mockResolvedValueOnce({ ModerationLabels: [{ Name: "Explicit Content", Confidence: 95 }] } as never); 
     
         const res = await request(app)
             .post("/upload")
@@ -122,8 +135,12 @@ describe("Mocked API Tests - post /user", () => {
         expect(res.body).toHaveProperty("error", "Internet Error");
     });
 
-    test("❌ 500 - Sharp Image Processing Error", async () => {
-        // ✅ Correctly spy on processImage function
+    // Mocked behavior: Sharp image processing fails
+    // Input: Image upload request with valid location
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - Sharp Image Processing Error", async () => {
         jest.spyOn(ImageController, "processImage").mockRejectedValue(new Error("Sharp Processing Error"));
     
         const res = await request(app)
@@ -137,10 +154,14 @@ describe("Mocked API Tests - post /user", () => {
         expect(res.body).toHaveProperty("error", "Internet Error");
     });
 
-    test("❌ 500 - General Rekognition API Failure", async () => {
+    // Mocked behavior: Rekognition moderation and normal detection fails
+    // Input: Image upload request with valid location
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - General Rekognition API Failure", async () => {
         jest.spyOn(s3, "send").mockResolvedValueOnce(Promise.resolve({}) as never); 
     
-        // ✅ Ensure both Rekognition functions fail
         jest.spyOn(ImageController, "analyzeImageLabels")
             .mockRejectedValue(new Error("General Rekognition API Failure"));
         jest.spyOn(ImageController, "analyzeImageModeration")
@@ -157,8 +178,12 @@ describe("Mocked API Tests - post /user", () => {
         expect(res.body).toHaveProperty("error", "Internet Error");
     });
 
-    test("❌ 500 - MongoDB Insert Failure", async () => {
-        // ✅ Spy on MongoDB `insertOne` and force an immediate failure
+    // Mocked behavior: MongoDB insert operation fails
+    // Input: Image upload request with valid location
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Insert Failure", async () => {
         const dbSpy = jest.spyOn(clinet.db("images").collection("metadata"), "insertOne")
             .mockImplementationOnce(() => Promise.reject(new Error("MongoDB Insert Failed")));
 
@@ -177,11 +202,15 @@ describe("Mocked API Tests - post /user", () => {
         expect(res.status).toBe(500);
         expect(res.body.error).toBe("Internet Error");
 
-        dbSpy.mockRestore(); // ✅ Restore behavior
+        dbSpy.mockRestore(); 
     });
 
-    test("❌ 500 - S3 Upload Failure", async () => {
-        // ✅ Force `s3.send()` to fail immediately
+    // Mocked behavior: S3 upload fails
+    // Input: Image upload request with valid location
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - S3 Upload Failure", async () => {
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 Upload Failed") as never);
 
         const res = await request(app)
@@ -201,14 +230,19 @@ describe("Mocked API Tests - post /user", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - get /metadata/:key", () => {
+// Interface: GET /metadata/:key 
+describe("Mocked API Tests - get /metadata/:key", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on getImage", async () => {
-        // ✅ Spy on `findOne` and force a failure
+    // Mocked behavior: MongoDB find operation fails
+    // Input: Request for metadata of an existing image
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on getImage", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "findOne")
             .mockRejectedValueOnce(new Error("MongoDB Read Error"));
     
@@ -218,11 +252,14 @@ describe("🛠️ Mocked API Tests - get /metadata/:key", () => {
         expect(res.body.error).toBe("Internet Error");
     });
 
-    test("❌ 500 - S3 GetObjectCommand Failure", async () => {
-        // ✅ Spy on `s3.send()` and force failure
+    // Mocked behavior: S3 GetObjectCommand fails
+    // Input: Request for metadata of an existing image
+    // Expected status code: 500
+    // Expected behavior: The server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - S3 GetObjectCommand Failure", async () => {
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 GetObjectCommand Failed") as never);
     
-        // ✅ Mock `findOne` to return a valid image entry
         jest.spyOn(clinet.db("images").collection("metadata"), "findOne").mockResolvedValue({
             fileName: "test.jpg",
             location: {
@@ -240,14 +277,19 @@ describe("🛠️ Mocked API Tests - get /metadata/:key", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - get /images/uploader/:uploaderEmail", () => {
+// Interface: GET /images/uploader/:uploaderEmail
+describe("Mocked API Tests - get /images/uploader/:uploaderEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on User Lookup", async () => {
-        // ✅ Spy on `findOne` for user existence and force failure
+    // Mocked behavior: MongoDB fails to fetch user
+    // Input: A request to fetch images for a valid user
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on User Lookup", async () => {
         jest.spyOn(clinet.db("User").collection("users"), "findOne")
             .mockRejectedValueOnce(new Error("MongoDB Read Error"));
 
@@ -257,12 +299,15 @@ describe("🛠️ Mocked API Tests - get /images/uploader/:uploaderEmail", () =>
         expect(res.body.error).toBe("Internet Error");
     });
 
-    test("❌ 500 - S3 GetObjectCommand Failure", async () => {
-        // ✅ Mock user exists
+    // Mocked behavior: S3 fails to generate signed URLs for images
+    // Input: Valid user email, images exist in the database
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - S3 GetObjectCommand Failure", async () => {
         jest.spyOn(clinet.db("User").collection("users"), "findOne")
             .mockResolvedValueOnce({ googleEmail: "exalex16@gmail.com" });
 
-        // ✅ Mock image metadata exists
         jest.spyOn(clinet.db("images").collection("metadata"), "find")
             .mockReturnValueOnce({
                 toArray: jest.fn().mockResolvedValue([
@@ -271,7 +316,6 @@ describe("🛠️ Mocked API Tests - get /images/uploader/:uploaderEmail", () =>
                 ]),
             } as any);
 
-        // ✅ Force failure on S3 getSignedUrl
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 GetObjectCommand Failed") as never);
 
         const res = await request(app).get("/images/uploader/exalex16@gmail.com");
@@ -281,14 +325,19 @@ describe("🛠️ Mocked API Tests - get /images/uploader/:uploaderEmail", () =>
     });
 });
 
-describe("🛠️ Mocked API Tests - delete /image/:key", () => {
+// Interface: DELETE /image/:key
+describe(" Mocked API Tests - delete /image/:key", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on deleteImage", async () => {
-        // ✅ Spy on MongoDB `deleteOne` and force failure
+    // Mocked behavior: MongoDB delete operation fails
+    // Input: Request to delete an existing image
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on deleteImage", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "deleteOne")
             .mockRejectedValueOnce(new Error("MongoDB Delete Error"));
 
@@ -298,11 +347,13 @@ describe("🛠️ Mocked API Tests - delete /image/:key", () => {
         expect(res.body.error).toBe("Internet Error");
     });
 
-    test("❌ 500 - S3 DeleteObjectCommand Failure", async () => {
-        // ✅ Force failure on S3 delete operation
+    // Mocked behavior: S3 fails to delete the file
+    // Input: Request to delete an existing image
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - S3 DeleteObjectCommand Failure", async () => {
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 DeleteObjectCommand Failed") as never);
-
-        // ✅ Mock MongoDB to return a valid delete result
         jest.spyOn(clinet.db("images").collection("metadata"), "deleteOne").mockResolvedValue({ deletedCount: 1 } as any);
 
         const res = await request(app).delete("/image/test.jpg");
@@ -312,14 +363,19 @@ describe("🛠️ Mocked API Tests - delete /image/:key", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - get /images", () => {
+// Interface: DELETE /image/delete-all/:userEmail
+describe("Mocked API Tests - get /images", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on getAllImages", async () => {
-        // ✅ Spy on `find().toArray()` and force failure
+    // Mocked behavior: MongoDB fails while fetching images to delete
+    // Input: A request to delete all images for a specific user
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on getAllImages", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find")
             .mockReturnValue({ toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")) } as any);
 
@@ -329,8 +385,12 @@ describe("🛠️ Mocked API Tests - get /images", () => {
         expect(res.body.error).toBe("Internet Error");
     });
 
-    test("❌ 500 - S3 GetObjectCommand Failure on getAllImages", async () => {
-        // ✅ Mock MongoDB to return image metadata
+    // Mocked behavior: S3 fails while deleting objects
+    // Input: A request to delete all images for a specific user
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - S3 GetObjectCommand Failure on getAllImages", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find").mockReturnValue({
             toArray: jest.fn().mockResolvedValue([
                 { fileName: "test1.jpg", location: { position: { lat: 49.195, lng: -122.699 }, title: "Location1" } },
@@ -338,7 +398,6 @@ describe("🛠️ Mocked API Tests - get /images", () => {
             ]),
         } as any);
 
-        // ✅ Force failure on `getSignedUrl`
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 GetObjectCommand Failed") as never);
 
         const res = await request(app).get("/images");
@@ -348,18 +407,22 @@ describe("🛠️ Mocked API Tests - get /images", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - put /image/update-description", () => {
+// Interface: POST /image/cancel-share
+describe("Mocked API Tests - put /image/update-description", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on updateImageDescription", async () => {
-        // ✅ Spy on `updateOne()` and force a failure
+    // Mocked behavior: MongoDB fails to find image
+    // Input: Request to cancel sharing an image
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on updateImageDescription", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "updateOne")
             .mockRejectedValueOnce(new Error("MongoDB Update Error"));
 
-        // ✅ Mock `findOne()` to return a valid image entry
         jest.spyOn(clinet.db("images").collection("metadata"), "findOne").mockResolvedValue({
             fileName: "test1.jpg",
             description: "Old Description",
@@ -374,14 +437,19 @@ describe("🛠️ Mocked API Tests - put /image/update-description", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - delete /image/delete-all/:userEmail", () => {
+// Interface: DELETE /image/delete-all/:userEmail
+describe("Mocked API Tests - delete /image/delete-all/:userEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on deleteAllImagesByUser", async () => {
-        // ✅ Spy on `find().toArray()` and force failure
+    // Mocked behavior: MongoDB fails while fetching images to delete
+    // Input: A request to delete all images for a specific user
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on deleteAllImagesByUser", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find")
             .mockReturnValue({ toArray: jest.fn().mockRejectedValueOnce(new Error("MongoDB Find Error")) } as any);
 
@@ -391,16 +459,18 @@ describe("🛠️ Mocked API Tests - delete /image/delete-all/:userEmail", () =>
         expect(res.body.error).toBe("Internet Error");
     });
 
-    test("❌ 500 - S3 DeleteObjectCommand Failure", async () => {
-        // ✅ Mock MongoDB to return image metadata
+    // Mocked behavior: S3 fails while deleting objects
+    // Input: A request to delete all images for a specific user
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - S3 DeleteObjectCommand Failure", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find").mockReturnValue({
             toArray: jest.fn().mockResolvedValue([
                 { fileName: "test1.jpg" },
                 { fileName: "test2.jpg" },
             ]),
         } as any);
-
-        // ✅ Force failure on `s3.send()`
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 DeleteObjectCommand Failed") as never);
 
         const res = await request(app).delete("/image/delete-all/testuser@example.com");
@@ -410,14 +480,19 @@ describe("🛠️ Mocked API Tests - delete /image/delete-all/:userEmail", () =>
     });
 });
 
-describe("🛠️ Mocked API Tests - post /image/share", () => {
+// Interface: POST /image/share
+describe("Mocked API Tests - post /image/share", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on Finding Image", async () => {
-        // ✅ Mock `findOne` for images to throw an error
+    // Mocked behavior: MongoDB fails to find the image to share
+    // Input: Request to share an image with a recipient
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on Finding Image", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "findOne")
             .mockRejectedValueOnce(new Error("MongoDB Read Error"));
 
@@ -432,14 +507,19 @@ describe("🛠️ Mocked API Tests - post /image/share", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - get /image/shared/:userEmail", () => {
+// Interface: GET /image/shared/:userEmail
+describe("Mocked API Tests - get /image/shared/:userEmail", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on getSharedImages", async () => {
-        // ✅ Spy on `find().toArray()` and force failure
+    // Mocked behavior: MongoDB fails while fetching shared images
+    // Input: Request to retrieve shared images for a user
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on getSharedImages", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find")
             .mockReturnValue({ toArray: jest.fn().mockRejectedValueOnce(new Error("MongoDB Read Error")) } as any);
 
@@ -449,8 +529,12 @@ describe("🛠️ Mocked API Tests - get /image/shared/:userEmail", () => {
         expect(res.body.error).toBe("Internet Error");
     });
 
-    test("❌ 500 - S3 GetObjectCommand Failure on getSharedImages", async () => {
-        // ✅ Mock MongoDB to return shared images metadata
+    // Mocked behavior: S3 fails while generating presigned URLs for shared images
+    // Input: Request to retrieve shared images for a user
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - S3 GetObjectCommand Failure on getSharedImages", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find").mockReturnValue({
             toArray: jest.fn().mockResolvedValue([
                 { fileName: "test1.jpg", location: { position: { lat: 49.195, lng: -122.699 }, title: "Location1" } },
@@ -458,7 +542,6 @@ describe("🛠️ Mocked API Tests - get /image/shared/:userEmail", () => {
             ]),
         } as any);
 
-        // ✅ Force failure on `s3.send()` for presigned URL generation
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 GetObjectCommand Failed") as never);
 
         const res = await request(app).get("/image/shared/testuser@example.com");
@@ -468,13 +551,19 @@ describe("🛠️ Mocked API Tests - get /image/shared/:userEmail", () => {
     });
 });
 
-describe("🛠️ Mocked API Tests - post /image/cancel-share", () => {
+// Interface: POST /image/cancel-share
+describe("Mocked API Tests - post /image/cancel-share", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    test("❌ 500 - MongoDB Failure on cancelShare", async () => {
+    // Mocked behavior: MongoDB fails to find the shared image entry
+    // Input: Request to cancel sharing an image
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    // Expected output: { error: "Internet Error" }
+    test("500 - MongoDB Failure on cancelShare", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "findOne")
             .mockRejectedValueOnce(new Error("MongoDB Read Error"));
     
@@ -485,6 +574,6 @@ describe("🛠️ Mocked API Tests - post /image/cancel-share", () => {
         expect(res.status).toBe(500);
         expect(res.body.error).toBe("Internet Error");
     
-        await new Promise((resolve) => setTimeout(resolve, 500)); // ✅ Ensures Jest has time to clean up
+        await new Promise((resolve) => setTimeout(resolve, 500)); 
     });
 });

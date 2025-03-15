@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import * as turf from "@turf/turf";
 import { clinet } from "../services"; 
 
@@ -7,7 +7,7 @@ export class mapController {
     /**
      * Get popular locations based on image density
      */
-    async getRecommendation(req: Request, res: Response, next: NextFunction) {
+    getRecommendation = async (req: Request, res: Response) => {
         const { userEmail } = req.params;
 
         const db = clinet.db("images");
@@ -43,7 +43,7 @@ export class mapController {
         // console.log("Cleaned Image Locations:", points);
 
         if (points.length === 0) {
-            console.log(`📌 All images for ${userEmail} had invalid coordinates.`);
+            console.log(`All images for ${userEmail} had invalid coordinates.`);
             return res.status(200).send({ popularLocation: null, message: "No valid image locations found. Cannot generate recommendation." });
         }
 

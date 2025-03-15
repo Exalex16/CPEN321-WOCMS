@@ -631,7 +631,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     currentMarker?.photoAtCurrentMarker?.add(PhotoInstance(
                         imageURL = uploadData?.presignedUrl?: "no url available.",
                         time = Instant.now(),
-                        fileName = uploadData?.fileName?: "no file name available."
+                        fileName = uploadData?.fileName?: "no file name available.",
+                        sharedTo = mutableListOf(),
+                        shared = false,
+                        sharedBy = null
                     ))
 
                     //refresh, update view

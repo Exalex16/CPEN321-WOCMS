@@ -99,7 +99,11 @@ data class Metadata(
 data class PhotoInstance(
     val imageURL:  String,
     val time: Instant,
-    val fileName: String
+    val fileName: String,
+    val sharedTo: MutableList<String>,
+    var shared: Boolean,
+    var sharedBy: String?
+
 )
 
 data class UserPostRequest(
@@ -134,6 +138,18 @@ data class DeleteMarkerResponse(
 data class DeleteImageResponse(
     val message: String
 )
+
+data class ShareImageRequest(
+    val recipientEmail: String,
+    val imageKey: String,
+    val senderEmail: String
+)
+
+data class addFriendRequest(
+    val googleEmail: String,
+    val friendEmail: String,
+)
+
 
 
 

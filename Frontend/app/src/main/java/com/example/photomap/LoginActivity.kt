@@ -31,7 +31,7 @@ import androidx.lifecycle.lifecycleScope
 
 class LoginActivity : AppCompatActivity() {
     companion object{
-        private const val TAG = "MainActivity"
+        private const val TAG = "LoginActivity"
     }
     private val activityScope = CoroutineScope(Dispatchers.Main)
 

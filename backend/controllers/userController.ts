@@ -1,12 +1,11 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { clinet, formDataMiddleware } from "../services";
-import { ObjectId } from "mongodb";
 
 export class userController {
     /**
      * Create a new user info, (or update name if it is exist).
      */
-    async postUser(req: Request, res: Response, next: NextFunction) {
+    postUser = async (req: Request, res: Response) => {
         const { googleEmail, googleName } = req.body;
         if (!googleEmail || !googleName) {
             return res.status(400).send({ error: "Missing required fields: googleEmail, googleName" });
@@ -41,7 +40,7 @@ export class userController {
     /**
      * Retrieve user profile info.
      */
-    async getProfileInfo(req: Request, res: Response, next: NextFunction) {
+    getProfileInfo = async (req: Request, res: Response) => {
         const { googleEmail  } = req.params;
 
         const db = clinet.db("User");
@@ -57,7 +56,7 @@ export class userController {
     /**
      * Update user profile info.
      */
-    async updateProfile(req: Request, res: Response, next: NextFunction) {
+    updateProfile = async (req: Request, res: Response) => {
         await new Promise<void>((resolve, reject) => {
             formDataMiddleware(req, res, (err) => {
                 if (err) {
@@ -88,7 +87,7 @@ export class userController {
         if (googleName) updateFields.googleName = googleName;
 
         const updateQuery: any = { $set: updateFields };
-        if (location) updateQuery.$addToSet = { locations: location }; // Add location
+        if (location) updateQuery.$addToSet = { locations: location }; 
 
         // Execute update
         const updateResult = await db.collection("users").updateOne(
@@ -111,7 +110,7 @@ export class userController {
     /**
      * Get list of all users (for admin).
      */
-    async getUserList(req: Request, res: Response, next: NextFunction) {
+    getUserList = async (_: Request, res: Response) => {
         const db = clinet.db("User");
         const users = await db.collection("users").find().toArray();
         res.status(200).send(users);
@@ -121,7 +120,7 @@ export class userController {
     /**
      * Delete a user by Google ID.
      */
-    async deleteUser(req: Request, res: Response, next: NextFunction) {
+    deleteUser = async (req: Request, res: Response) => {
         const { googleEmail } = req.params;
 
         const db = clinet.db("User");
@@ -137,7 +136,7 @@ export class userController {
     /**
      * Delete user from a location.
      */
-    async removeLocation(req: Request, res: Response, next: NextFunction) {
+    removeLocation = async (req: Request, res: Response) => {
         await new Promise<void>((resolve, reject) => {
             formDataMiddleware(req, res, (err) => {
                 if (err) {
@@ -152,7 +151,7 @@ export class userController {
 
         const db = clinet.db("User");
 
-        // ✅ Parse `location` if it's a string (handling form-data issue)
+        // Parse `location` if it's a string (handling form-data issue)
         if (typeof location === "string") {
             try {
                 location = JSON.parse(location);
@@ -163,10 +162,10 @@ export class userController {
             }
         }
 
-        // ✅ Perform the location removal from the user's document
+        // Perform the location removal from the user's document
         const updateResult = await db.collection("users").updateOne(
             { googleEmail },
-            { $pull: { locations: location } } // Removes the matching location
+            { $pull: { locations: location } } 
         );
 
         if (updateResult.matchedCount === 0) {
@@ -183,7 +182,7 @@ export class userController {
         });
     }
 
-    async addFriend(req: Request, res: Response, next: NextFunction) {
+    addFriend = async (req: Request, res: Response) => {
         const { googleEmail, friendEmail } = req.body;
         if (!googleEmail || !friendEmail) {
             return res.status(400).send({ error: "Both user email and friend email are required" });
@@ -206,13 +205,13 @@ export class userController {
         // Add friendEmail to user's friends list (if not already added)
         await db.collection("users").updateOne(
             { googleEmail },
-            { $addToSet: { friends: friendEmail } }  // ✅ Ensures no duplicates
+            { $addToSet: { friends: friendEmail } }  
         );
 
         res.status(200).send({ message: "Friend added successfully", friendEmail });
     }
 
-    async deleteFriend(req: Request, res: Response, next: NextFunction) {
+    deleteFriend = async (req: Request, res: Response) => {
         const { googleEmail, friendEmail } = req.body;
         if (!googleEmail || !friendEmail) {
             return res.status(400).send({ error: "Both user email and friend email are required" });
@@ -223,7 +222,7 @@ export class userController {
         // Remove friendEmail from user's friends list
         const result = await db.collection("users").updateOne(
             { googleEmail },
-            { $pull: { friends: friendEmail } }  // ✅ Removes friend from list
+            { $pull: { friends: friendEmail } }  
         );
 
         if (result.modifiedCount === 0) {
@@ -233,7 +232,7 @@ export class userController {
         res.status(200).send({ message: "Friend removed successfully", friendEmail });
     }
 
-    async getFriends(req: Request, res: Response, next: NextFunction) {
+    getFriends = async (req: Request, res: Response) => {
         const { googleEmail } = req.params;
 
         const db = clinet.db("User");

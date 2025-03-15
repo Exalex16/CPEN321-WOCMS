@@ -1,5 +1,6 @@
-import { body, param } from "express-validator"
+import { param } from "express-validator"
 import { userController } from "../controllers/userController"
+import { Request, Response } from 'express';
 
 const controller = new userController()
 
@@ -7,19 +8,19 @@ export const userRoutes = [
     {
         method: "post",
         route: "/user",
-        action: controller.postUser,
+        action: (req: Request, res: Response) => controller.postUser(req, res),
         validation: [],
     },
     {
         method: "get",
         route: "/user/:googleEmail",
-        action: controller.getProfileInfo,
+        action: (req: Request, res: Response) => controller.getProfileInfo(req, res),
         validation: [param("googleEmail").isString()],
     },
     {
         method: "put",
         route: "/user/:googleEmail",
-        action: controller.updateProfile,
+        action: (req: Request, res: Response) => controller.updateProfile(req, res),
         validation: [
             param("googleEmail").isString(),
         ],
@@ -27,19 +28,19 @@ export const userRoutes = [
     {
         method: "get",
         route: "/users",
-        action: controller.getUserList,
+        action: (req: Request, res: Response) => controller.getUserList(req, res),
         validation: [],
     },
     {
         method: "delete",
         route: "/user/:googleEmail",
-        action: controller.deleteUser,
+        action: (req: Request, res: Response) => controller.deleteUser(req, res),
         validation: [param("googleEmail").isString()],
     },
     {
         method: "post",
         route: "/user/:googleEmail/location",
-        action: controller.removeLocation,
+        action: (req: Request, res: Response) => controller.removeLocation(req, res),
         validation: [
             param("googleEmail").isString(),
         ],
@@ -47,21 +48,21 @@ export const userRoutes = [
     {
         method: "post",
         route: "/user/add-friend",
-        action: controller.addFriend,
+        action: (req: Request, res: Response) => controller.addFriend(req, res),
         validation: [
         ],
     },
     {
         method: "post",
         route: "/user/delete-friend",
-        action: controller.deleteFriend,
+        action: (req: Request, res: Response) => controller.deleteFriend(req, res),
         validation: [
         ],
     },
     {
         method: "get",
         route: "/user/:googleEmail/friends",
-        action: controller.getFriends,
+        action: (req: Request, res: Response) => controller.getFriends(req, res),
         validation: [param("googleEmail").isString()],
     },
 ]
