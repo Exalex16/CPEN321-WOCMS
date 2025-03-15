@@ -17,7 +17,9 @@ import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.VisibleForTesting
 import androidx.core.text.HtmlCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -44,6 +46,7 @@ import java.time.Instant
 import java.util.Locale
 
 import com.example.photomap.MainActivity.mapContent
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.selects.select
@@ -67,7 +70,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var noImagesText: TextView
     private lateinit var imageGalleryRecycler: RecyclerView
 
-    private var selectedImageUri: Uri? = null
+    internal var selectedImageUri: Uri? = null
     private var previewImageView: ImageView? = null
     private var currentMarker: MarkerInstance? = null
 
@@ -264,7 +267,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         )
 
         sendMarkerUpdate(USER_EMAIL, currentMarker!!){
-            Toast.makeText(this@MapsActivity, "Add Marker Successful!", Toast.LENGTH_SHORT).show()
+            Snackbar.make(
+                findViewById(android.R.id.content), // Or a specific CoordinatorLayout
+                "Add Marker Successful!",
+                Snackbar.LENGTH_SHORT
+            ).show()
             addedPlaces.add(selectedPlace)
         }
     }
@@ -365,7 +372,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     )
 
                     sendMarkerUpdate(USER_EMAIL, currentMarker!!){
-                        Toast.makeText(this@MapsActivity, "Add Marker Successful!", Toast.LENGTH_SHORT).show()
+                        Snackbar.make(
+                            findViewById(android.R.id.content), // Or a specific CoordinatorLayout
+                            "Add Marker Successful!",
+                            Snackbar.LENGTH_SHORT
+                        ).show()
                     }
                 }
                 .setNegativeButton("Cancel", null)
@@ -553,7 +564,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         pickPhotoButton.setOnClickListener {
-            pickImageLauncher.launch("image/*")
+            pickImageLauncherTest.launch("image/*")
         }
 
         submitButton.setOnClickListener {
@@ -585,6 +596,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             previewImageView?.setImageURI(uri)
         }
     }
+
+    var pickImageLauncherTest : ActivityResultLauncher<String> = pickImageLauncher
 
 
     private fun uploadPhotoToAWS() {
@@ -622,7 +635,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if (response.isSuccessful) {
                     // Show success
-                    Toast.makeText(this@MapsActivity, "Upload successful!", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this@MapsActivity, "Upload successful!", Toast.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        findViewById(android.R.id.content), // Or a specific CoordinatorLayout
+                        "Upload Successful!",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
                     val uploadData = response.body()
 
                     Log.d("MapsActivity", "Upload filename: ${uploadData?.fileName}")
