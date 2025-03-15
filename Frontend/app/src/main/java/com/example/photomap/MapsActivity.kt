@@ -569,8 +569,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         submitButton.setOnClickListener {
             if (selectedImageUri == null) {
-                Toast.makeText(this, "Please pick an image first", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+                Log.d("MapsActivity", "No image selected.")
+                Snackbar.make(
+                    findViewById(android.R.id.content), // Or a specific CoordinatorLayout
+                    "No image selected.",
+                    Snackbar.LENGTH_SHORT
+                ).show()
+                bottomSheetDialog.dismiss()
             }
 
             if (currentMarker == null) {
@@ -589,12 +594,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        if (uri != null) {
             selectedImageUri = uri
             // Show the preview in your ImageView
             previewImageView?.visibility = View.VISIBLE
             previewImageView?.setImageURI(uri)
-        }
     }
 
     var pickImageLauncherTest : ActivityResultLauncher<String> = pickImageLauncher

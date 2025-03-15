@@ -185,6 +185,75 @@ class UploadTest {
         assertTrue("Marker not added!", MainActivity.mapContent.markerList.any { it.title == "Test Marker" })
         assertTrue("Marker color incorrect!", MainActivity.mapContent.markerList.any { it.color == "Red" })
     }
+
+    @Test
+    fun testUploadPhotoNoImageFailure() {
+        // Override the launcher to simulate no image being selected
+        scenario.onActivity { activity ->
+            val fakeLauncher = object : ActivityResultLauncher<String>() {
+                override fun launch(input: String, options: ActivityOptionsCompat?) {
+                    // Simulate no image being picked by setting the URI to null
+                    activity.selectedImageUri = null
+                }
+                override fun unregister() {
+                    // No-op for testing purposes
+                }
+                override val contract: ActivityResultContract<String, *>
+                    get() = ActivityResultContracts.GetContent()
+            }
+            activity.pickImageLauncherTest = fakeLauncher
+        }
+
+        simulateMapClick(1000, 1400)
+
+        onView(withId(R.id.markerTitle))
+            .inRoot(isDialog())
+            .perform(typeText("Test Marker"), closeSoftKeyboard())
+
+        onView(withId(R.id.colorSpinner))
+            .inRoot(isDialog())
+            .perform(click())
+        onData(allOf(`is`(instanceOf(String::class.java)), `is`("Red")))
+            .inRoot(isPlatformPopup())   // Use isPlatformPopup() for the spinner dropdown
+            .perform(click())
+
+        onView(withText("Add"))
+            .inRoot(isDialog())
+            .perform(click())
+
+        Thread.sleep(1000)
+
+        // 7. Click the center of the screen to open title of marker.
+        simulateMapClick(540, 1200)
+
+        Thread.sleep(1000)
+
+        //    b) Tap the upload photo button (ensure its ID is set correctly)
+        onView(withId(R.id.fab_actions))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        //    c) Bottom sheet should appear; click "Pick Photo" to trigger the fake launcher
+        onView(withId(R.id.btn_pick_photo))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        Thread.sleep(1000)
+
+        // 4. Press "Submit" to upload
+        onView(withId(R.id.btn_submit_upload))
+            .perform(click())
+
+        Thread.sleep(3000)
+
+        // Verify that the error message (Snackbar or Toast) is displayed
+        // For example, if you use a Snackbar:
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(matches(withText("No image selected.")))
+            .check(matches(isDisplayed()))
+    }
+
+
     /**
      * Helper method to simulate a map click.
      * For a pure UI test, you can:
