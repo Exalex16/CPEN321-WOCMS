@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityOptionsCompat
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onData
@@ -36,11 +37,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import junit.framework.TestCase.assertTrue
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
+import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import org.hamcrest.CoreMatchers.containsString
 
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
-class UploadTest {
+class RecommendationTest {
 
     private lateinit var scenario: ActivityScenario<MapsActivity>
 
@@ -84,117 +88,26 @@ class UploadTest {
         scenario.close()
     }
 
-    /**
-     * Test that tapping the map shows the "Add Marker" dialog
-     * and that the dialog's UI elements (title, spinner, buttons) are displayed.
-     */
-
     @Test
-    fun testAddMarkerDialogAppears() {
-        // 1. Simulate user tapping on the map
-        simulateMapClick(200, 300)
-
-        // 2. Check that the "Add Marker" dialog is displayed
-        onView(withText("Add Marker"))
-            .inRoot(isDialog())
+    fun testRawClickRecommend(){
+        onView(withId(R.id.recommendation))
             .check(matches(isDisplayed()))
-
-        // 3. Check that the title EditText is displayed
-        onView(withId(R.id.markerTitle))
-            .inRoot(isDialog())
-            .check(matches(isDisplayed()))
-
-        // 4. Check that the color spinner is displayed
-        onView(withId(R.id.colorSpinner))
-            .inRoot(isDialog())
-            .check(matches(isDisplayed()))
-
-        // 5. Check that the "Add" and "Cancel" buttons exist
-        onView(withText("Add"))
-            .inRoot(isDialog())
-            .check(matches(isDisplayed()))
-        onView(withText("Cancel"))
-            .inRoot(isDialog())
-            .check(matches(isDisplayed()))
-    }
-
-    /**
-     * Test that clicking "Cancel" dismisses the dialog without adding a marker.
-     * (We are only testing UI, so we won't verify any network calls or marker lists.)
-     */
-    @Test
-    fun testCancelButtonDismissesDialog() {
-        simulateMapClick(200, 300)
-
-        // Wait for the "Add Marker" dialog to appear in its dialog window
-        onView(withText("Add Marker"))
-            .inRoot(isDialog())
-            .check(matches(isDisplayed()))
-
-        // Find and click the "Cancel" button in the dialog
-        onView(withText("Cancel"))
-            .inRoot(isDialog())
             .perform(click())
-
-        // Verify the dialog is dismissed (i.e. "Add Marker" is no longer present)
-        onView(withText("Add Marker"))
-            .check(doesNotExist())
-    }
-
-
-    @Test
-    fun testAddMarkerAndVerifyTitle() {
-
-        // 1. Click on the map
-        simulateMapClick(1000, 1400)
-
-        // 2. Wait for the "Add Marker" dialog to appear
-        onView(withText("Add Marker"))
-            .inRoot(isDialog())
-            .check(matches(isDisplayed()))
-
-        // 3. Fill title
-        onView(withId(R.id.markerTitle))
-            .inRoot(isDialog())
-            .perform(typeText("Test Marker"), closeSoftKeyboard())
-
-        // 4. Select color
-        onView(withId(R.id.colorSpinner))
-            .inRoot(isDialog())
-            .perform(click())
-        onData(allOf(`is`(instanceOf(String::class.java)), `is`("Red")))
-            .inRoot(isPlatformPopup())   // Use isPlatformPopup() for the spinner dropdown
-            .perform(click())
-
-        // 5. Press Add
-        onView(withText("Add"))
-            .inRoot(isDialog())
-            .perform(click())
-
-        // 6. Wait before interacting with the map again
-        Thread.sleep(500)
-        onView(withId(com.google.android.material.R.id.snackbar_text))
-            .check(matches(withText("Add Marker Successful!")))
-            .check(matches(isDisplayed()))
 
         Thread.sleep(1000)
 
-        // 7. Click the center of the screen to open title of marker.
-        simulateMapClick(540, 1200)
-
-        // 8. Verify marker addition in MapContent.
-        assertTrue("Marker not added!", MainActivity.mapContent.markerList.any { it.title == "Test Marker" })
-        assertTrue("Marker color incorrect!", MainActivity.mapContent.markerList.any { it.color == "Red" })
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(matches(withText("No recommendation available! Insufficient images or markers.")))
+            .check(matches(isDisplayed()))
     }
 
     @Test
-    fun testUploadPhotoNoImageFailure() {
-        // Override the launcher to simulate no image being selected
+    fun testSuccessfulRecommendWithMatch() {
         scenario.onActivity { activity ->
             val fakeLauncher = object : ActivityResultLauncher<String>() {
                 override fun launch(input: String, options: ActivityOptionsCompat?) {
                     // Simulate no image being picked by setting the URI to null
-                    activity.selectedImageUri = null
+                    activity.selectedImageUri = Uri.parse("android.resource://com.example.photomap/drawable/bloodmoon")
                 }
                 override fun unregister() {
                     // No-op for testing purposes
@@ -204,71 +117,6 @@ class UploadTest {
             }
             activity.pickImageLauncherTest = fakeLauncher
         }
-
-        simulateMapClick(1000, 1400)
-
-        onView(withId(R.id.markerTitle))
-            .inRoot(isDialog())
-            .perform(typeText("Test Marker"), closeSoftKeyboard())
-
-        onView(withId(R.id.colorSpinner))
-            .inRoot(isDialog())
-            .perform(click())
-        onData(allOf(`is`(instanceOf(String::class.java)), `is`("Red")))
-            .inRoot(isPlatformPopup())   // Use isPlatformPopup() for the spinner dropdown
-            .perform(click())
-
-        onView(withText("Add"))
-            .inRoot(isDialog())
-            .perform(click())
-
-        Thread.sleep(1000)
-
-        // 7. Click the center of the screen to open title of marker.
-        simulateMapClick(540, 1200)
-
-        Thread.sleep(1000)
-
-        //    b) Tap the upload photo button (ensure its ID is set correctly)
-        onView(withId(R.id.fab_actions))
-            .check(matches(isDisplayed()))
-            .perform(click())
-
-        //    c) Bottom sheet should appear; click "Pick Photo" to trigger the fake launcher
-        onView(withId(R.id.btn_pick_photo))
-            .check(matches(isDisplayed()))
-            .perform(click())
-
-        Thread.sleep(1000)
-
-        // 4. Press "Submit" to upload
-        onView(withId(R.id.btn_submit_upload))
-            .perform(click())
-
-        Thread.sleep(3000)
-
-        // Verify that the error message (Snackbar or Toast) is displayed
-        // For example, if you use a Snackbar:
-        onView(withId(com.google.android.material.R.id.snackbar_text))
-            .check(matches(withText("No image selected.")))
-            .check(matches(isDisplayed()))
-    }
-
-
-    /**
-     * Helper method to simulate a map click.
-     * For a pure UI test, you can:
-     * - Programmatically call the code that shows the dialog, or
-     * - Use a specialized approach for tapping the Google Map if necessary.
-     */
-    private fun simulateMapClick(x: Int, y: Int) {
-        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        device.click(x, y)
-    }
-
-
-    @Test
-    fun testUploadPhotoWithMockedPicker() {
         // Add a marker for upload test
         simulateMapClick(1000, 1400)
 
@@ -310,11 +158,132 @@ class UploadTest {
         onView(withId(R.id.btn_submit_upload))
             .perform(click())
 
-        Thread.sleep(3000)
+        Thread.sleep(5000)
 
         // 5. Verify success message (e.g., via Snackbar)
         onView(withId(com.google.android.material.R.id.snackbar_text))
             .check(matches(withText("Upload Successful!")))
             .check(matches(isDisplayed()))
+
+        Thread.sleep(1000)
+
+        // Click Recommendation
+        onView(withId(R.id.recommendation))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        Thread.sleep(1000)
+
+        // 2. Check that the summary TextView is displayed.
+        onView(withId(R.id.tvSummary))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+            .check(matches(withText(containsString("You appear to be most active around"))))
+
+        // 3. Verify the RecyclerView is visible and the “No places” message is hidden.
+        onView(withId(R.id.rvSuggestedPlaces))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+        onView(withId(R.id.tvNoPlacesMessage))
+            .inRoot(isDialog())
+            .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)))
+
+        simulateMapClick(500, 1500)
+
+        Thread.sleep(1000)
+
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(matches(withText("Add Recommendation Marker Successful!")))
+            .check(matches(isDisplayed()))
+
+        // 6. The bottom sheet should dismiss. Check that the summary is gone:
+        onView(withId(R.id.tvSummary))
+            .check(doesNotExist())
+    }
+
+    @Test
+    fun testSuccessfulRecommendWithNoMatch() {
+
+        // Add a marker for upload test
+        simulateMapClick(1000, 1400)
+
+        onView(withId(R.id.markerTitle))
+            .inRoot(isDialog())
+            .perform(typeText("Test Marker"), closeSoftKeyboard())
+
+        onView(withId(R.id.colorSpinner))
+            .inRoot(isDialog())
+            .perform(click())
+        onData(allOf(`is`(instanceOf(String::class.java)), `is`("Red")))
+            .inRoot(isPlatformPopup())   // Use isPlatformPopup() for the spinner dropdown
+            .perform(click())
+
+        onView(withText("Add"))
+            .inRoot(isDialog())
+            .perform(click())
+
+        Thread.sleep(1000)
+
+        // 7. Click the center of the screen to open title of marker.
+        simulateMapClick(540, 1200)
+
+        Thread.sleep(1000)
+
+        //    b) Tap the upload photo button (ensure its ID is set correctly)
+        onView(withId(R.id.fab_actions))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        //    c) Bottom sheet should appear; click "Pick Photo" to trigger the fake launcher
+        onView(withId(R.id.btn_pick_photo))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        Thread.sleep(1000)
+
+        // 4. Press "Submit" to upload
+        onView(withId(R.id.btn_submit_upload))
+            .perform(click())
+
+        Thread.sleep(2000)
+
+        // 5. Verify success message (e.g., via Snackbar)
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(matches(withText("Upload Successful!")))
+            .check(matches(isDisplayed()))
+
+        Thread.sleep(1000)
+
+        // Click Recommendation
+        onView(withId(R.id.recommendation))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        Thread.sleep(1000)
+
+        // 2. Check that the summary TextView is displayed.
+        onView(withId(R.id.tvSummary))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+            .check(matches(withText(containsString("You appear to be most active around"))))
+
+        // 3. Verify the RecyclerView is visible and the “No places” message is hidden.
+        onView(withId(R.id.tvNoPlacesMessage))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+        onView(withId(R.id.rvSuggestedPlaces))
+            .inRoot(isDialog())
+            .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)))
+    }
+
+    /**
+     * Helper method to simulate a map click.
+     * For a pure UI test, you can:
+     * - Programmatically call the code that shows the dialog, or
+     * - Use a specialized approach for tapping the Google Map if necessary.
+     */
+    private fun simulateMapClick(x: Int, y: Int) {
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        device.click(x, y)
     }
 }

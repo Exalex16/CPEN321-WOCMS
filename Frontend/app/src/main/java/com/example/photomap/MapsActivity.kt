@@ -127,8 +127,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                     if (popularLocation == null) {
                         //Display custom backend message for no recommendation
-                        Toast.makeText(this@MapsActivity, "No recommendation available: Did you add enough markers and photos?", Toast.LENGTH_LONG).show()
-                        Log.e("MapsActivity", "No recommendation available: insufficient images or markers. ")
+                        Snackbar.make(
+                            findViewById(android.R.id.content), // Or a specific CoordinatorLayout
+                            "No recommendation available! Insufficient images or markers.",
+                            Snackbar.LENGTH_LONG
+                        ).show()
+                        Log.e("MapsActivity", "No recommendation available: insufficient images or markers.")
 
                     } else {
                         val lat = popularLocation.position.lat
@@ -269,7 +273,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         sendMarkerUpdate(USER_EMAIL, currentMarker!!){
             Snackbar.make(
                 findViewById(android.R.id.content), // Or a specific CoordinatorLayout
-                "Add Marker Successful!",
+                "Add Recommendation Marker Successful!",
                 Snackbar.LENGTH_SHORT
             ).show()
             addedPlaces.add(selectedPlace)
@@ -638,11 +642,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if (response.isSuccessful) {
                     // Show success
-                    //Toast.makeText(this@MapsActivity, "Upload successful!", Toast.LENGTH_SHORT).show()
                     Snackbar.make(
                         findViewById(android.R.id.content), // Or a specific CoordinatorLayout
                         "Upload Successful!",
-                        Snackbar.LENGTH_SHORT
+                        Snackbar.LENGTH_LONG
                     ).show()
                     val uploadData = response.body()
 
