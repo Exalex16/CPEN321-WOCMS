@@ -419,10 +419,10 @@ class GalleryActivity : ComponentActivity() {
 
                         Spacer(Modifier.height(10.dp))
                         Text("People with Access", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
-
+                        Spacer(Modifier.height(10.dp))
                         Box(
                             modifier = Modifier
-                                .height(80.dp)
+                                .height(96.dp)
                                 .fillMaxWidth()
                                 .then(if (images[pagerState.currentPage].second.sharedTo.size > 3) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                                 .background(Color(0xFFf2f3f4))
@@ -439,7 +439,7 @@ class GalleryActivity : ComponentActivity() {
                             }
                         }
 
-                        Spacer(Modifier.height(40.dp))
+                        Spacer(Modifier.height(30.dp))
                         Button(
                             onClick = {
                                 coroutineScope.launch {
@@ -476,7 +476,7 @@ class GalleryActivity : ComponentActivity() {
                             ),
                             modifier = Modifier.fillMaxWidth(0.3f).align(Alignment.End)
                         ) {
-                            Text("Share")
+                            Text("Share", fontWeight = FontWeight.SemiBold)
                         }
                         //new component add here
                     }
