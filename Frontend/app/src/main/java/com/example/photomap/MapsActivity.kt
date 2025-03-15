@@ -54,6 +54,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val MAX_REC_PLACES: Int = 20
     private val TAG: String = "MapsActivity"
     private val PLACE_SEARCH_RADIUS: Int = 10000
+    private var addMarkerDialog: AlertDialog? = null
 
     private val addedPlaces = mutableListOf<Place>()
 
@@ -242,7 +243,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val lat = selectedPlace.geometry.location.lat
         val lng = selectedPlace.geometry.location.lng
-        val latLng = LatLng(lat, lng)
 
         if (mapContent.markerList.any { it.lat == lat && it.lng == lng }) {
             Log.d(TAG, "Marker already exists at this location, skipping duplicate.")
@@ -345,11 +345,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             hideGallery()
 
             // Build and display the AlertDialog
-            AlertDialog.Builder(this)
+            addMarkerDialog = AlertDialog.Builder(this)
                 .setTitle("Add Marker")
                 .setView(dialogView)
                 .setPositiveButton("Add") { _, _ ->
-                    val markerTitle = titleEditText.text.toString()
+                    val markerTitle = if (titleEditText.text.toString().isBlank()) "NoName Marker" else titleEditText.text.toString()
                     val selectedColor = colorSpinner.selectedItem.toString()
                     val lat = latLng.latitude
                     val lng = latLng.longitude
@@ -767,5 +767,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    override fun onDestroy() {
+        addMarkerDialog?.dismiss()
+        addMarkerDialog = null
+        super.onDestroy()
+    }
 
 }
