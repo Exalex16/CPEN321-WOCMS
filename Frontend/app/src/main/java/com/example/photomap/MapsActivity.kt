@@ -497,8 +497,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         for (photo in photos) {
                             try {
                                 deleteImage(photo.fileName)
-                            } catch (e: Exception) {
+                            } catch (e: IOException) {
                                 e.printStackTrace()
+                                Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_SHORT).show()
+                            } catch (e: HttpException) {
+                                e.printStackTrace()
+                                Toast.makeText(this@MapsActivity, "Server error, please try again later. ", Toast.LENGTH_LONG).show()
                             }
                         }
                         // Clear the list after all deletions
@@ -621,10 +625,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun uploadPhotoToAWS() {
         lifecycleScope.launch {
             try {
-                val imagePart = createImagePart(selectedImageUri!!)
-                val description = "This is a test description"
-                val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
-
                 val locationJson = JSONObject().apply {
                     put("position", JSONObject().apply {
                         put("lat", currentMarker?.lat ?: 0.0)
@@ -636,33 +636,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 }.toString()
                 val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
                 val userEmailReqBody = (USER_EMAIL).toRequestBody("text/plain".toMediaTypeOrNull())
-                val sharedToBody = "[]".toRequestBody("application/json".toMediaTypeOrNull())
-                val sharedBody = "false".toRequestBody("text/plain".toMediaTypeOrNull())
-                val sharedByBody = "".toRequestBody("text/plain".toMediaTypeOrNull())
-
 
                 val response = RetrofitClient.api.uploadPhoto(
-                    image = imagePart,
-                    description = descriptionBody,
+                    image = createImagePart(selectedImageUri!!),
+                    description = "This is a test description".toRequestBody("text/plain".toMediaTypeOrNull()),
                     uploader = userEmailReqBody,
                     location = locationBody,
-                    sharedTo = sharedToBody,
-                    shared = sharedBody,
-                    sharedBy = sharedByBody
+                    sharedTo = "[]".toRequestBody("application/json".toMediaTypeOrNull()),
+                    shared = "false".toRequestBody("text/plain".toMediaTypeOrNull()),
+                    sharedBy = "".toRequestBody("text/plain".toMediaTypeOrNull())
                 )
 
                 if (response.isSuccessful) {
-                    // Show success
                     Snackbar.make(
                         findViewById(android.R.id.content), // Or a specific CoordinatorLayout
                         "Upload Successful!",
                         Snackbar.LENGTH_LONG
                     ).show()
                     val uploadData = response.body()
-
                     Log.d("MapsActivity", "Upload filename: ${uploadData?.fileName}")
 
-                    //val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title }
                     currentMarker?.photoAtCurrentMarker?.add(PhotoInstance(
                         imageURL = uploadData?.presignedUrl?: "no url available.",
                         time = Instant.now(),
