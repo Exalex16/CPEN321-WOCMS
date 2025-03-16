@@ -635,12 +635,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     put("icon", currentMarker?.color ?: "red")
                 }.toString()
                 val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
-                val userEmailReqBody = (USER_EMAIL).toRequestBody("text/plain".toMediaTypeOrNull())
 
                 val response = RetrofitClient.api.uploadPhoto(
                     image = createImagePart(selectedImageUri!!),
                     description = "This is a test description".toRequestBody("text/plain".toMediaTypeOrNull()),
-                    uploader = userEmailReqBody,
+                    uploader = (USER_EMAIL).toRequestBody("text/plain".toMediaTypeOrNull()),
                     location = locationBody,
                     sharedTo = "[]".toRequestBody("application/json".toMediaTypeOrNull()),
                     shared = "false".toRequestBody("text/plain".toMediaTypeOrNull()),
@@ -654,7 +653,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         Snackbar.LENGTH_LONG
                     ).show()
                     val uploadData = response.body()
-                    Log.d("MapsActivity", "Upload filename: ${uploadData?.fileName}")
+                    Log.d("MapsActivity", "Upload response: $uploadData")
 
                     currentMarker?.photoAtCurrentMarker?.add(PhotoInstance(
                         imageURL = uploadData?.presignedUrl?: "no url available.",
@@ -665,26 +664,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         sharedBy = null
                     ))
 
-                    //refresh, update view
                     currentMarker?.let { markerInstance ->
                         val photos = markerInstance.photoAtCurrentMarker
                         showGallery(photos)
                     } ?: run {
                         hideGallery()
                     }
-
-                    Log.d("MapsActivity", "Upload response: $uploadData")
-
                 } else {
-                    // Show error
                     val errorMsg = response.errorBody()?.string()
                     Toast.makeText(this@MapsActivity, "Upload failed: $errorMsg", Toast.LENGTH_LONG).show()
-                    Log.e("MapsActivity", "Upload failed: $errorMsg")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 Toast.makeText(this@MapsActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                Log.e("MapsActivity", "Error uploading photo", e)
             }
         }
     }

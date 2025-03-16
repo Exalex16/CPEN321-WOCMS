@@ -290,12 +290,6 @@ class RecommendationTest {
             .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)))
     }
 
-    /**
-     * Helper method to simulate a map click.
-     * For a pure UI test, you can:
-     * - Programmatically call the code that shows the dialog, or
-     * - Use a specialized approach for tapping the Google Map if necessary.
-     */
     private fun simulateScreenTap(x: Int, y: Int) {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         device.click(x, y)
