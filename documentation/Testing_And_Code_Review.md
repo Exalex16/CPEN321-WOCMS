@@ -104,17 +104,38 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
 | **Non-Functional Requirement**  | **Location in Git**                              |
 | ------------------------------- | ------------------------------------------------ |
-| **Performance (Response Time)** | [`tests/nonfunctional/response_time.test.js`](#) |
+| **Photo Gallery Upload Speed (Response Time)** | [`tests/NonFunctional/uploadspeed.test.js`](#) |
 | **Chat Data Security**          | [`tests/nonfunctional/chat_security.test.js`](#) |
 
 ### 3.2. Test Verification and Logs
 
-- **Performance (Response Time)**
+- **Photo Gallery Upload Speed (Response Time)**
 
-  - **Verification:** This test suite simulates multiple concurrent API calls using Jest along with a load-testing utility to mimic real-world user behavior. The focus is on key endpoints such as user login and study group search to ensure that each call completes within the target response time of 2 seconds under normal load. The test logs capture metrics such as average response time, maximum response time, and error rates. These logs are then analyzed to identify any performance bottlenecks, ensuring the system can handle expected traffic without degradation in user experience.
+  - **Verification:** This test suite simulates multiple concurrent API calls using Jest to mimic real-world user behavior. The focus is on key endpoints that user create two location markers and upload one phtot to each marker. The test logs capture the general upload speed of photo from API call to backend server, label analyze, and S3 cloud. These logs shows the performence of our backend logic. Also, the Jest describe has a 6s timeout. If the test running time exceed 6s, it will fail automatically. 
   - **Log Output**
     ```
-    [Placeholder for response time test logs]
+    POST /user 200 69 - 50.170 ms
+    PUT /user/exalex16@gmail.com 200 245 - 13.653 ms
+    PUT /user/exalex16@gmail.com 200 239 - 6.264 ms
+    POST /upload 200 1027 - 2019.652 ms
+    POST /upload 200 1033 - 1471.619 ms
+    DELETE /image/exalex16@gmail.com-2025-03-16T19-10-15.317Z.png 200 40 - 50.583 ms
+    DELETE /image/exalex16@gmail.com-2025-03-16T19-10-17.328Z.png 200 40 - 47.813 ms
+    console.log
+
+      Total Test Execution Time: 3.856s
+
+        at tests/NonFunctional/uploadspeed.test.ts:40:13
+
+    console.log
+      Image Upload Test 1 Execution Time: 2.045s
+
+        at tests/NonFunctional/uploadspeed.test.ts:41:13
+
+    console.log
+      Image Upload Test 2 Execution Time: 1.488s
+
+        at tests/NonFunctional/uploadspeed.test.ts:42:13
     ```
 
 - **Chat Data Security**
