@@ -5,6 +5,7 @@ jest.mock("../../services", () => {
     const actualServices = jest.requireActual("../../services");
 
     return {
+        __esModule: true,
         ...actualServices,
         clinet: {
             db: jest.fn(() => ({
@@ -20,6 +21,7 @@ jest.mock("../../services", () => {
             })),
             connect: jest.fn().mockResolvedValue(undefined),
             close: jest.fn(),
+            default: jest.fn(() => 'mocked client'),
         },
     };
 });
