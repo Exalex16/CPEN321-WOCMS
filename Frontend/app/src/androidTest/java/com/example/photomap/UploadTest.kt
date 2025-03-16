@@ -2,7 +2,6 @@ package com.example.photomap
 
 import android.content.Context
 import android.net.Uri
-import android.view.View
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -92,7 +91,7 @@ class UploadTest {
     @Test
     fun testAddMarkerDialogAppears() {
         // 1. Simulate user tapping on the map
-        simulateMapClick(200, 300)
+        simulateScreenTap(200, 300)
 
         // 2. Check that the "Add Marker" dialog is displayed
         onView(withText("Add Marker"))
@@ -124,7 +123,7 @@ class UploadTest {
      */
     @Test
     fun testCancelButtonDismissesDialog() {
-        simulateMapClick(200, 300)
+        simulateScreenTap(200, 300)
 
         // Wait for the "Add Marker" dialog to appear in its dialog window
         onView(withText("Add Marker"))
@@ -146,7 +145,7 @@ class UploadTest {
     fun testAddMarkerAndVerifyTitle() {
 
         // 1. Click on the map
-        simulateMapClick(1000, 1400)
+        simulateScreenTap(1000, 1400)
 
         // 2. Wait for the "Add Marker" dialog to appear
         onView(withText("Add Marker"))
@@ -180,7 +179,7 @@ class UploadTest {
         Thread.sleep(1000)
 
         // 7. Click the center of the screen to open title of marker.
-        simulateMapClick(540, 1200)
+        simulateScreenTap(540, 1200)
 
         // 8. Verify marker addition in MapContent.
         assertTrue("Marker not added!", MainActivity.mapContent.markerList.any { it.title == "Test Marker" })
@@ -205,7 +204,7 @@ class UploadTest {
             activity.pickImageLauncherTest = fakeLauncher
         }
 
-        simulateMapClick(1000, 1400)
+        simulateScreenTap(1000, 1400)
 
         onView(withId(R.id.markerTitle))
             .inRoot(isDialog())
@@ -225,7 +224,7 @@ class UploadTest {
         Thread.sleep(1000)
 
         // 7. Click the center of the screen to open title of marker.
-        simulateMapClick(540, 1200)
+        simulateScreenTap(540, 1200)
 
         Thread.sleep(1000)
 
@@ -255,13 +254,7 @@ class UploadTest {
     }
 
 
-    /**
-     * Helper method to simulate a map click.
-     * For a pure UI test, you can:
-     * - Programmatically call the code that shows the dialog, or
-     * - Use a specialized approach for tapping the Google Map if necessary.
-     */
-    private fun simulateMapClick(x: Int, y: Int) {
+    private fun simulateScreenTap(x: Int, y: Int) {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         device.click(x, y)
     }
@@ -270,7 +263,7 @@ class UploadTest {
     @Test
     fun testUploadPhotoWithMockedPicker() {
         // Add a marker for upload test
-        simulateMapClick(1000, 1400)
+        simulateScreenTap(1000, 1400)
 
         onView(withId(R.id.markerTitle))
             .inRoot(isDialog())
@@ -290,7 +283,7 @@ class UploadTest {
         Thread.sleep(1000)
 
         // 7. Click the center of the screen to open title of marker.
-        simulateMapClick(540, 1200)
+        simulateScreenTap(540, 1200)
 
         Thread.sleep(1000)
 

@@ -3,12 +3,10 @@ package com.example.photomap
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import android.view.View
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityOptionsCompat
-import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onData
@@ -35,7 +33,6 @@ import org.junit.runner.RunWith
 
 import androidx.test.uiautomator.UiDevice
 import androidx.test.platform.app.InstrumentationRegistry
-import junit.framework.TestCase.assertTrue
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 import androidx.test.espresso.matcher.ViewMatchers
@@ -131,7 +128,7 @@ class RecommendationTest {
     @Test
     fun testSuccessfulRecommendWithMatch() {
         // Add a marker for upload test
-        simulateMapClick(1000, 1400)
+        simulateScreenTap(1000, 1400)
 
         onView(withId(R.id.markerTitle))
             .inRoot(isDialog())
@@ -151,7 +148,7 @@ class RecommendationTest {
         Thread.sleep(1000)
 
         // 7. Click the center of the screen to open title of marker.
-        simulateMapClick(540, 1200)
+        simulateScreenTap(540, 1200)
 
         Thread.sleep(1000)
 
@@ -201,7 +198,7 @@ class RecommendationTest {
             .inRoot(isDialog())
             .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.GONE)))
 
-        simulateMapClick(500, 1500)
+        simulateScreenTap(500, 1500)
 
         Thread.sleep(1000)
 
@@ -222,7 +219,7 @@ class RecommendationTest {
         }
 
         // Add a marker for upload test
-        simulateMapClick(1000, 1400)
+        simulateScreenTap(1000, 1400)
 
         onView(withId(R.id.markerTitle))
             .inRoot(isDialog())
@@ -242,7 +239,7 @@ class RecommendationTest {
         Thread.sleep(1000)
 
         // 7. Click the center of the screen to open title of marker.
-        simulateMapClick(540, 1200)
+        simulateScreenTap(540, 1200)
 
         Thread.sleep(1000)
 
@@ -299,7 +296,7 @@ class RecommendationTest {
      * - Programmatically call the code that shows the dialog, or
      * - Use a specialized approach for tapping the Google Map if necessary.
      */
-    private fun simulateMapClick(x: Int, y: Int) {
+    private fun simulateScreenTap(x: Int, y: Int) {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         device.click(x, y)
     }
