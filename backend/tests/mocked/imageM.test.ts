@@ -12,17 +12,17 @@ jest.mock("../../services", () => {
     return {
         ...actualServices,
         clinet: {
-            db: jest.fn((): Record<string, unknown> => ({
-                collection: jest.fn((): Record<string, unknown> => ({
+            db: jest.fn(() => ({
+                collection: jest.fn(() => ({
                     updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
                     findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),  
                     insertOne: jest.fn().mockRejectedValue(new Error("MongoDB Insert Error")),  
-                    find: jest.fn().mockReturnValue({ 
+                    find: jest.fn(() => ({
                         toArray: jest.fn().mockRejectedValue(new Error("MongoDB Find Error")),  
-                    }),
+                    })),
                     deleteOne: jest.fn().mockRejectedValue(new Error("MongoDB Delete Error")),  
-                })),
-            })),
+                })) as jest.MockedFunction<() => Record<string, unknown>>,
+            })) as jest.MockedFunction<() => Record<string, unknown>>,
             connect: jest.fn().mockResolvedValue(undefined),
             close: jest.fn(),
         },

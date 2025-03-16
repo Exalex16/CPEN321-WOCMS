@@ -3,20 +3,21 @@ import { app, closeServer } from "../../index";
 
 jest.mock("../../services", () => {
     const actualServices = jest.requireActual("../../services");
+
     return {
         ...actualServices,
         clinet: {
-            db: jest.fn((): Record<string, unknown> => ({
-                collection: jest.fn((): Record<string, unknown> => ({
-                    findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")), // Default to failure
+            db: jest.fn(() => ({
+                collection: jest.fn(() => ({
+                    findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
                     updateOne: jest.fn().mockRejectedValue(new Error("MongoDB Update Error")),
                     insertOne: jest.fn().mockResolvedValue({ insertedId: "mockedId" }),
-                    find: jest.fn().mockReturnValue({
+                    find: jest.fn(() => ({
                         toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
-                    }),
+                    })),
                     deleteOne: jest.fn().mockRejectedValue(new Error("MongoDB Delete Error")),
-                })),
-            })),
+                })) as jest.MockedFunction<() => Record<string, unknown>>,
+            })) as jest.MockedFunction<() => Record<string, unknown>>,
             connect: jest.fn().mockResolvedValue(undefined),
             close: jest.fn(),
         },
