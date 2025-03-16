@@ -66,7 +66,8 @@ export class mapController {
             if (!cluster.properties || cluster.properties.cluster === undefined) return;
 
             const clusterId = cluster.properties.cluster.toString();
-            clusterData[clusterId] ??= { positions: [], tags: [] };
+            // clusterData[clusterId] ??= { positions: [], tags: [] };
+            clusterData[clusterId] = { positions: [], tags: [] };
 
             const coords = cluster.geometry.coordinates;
 

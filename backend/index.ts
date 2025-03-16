@@ -64,11 +64,14 @@ clinet.connect().then(() => {
 });
 
 export const closeServer = async () => {
-    if (server) {
-        server.close();
-    }
-    if (clinet) {
-        clinet.close();
-    }
+    // if (server) {
+    //     server.close();
+    // }
+    // if (clinet) {
+    //     clinet.close();
+    // }
+    if (!server) return;
+    await server.close();
+    await clinet.close();
 };
 export { server };
