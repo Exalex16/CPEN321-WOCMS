@@ -25,8 +25,8 @@ jest.mock("../../services", () => {
                             },
                         ]),
                     })),
-                })) as jest.MockedFunction<() => Record<string, unknown>>,
-            })) as jest.MockedFunction<() => Record<string, unknown>>,
+                })),
+            })),
         },
     };
 });

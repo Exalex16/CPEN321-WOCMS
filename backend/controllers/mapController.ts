@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import * as turf from "@turf/turf";
 import { clinet } from "../services"; 
+import type { Feature, Point, GeoJsonProperties } from "geojson";
+
 
 
 export class mapController {
@@ -39,7 +41,7 @@ export class mapController {
                     return null;
                 }
 
-                return turf.point([lng, lat], { imageData: image as unknown });
+                return turf.point([lng, lat], { imageData: image as Record<string, unknown> }) as Feature<Point, GeoJsonProperties>;
             })
             .filter(point => point !== null);
 
