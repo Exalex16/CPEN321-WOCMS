@@ -60,40 +60,13 @@ export class mapController {
         let largestClusterSize = 0;
         let largestCluster: [number, number][] = [];
 
-        // const clusterData: Record<string, { positions: [number, number][], tags: string[] }> = {};
         const clusterData = new Map<string, { positions: [number, number][], tags: string[] }>();
 
-        // clustered.features.forEach(cluster => {
-        //     if (!cluster.properties || cluster.properties.cluster === undefined) return;
-
-        //     // const clusterId = cluster.properties.cluster.toString();
-        //     const clusterId = String(cluster.properties.cluster);
-        //     // clusterData[clusterId] = { positions: [], tags: [] };
-        //     if (!Object.prototype.hasOwnProperty.call(clusterData, clusterId)) {
-        //         clusterData[clusterId] = { positions: [], tags: [] };
-        //     }
-
-        //     const coords = cluster.geometry.coordinates;
-
-        //     // clusterData[clusterId].positions.push(cluster.geometry.coordinates);
-        //     if (Array.isArray(coords) && coords.length === 2) {
-        //         clusterData[clusterId].positions.push([coords[0], coords[1]] as [number, number]); 
-        //     }
-
-        //     clusterData[clusterId].tags.push(...cluster.properties.imageData.tags);
-
-        //     const clusterSize = clusterData[clusterId].positions.length;
-        //     if (clusterSize > largestClusterSize) {
-        //         largestClusterSize = clusterSize;
-        //         largestClusterId = clusterId;
-        //     }
-        // });
         clustered.features.forEach(cluster => {
             if (!cluster.properties || cluster.properties.cluster === undefined) return;
 
             const clusterId = String(cluster.properties.cluster);
 
-            // ✅ FIX: Use Map to avoid object injection
             if (!clusterData.has(clusterId)) {
                 clusterData.set(clusterId, { positions: [], tags: [] });
             }
@@ -115,20 +88,9 @@ export class mapController {
         });
 
         // Get the largest cluster's data
-        // largestCluster = clusterData[largestClusterId].positions;
-        // const allTagsInLargestCluster = largestClusterId ? clusterData[largestClusterId].tags : [];
         largestCluster = clusterData.get(largestClusterId)?.positions ?? [];
         const allTagsInLargestCluster = clusterData.get(largestClusterId)?.tags ?? [];
 
-        // Compute average lat/lng for the largest cluster
-        // const avgPosition: [number, number] = largestCluster.reduce(
-        //     (acc: [number, number], pos: [number, number]) => {
-        //         acc[0] += pos[0]; 
-        //         acc[1] += pos[1]; 
-        //         return acc;
-        //     },
-        //     [0, 0]
-        // ).map((coord: number) => coord / largestCluster.length) as [number, number];
         // Compute average lat/lng for the largest cluster
         const avgPosition: [number, number] = largestCluster.reduce(
             (acc: [number, number], pos: [number, number]) => {
@@ -140,19 +102,12 @@ export class mapController {
         ).map((coord: number) => coord / (largestCluster.length || 1)) as [number, number];
 
         // Count tag frequencies & get the top 3
-        // const tagCounts: Record<string, number> = allTagsInLargestCluster.reduce((acc: Record<string, number>, tag: string) => {
-        //     acc[tag] = (acc[tag] || 0) + 1;
-        //     return acc;
-        // }, {});
         const tagCounts = new Map<string, number>();
         allTagsInLargestCluster.forEach(tag => {
-            tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+            // tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+            tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
         });
 
-        // const topTags = Object.entries(tagCounts)
-        //     .sort((a, b) => b[1] - a[1]) 
-        //     .slice(0, 3) 
-        //     .map(tag => tag[0]);
         const topTags = Array.from(tagCounts.entries())
             .sort((a, b) => b[1] - a[1])
             .slice(0, 3)
