@@ -100,7 +100,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val fabRecommendation: FloatingActionButton = findViewById(R.id.recommendation)
         fabRecommendation.visibility = View.VISIBLE
         fabRecommendation.setOnClickListener {
-            Toast.makeText(this, "Recommendation clicked!", Toast.LENGTH_SHORT).show()
             fetchRecommendation()
         }
 
@@ -317,6 +316,45 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.e("MapsActivity", "Can't find style. Error: ", e)
         }
 
+        loadMarkers()
+        // Listeners
+        mMap.setOnMapClickListener { latLng ->
+           showAddMarkerDialog(latLng)
+        }
+        // Set marker click listener
+        mMap.setOnMarkerClickListener { marker ->
+            handleMarkerClick(marker)
+        }
+
+        fabActions.setOnClickListener {
+            showUploadBottomSheet()
+        }
+
+        fabDeleteMarker.setOnClickListener {
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Warning")
+            builder.setMessage("If you delete this marker, all images tagged to this marker will also be deleted. Do you wish to proceed?")
+            // Set the positive button action: user confirms deletion
+            builder.setPositiveButton("Yes") { _, _ ->
+                deleteMarker()  // Execute the deletion function
+                Toast.makeText(this, "Marker deleted", Toast.LENGTH_SHORT).show()
+                Log.d("MapsActivity", "Alert dialog confirm: marker deleted.")
+            }
+
+            // Set the negative button action: user cancels deletion
+            builder.setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()  // Simply dismiss the dialog
+                Toast.makeText(this, "Deletion cancelled", Toast.LENGTH_SHORT).show()
+            }
+
+            // Build and show the dialog
+            val alertDialog = builder.create()
+            alertDialog.show()
+        }
+    }
+
+    //Load Markers
+    private fun loadMarkers() {
         // Add saved markers to map
         for (marker in mapContent.markerList) {
             val position = LatLng(marker.lat, marker.lng)
@@ -341,42 +379,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
         } else {
             centerMapOn(49.2827, -123.1207) // Default Vancouver
-        }
-
-        // Listeners
-        mMap.setOnMapClickListener { latLng ->
-           showAddMarkerDialog(latLng)
-        }
-        // Set marker click listener
-        mMap.setOnMarkerClickListener { marker ->
-            handleMarkerClick(marker)
-        }
-
-        fabActions.setOnClickListener {
-            showUploadBottomSheet()
-        }
-
-        fabDeleteMarker.setOnClickListener {
-
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle("Warning")
-            builder.setMessage("If you delete this marker, all images tagged to this marker will also be deleted. Do you wish to proceed?")
-            // Set the positive button action: user confirms deletion
-            builder.setPositiveButton("Yes") { _, _ ->
-                deleteMarker()  // Execute the deletion function
-                Toast.makeText(this, "Marker deleted", Toast.LENGTH_SHORT).show()
-                Log.d("MapsActivity", "Alert dialog confirm: marker deleted.")
-            }
-
-            // Set the negative button action: user cancels deletion
-            builder.setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()  // Simply dismiss the dialog
-                Toast.makeText(this, "Deletion cancelled", Toast.LENGTH_SHORT).show()
-            }
-
-            // Build and show the dialog
-            val alertDialog = builder.create()
-            alertDialog.show()
         }
     }
 
@@ -484,19 +486,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     })
                 }.toString()
 
-                Log.d("MapsActivity", "currLat: ${currentMarker?.lat}, currLng: ${currentMarker?.lng}, currTitle: ${currentMarker?.title}, currColor: ${currentMarker?.color}")
-                val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
-
-                // Retrieve user email from SharedPreferences
-                val userEmail = USER_EMAIL
-                Log.d("MapsActivity", "User email: $userEmail")
-
-                val response = RetrofitClient.api.deleteMarker(userEmail, locationBody)
+                val response = RetrofitClient.api.deleteMarker(USER_EMAIL, locationJson.toRequestBody("application/json".toMediaTypeOrNull()))
                 if (response.isSuccessful) {
                     Log.d("MapsActivity", "Marker delete successful from DB. Now deleting images.")
                     Log.d("MapsActivity", "Photos at current marker before: ${currentMarker?.photoAtCurrentMarker}")
 
-
+                    //Delete Photos
                     currentMarker?.photoAtCurrentMarker?.let { photos ->
                         // Delete each photo in the list
                         for (photo in photos) {
@@ -505,19 +500,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                             } catch (e: IOException) {
                                 e.printStackTrace()
                                 Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_SHORT).show()
-                            } catch (e: HttpException) {
-                                e.printStackTrace()
-                                Toast.makeText(this@MapsActivity, "Server error, please try again later. ", Toast.LENGTH_LONG).show()
                             }
                         }
-                        // Clear the list after all deletions
                         photos.clear()
                     }
 
                     Log.d("MapsActivity", "Photos at current marker after: ${currentMarker?.photoAtCurrentMarker}")
 
-                    currentMarker?.drawnMarker?.remove() // Remove the marker from the map
-
+                    currentMarker?.drawnMarker?.remove() // Remove visual marker on map.
                     Log.d("MapsActivity", "Marker list before: ${mapContent.markerList}")
                     mapContent.markerList.remove(currentMarker)
                     hideGallery()
@@ -585,7 +575,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val submitButton = view.findViewById<Button>(R.id.btn_submit_upload)
         val previewImageView = view.findViewById<ImageView>(R.id.imagePreview)
         this.previewImageView = previewImageView
-
 
         pickPhotoButton.setOnClickListener {
             pickImageLauncherTest.launch("image/*")
@@ -744,26 +733,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         })
                     }.toString()
 
-                Log.d("MapsActivity", "Marker update JSON: $locationJson")
-
-                // Convert to Json Request Body
-                val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
-
-                val response = RetrofitClient.api.putLocation(email, locationBody)
+                val response = RetrofitClient.api.putLocation(email, locationJson.toRequestBody("application/json".toMediaTypeOrNull()))
 
                 if (response.isSuccessful) {
-                    val responseBody = response.body()
-                    val message = responseBody?.message ?: "No message"
-                    val addedLocation = responseBody?.addedLocation
                     val latlng = LatLng(markerData.lat, markerData.lng)
                     val hue = getHueFromColor(markerData.color)
 
-                    Log.d("MapsActivity", "Marker update response: $message")
-                    addedLocation?.let {
-                        Log.d("MapsActivity", "Triggered here")
-                        Log.d("MapsActivity", "Added Location: ${it.title}, ${it.position.lat}, ${it.position.lng}")
-                        // Update UI or map marker here
-                    }
                     // Marker attributes: push this information to DB
                     val marker = mMap.addMarker(
                         MarkerOptions()
