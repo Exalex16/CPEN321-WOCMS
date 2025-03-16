@@ -42,13 +42,24 @@ export class mapController {
                     return null;
                 }
 
-                const pointFeature = createSafePointFeature(lng, lat, image as Record<string, unknown>);
-
-                // Validate before returning
-                // if (!pointFeature.geometry?.coordinates || pointFeature.geometry.coordinates.length !== 2) {
-                //     throw new Error("Invalid point feature generated.");
-                // }
-
+                const pointFeature = turf.point([lng, lat], {
+                    imageData: image as Record<string, unknown>,
+                }) as Feature<Point, Record<string, unknown>>;
+                
+                // Manual validation to ensure it's a valid GeoJSON Feature
+                if (
+                    typeof pointFeature !== "object" ||
+                    pointFeature.type !== "Feature" ||
+                    !pointFeature.geometry ||
+                    pointFeature.geometry.type !== "Point" ||
+                    !Array.isArray(pointFeature.geometry.coordinates) ||
+                    pointFeature.geometry.coordinates.length !== 2 ||
+                    typeof pointFeature.geometry.coordinates[0] !== "number" ||
+                    typeof pointFeature.geometry.coordinates[1] !== "number"
+                ) {
+                    throw new Error("Invalid point feature generated.");
+                }
+                
                 return pointFeature;
             })
             .filter(point => point !== null);
