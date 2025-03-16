@@ -54,7 +54,7 @@ describe("Mocked API Tests - get /map/popular-locations/:userEmail", () => {
                 features: [
                     { geometry: { coordinates: [-122.699, 49.195] }, properties: undefined },
                 ],
-            } as any;
+            } as unknown as ReturnType<typeof turf.clustersDbscan>;
         });
 
         const res = await request(app).get(`/map/popular-locations/${TEST_USER}`);

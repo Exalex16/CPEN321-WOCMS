@@ -5,7 +5,7 @@ import { userRoutes } from "./routes/userRoutes";
 import { mapRoutes } from "./routes/mapRoutes";
 import { validationResult } from "express-validator";
 import morgan from "morgan"
-
+import { Server } from "http";
 
 export const app = express();
 
@@ -18,7 +18,7 @@ app.get("/", (_: Request, res: Response) => {
 })
 
 Routes.forEach((route) => {
-    (app as any)[route.method](
+    (app as unknown as Record<string, Function>)[route.method](
         route.route,
         route.validation,
         async (req: Request, res: Response) => {
@@ -37,7 +37,7 @@ Routes.forEach((route) => {
     );
 });
 
-let server: any;
+let server: Server | null = null;
 
 clinet.connect().then(() => {
     console.log("MongoDB Client Connected: " + process.env.DB_URI);
@@ -52,11 +52,12 @@ clinet.connect().then(() => {
 
 export const closeServer = async () => {
     if (server) {
-        await server.close(); // Delay closing server
+        await new Promise<void>((resolve, reject) => {
+            server!.close((err) => (err ? reject(err) : resolve()));
+        });
     }
     if (clinet) {
         await clinet.close();
     }
 };
 export { server };
-

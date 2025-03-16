@@ -30,7 +30,7 @@ describe("Mocked API Tests - get /map/popular-locations/:userEmail", () => {
             collection: jest.fn().mockReturnValue({
                 find: mockFind,
             }),
-        } as any);
+        } as unknown as ReturnType<typeof clinet.db>);
 
         const res = await request(app).get(`/map/popular-locations/${TEST_USER}`);
 

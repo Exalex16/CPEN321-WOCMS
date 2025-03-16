@@ -19,7 +19,7 @@ export class mapController {
         }).toArray();
 
         if (images.length === 0) {
-            console.log(`No images found for user: ${userEmail}.`);
+            // console.log(`No images found for user: ${userEmail}.`);
             return res.status(200).send({ popularLocation: null, message: "No images uploaded. Cannot generate recommendation." });
         }
 
@@ -43,17 +43,17 @@ export class mapController {
         // console.log("Cleaned Image Locations:", points);
 
         if (points.length === 0) {
-            console.log(`All images for ${userEmail} had invalid coordinates.`);
+            // console.log(`All images for ${userEmail} had invalid coordinates.`);
             return res.status(200).send({ popularLocation: null, message: "No valid image locations found. Cannot generate recommendation." });
         }
 
-        console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
+        // console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
 
         // Cluster only by location (`epsilon = 2.0` to merge nearby locations)
         const geoJsonPoints = turf.featureCollection(points);
         const clustered = turf.clustersDbscan(geoJsonPoints, 100.0, { minPoints: 1 });
 
-        console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
+        // console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
 
         // Track the largest cluster
         let largestClusterId: string | null = null;
