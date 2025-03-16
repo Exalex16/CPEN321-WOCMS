@@ -50,7 +50,7 @@ Routes.forEach((route) => {
     );
 });
 
-let server: Server;
+let server: Server | null = null; 
 
 clinet.connect().then(() => {
     // console.log(`MongoDB Client Connected: ${JSON.stringify(process.env.DB_URI)}`);
@@ -64,9 +64,10 @@ clinet.connect().then(() => {
 });
 
 export const closeServer = async () => {
-    // if (server) {
-        server?.close();
-    // }
+    if (server !== null) {
+        server.close();
+        server = null; // Ensure it's reset properly
+    }
     if (clinet) {
         await clinet.close();
     }
