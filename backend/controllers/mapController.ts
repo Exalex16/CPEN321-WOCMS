@@ -25,7 +25,10 @@ export class mapController {
 
         // Filter out invalid lat/lng values
         const points = images
-            .filter(img => img.location?.position?.lat && img.location?.position?.lng)
+            .filter(img => 
+                typeof img.location?.position?.lat === "number" && 
+                typeof img.location?.position?.lng === "number"
+            )
             .map(image => {
                 let lat = parseFloat(image.location.position.lat);
                 let lng = parseFloat(image.location.position.lng);
@@ -36,7 +39,7 @@ export class mapController {
                     return null;
                 }
 
-                return turf.point([lng, lat], { imageData: image });
+                return turf.point([lng, lat], { imageData: image as Record<string, unknown> });
             })
             .filter(point => point !== null);
 
