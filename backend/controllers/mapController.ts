@@ -51,7 +51,16 @@ export class mapController {
                     throw new Error("Invalid point feature generated.");
                 }
 
-                return pointFeature;
+                return {
+                    type: "Feature",
+                    geometry: {
+                        type: "Point",
+                        coordinates: [lng, lat] as [number, number],
+                    },
+                    properties: {
+                        imageData: image as Record<string, unknown>,
+                    },
+                } as Feature<Point, Record<string, unknown>>;
             })
             .filter(point => point !== null);
 
