@@ -84,8 +84,8 @@ export class mapController {
                 if (Array.isArray(coords) && coords.length === 2) {
                     clusterEntry.positions.push([Number(coords[0]), Number(coords[1])]);
                 }
-                const tags = Array.isArray(cluster.properties.imageData.tags) 
-                    ? cluster.properties.imageData.tags.filter((tag: unknown): tag is string => typeof tag === "string") 
+                const tags: string[] = Array.isArray(cluster.properties.imageData.tags)
+                    ? cluster.properties.imageData.tags.filter((tag: unknown): tag is string => typeof tag === "string")
                     : [];
                 clusterEntry.tags.push(...tags);
             }
