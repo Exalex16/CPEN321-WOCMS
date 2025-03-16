@@ -71,7 +71,7 @@ export const closeServer = async () => {
     //     clinet.close();
     // }
     if (!server) return;
-    await server.close();
+    server.close();
     await clinet.close();
 };
 export { server };
