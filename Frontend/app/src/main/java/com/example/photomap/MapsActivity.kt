@@ -185,8 +185,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                             Log.e("MapsActivity", "Zero response found??")
                             emptyList()
                         }
-                    } catch (e: Exception) {
+                    } catch (e: IOException) {
                         e.printStackTrace()
+                        Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_LONG).show()
+                        emptyList()
+                    } catch (e: HttpException) {
+                        e.printStackTrace()
+                        Toast.makeText(this@MapsActivity, "Server error, please try again later. ", Toast.LENGTH_LONG).show()
                         emptyList()
                     }
                 }
