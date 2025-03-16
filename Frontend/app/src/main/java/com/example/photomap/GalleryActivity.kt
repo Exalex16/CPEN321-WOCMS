@@ -111,30 +111,20 @@ class GalleryActivity : ComponentActivity() {
     fun Gallery(imageGroups: Map<MarkerInstance, List<PhotoInstance>>) {
         val screenWidth = LocalConfiguration.current.screenWidthDp.dp
         val imageSize = screenWidth / 3
-
-
         var selectedImageIndex by remember { mutableStateOf<Int?>(null) }
         var selectedImages by remember { mutableStateOf<List<Pair<MarkerInstance,PhotoInstance>>>(emptyList()) }
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-
             item {
                 Spacer(modifier = Modifier.height(40.dp))
             }
 
             val allImages: MutableList<Pair<MarkerInstance, PhotoInstance>> = mutableListOf()
-
-            //val allImages = imageGroups.values.flatten()
             for((key, value) in imageGroups){
                 for(item in value){
                     allImages.add(Pair(key, item))
                 }
             }
-
-
-
-
-            Log.d("GalleryActivity1",allImages.toString())
             imageGroups.forEach { (category, img) ->
                 item {
                     Text(
@@ -165,9 +155,7 @@ class GalleryActivity : ComponentActivity() {
                                         selectedImages = allImages // ✅ Store all images, not just row
                                         Log.d("Gallery", "Clicked Image: $imageUrl")
                                         Log.d("Gallery", "All Images: $allImages")
-                                        Log.d("Gallery", "Selected Image Index: $selectedImageIndex")
                                     }
-
                             )
                             count++
                         }
@@ -180,26 +168,15 @@ class GalleryActivity : ComponentActivity() {
         }
 
         selectedImageIndex?.let { index ->
-            Log.d("Gallery", "Opening Full-Screen Viewer for Index: $index")
-            Log.d("Gallery", "Full-Screen Image: ${selectedImages.getOrNull(index)}")
             FullScreenImageViewer(
                 images = selectedImages,
                 startIndex = index,
                 onDismiss = { selectedImageIndex = null }
             )
         }
-
     }
 
-    suspend fun showToast(context: Context, message: String) {
-        withContext(Dispatchers.Main) {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
-
-    }
-
-
-        @Composable
+    @Composable
     fun FullScreenImageViewer(images: List<Pair<MarkerInstance,PhotoInstance>>, startIndex: Int, onDismiss: () -> Unit) {
         val pagerState = rememberPagerState( // ✅ Move pageCount inside `rememberPagerState`
             initialPage = startIndex,
