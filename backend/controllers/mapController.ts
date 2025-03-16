@@ -42,25 +42,14 @@ export class mapController {
                     return null;
                 }
 
-                const pointFeature: Feature<Point, { imageData: Record<string, unknown> }> = turf.point(
-                    [lng, lat], 
-                    { imageData: image as Record<string, unknown> }
-                );
-                // Ensure that the pointFeature is valid before returning
-                if (!pointFeature?.geometry?.coordinates) {
-                    throw new Error("Invalid point feature generated.");
-                }
+                const pointFeature = createSafePointFeature(lng, lat, image as Record<string, unknown>);
 
-                return {
-                    type: "Feature",
-                    geometry: {
-                        type: "Point",
-                        coordinates: [lng, lat] as [number, number],
-                    },
-                    properties: {
-                        imageData: image as Record<string, unknown>,
-                    },
-                } as Feature<Point, Record<string, unknown>>;
+                // Validate before returning
+                // if (!pointFeature.geometry?.coordinates || pointFeature.geometry.coordinates.length !== 2) {
+                //     throw new Error("Invalid point feature generated.");
+                // }
+
+                return pointFeature;
             })
             .filter(point => point !== null);
 
@@ -148,4 +137,21 @@ export class mapController {
             }
         });
     }
+}
+
+function createSafePointFeature(
+    lng: number,
+    lat: number,
+    image: Record<string, unknown>
+): Feature<Point, Record<string, unknown>> {
+    return {
+        type: "Feature",
+        geometry: {
+            type: "Point",
+            coordinates: [lng, lat] as [number, number],
+        },
+        properties: {
+            imageData: image,
+        },
+    };
 }
