@@ -47,12 +47,11 @@ export class mapController {
                     { imageData: image as Record<string, unknown> }
                 );
                 // Ensure that the pointFeature is valid before returning
-                if (!pointFeature || !pointFeature.geometry || !pointFeature.geometry.coordinates) {
+                if (!pointFeature?.geometry?.coordinates) {
                     throw new Error("Invalid point feature generated.");
                 }
 
                 return pointFeature;
-
             })
             .filter(point => point !== null);
 
