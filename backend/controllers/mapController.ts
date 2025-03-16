@@ -65,9 +65,15 @@ export class mapController {
         clustered.features.forEach(cluster => {
             if (!cluster.properties || cluster.properties.cluster === undefined) return;
 
-            const clusterId = cluster.properties.cluster.toString();
-            // clusterData[clusterId] ??= { positions: [], tags: [] };
-            clusterData[clusterId] = { positions: [], tags: [] };
+            // const clusterId = cluster.properties.cluster.toString();
+            const clusterId = String(cluster.properties.cluster);
+            // clusterData[clusterId] = { positions: [], tags: [] };
+            // if (!/^\d+$/.test(clusterId)) {
+            //     return; // Skip invalid IDs
+            // }
+            if (!Object.prototype.hasOwnProperty.call(clusterData, clusterId)) {
+                clusterData[clusterId] = { positions: [], tags: [] };
+            }
 
             const coords = cluster.geometry.coordinates;
 
