@@ -46,6 +46,7 @@ import java.time.Instant
 import java.util.Locale
 
 import com.example.photomap.MainActivity.mapContent
+import com.google.android.gms.maps.model.Marker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -255,7 +256,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun addRecommendationMarkerOnMap(selectedPlace: Place) {
-
         val lat = selectedPlace.geometry.location.lat
         val lng = selectedPlace.geometry.location.lng
 
@@ -303,8 +303,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
         USER_EMAIL = getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", null) ?: "anonymous@example.com"
         Log.d(TAG, "User email fetched on map creation: $USER_EMAIL")
+        Log.d("MapsActivity", "Begin loading map.")
 
-        // Load the style from the raw resource folder
+        // Load map syle
         try {
             val success = mMap.setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style)
@@ -316,12 +317,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.e("MapsActivity", "Can't find style. Error: ", e)
         }
 
-        Log.d("MapsActivity", "Begin loading map.")
-
-        // Load all markers fetched from backend
+        // Add saved markers to map
         for (marker in mapContent.markerList) {
             val position = LatLng(marker.lat, marker.lng)
-            //Log.d("MapsActivity", "Adding marker: $marker")
+
             val drawnMarker = mMap.addMarker(
                 MarkerOptions()
                     .position(position)
@@ -329,12 +328,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     .icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor(marker.color)))
             )
 
-            //Remember when first creating the marker, add tag to color and ref to google marker.
+            // Assign marker tag and reference
             drawnMarker?.tag = marker.color
             marker.drawnMarker = drawnMarker
         }
 
-        // Optionally, adjust the camera to the first marker
+        // Adjust the camera to the first marker
         val firstMarker = mapContent.markerList.firstOrNull()
         if (firstMarker != null) {
             val position = LatLng(firstMarker.lat, firstMarker.lng)
@@ -344,95 +343,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             centerMapOn(49.2827, -123.1207) // Default Vancouver
         }
 
-        // Draw markers onto the map
+        // Listeners
         mMap.setOnMapClickListener { latLng ->
-            // Inflate the custom dialog layout
-            val dialogView = layoutInflater.inflate(R.layout.marker_style, null)
-            val titleEditText = dialogView.findViewById<EditText>(R.id.markerTitle)
-            val colorSpinner = dialogView.findViewById<Spinner>(R.id.colorSpinner)
-
-            // Set up the Spinner with color options
-            ArrayAdapter.createFromResource(
-                this,
-                R.array.marker_colors,
-                android.R.layout.simple_spinner_item
-            ).also { adapter ->
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                colorSpinner.adapter = adapter
-            }
-
-            // Views: Upload off, Gallery Off
-            fabActions.visibility = View.GONE
-            fabDeleteMarker.visibility = View.GONE
-            hideGallery()
-
-            // Build and display the AlertDialog
-            addMarkerDialog = AlertDialog.Builder(this)
-                .setTitle("Add Marker")
-                .setView(dialogView)
-                .setPositiveButton("Add") { _, _ ->
-                    val markerTitle = if (titleEditText.text.toString().isBlank()) "NoName Marker" else titleEditText.text.toString()
-                    val selectedColor = colorSpinner.selectedItem.toString()
-                    val lat = latLng.latitude
-                    val lng = latLng.longitude
-                    val cityName = getCityName(this, lat, lng)
-                    // Store the marker data
-                    currentMarker = MarkerInstance(
-                        lat = lat,
-                        lng = lng,
-                        title = markerTitle,
-                        color = selectedColor,
-                        location = cityName,
-                        photoAtCurrentMarker = arrayListOf(),
-                    )
-
-                    sendMarkerUpdate(USER_EMAIL, currentMarker!!){
-                        Snackbar.make(
-                            findViewById(android.R.id.content), // Or a specific CoordinatorLayout
-                            "Add Marker Successful!",
-                            Snackbar.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
+           showAddMarkerDialog(latLng)
         }
-
         // Set marker click listener
         mMap.setOnMarkerClickListener { marker ->
-            val lat = marker.position.latitude
-            val lng = marker.position.longitude
-            val markerTitle = marker.title ?: "Untitled Marker"
-            val markerColor = marker.tag ?: "unknown Color"
-
-            // Obtain location string
-            val cityName = getCityName(this, lat, lng)
-            // 3) Store the marker data
-            currentMarker = MarkerInstance(
-                lat = lat,
-                lng = lng,
-                title = markerTitle,
-                color = markerColor.toString(),
-                location = cityName,
-                photoAtCurrentMarker = arrayListOf()
-            )
-            Log.d("MapsActivity", "current Marker data before match: $currentMarker")
-
-            val matchedMarker = mapContent.markerList.firstOrNull { it.title == currentMarker!!.title && it.lat == currentMarker!!.lat && it.lng == currentMarker!!.lng}
-            currentMarker = matchedMarker
-
-            Log.d("MapsActivity", "current Marker data after match: $currentMarker")
-
-            matchedMarker?.let { markerInstance ->
-                val photos = markerInstance.photoAtCurrentMarker
-                showGallery(photos)
-            } ?: run {
-                hideGallery()
-            }
-
-            fabActions.visibility = View.VISIBLE
-            fabDeleteMarker.visibility = View.VISIBLE
-            false  // Return false to allow default behavior (e.g., info window display)
+            handleMarkerClick(marker)
         }
 
         fabActions.setOnClickListener {
@@ -462,6 +379,94 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             alertDialog.show()
         }
     }
+
+
+    //Listeners:
+    private fun showAddMarkerDialog(latLng: LatLng) {
+        // Inflate the custom dialog layout
+        val dialogView = layoutInflater.inflate(R.layout.marker_style, null)
+        val titleEditText = dialogView.findViewById<EditText>(R.id.markerTitle)
+        val colorSpinner = dialogView.findViewById<Spinner>(R.id.colorSpinner)
+
+        // Set up the Spinner with color options
+        ArrayAdapter.createFromResource(
+            this,
+            R.array.marker_colors,
+            android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            colorSpinner.adapter = adapter
+        }
+
+        // Views: Upload off, Gallery Off
+        fabActions.visibility = View.GONE
+        fabDeleteMarker.visibility = View.GONE
+        hideGallery()
+
+        // Build and display the AlertDialog
+        addMarkerDialog = AlertDialog.Builder(this)
+            .setTitle("Add Marker")
+            .setView(dialogView)
+            .setPositiveButton("Add") { _, _ ->
+
+                // Store the marker data
+                currentMarker = MarkerInstance(
+                    lat = latLng.latitude,
+                    lng = latLng.longitude,
+                    title = if (titleEditText.text.toString().isBlank()) "NoName Marker" else titleEditText.text.toString(),
+                    color = colorSpinner.selectedItem.toString(),
+                    location = getCityName(this, latLng.latitude, latLng.longitude),
+                    photoAtCurrentMarker = arrayListOf(),
+                )
+
+                sendMarkerUpdate(USER_EMAIL, currentMarker!!){
+                    Snackbar.make(
+                        findViewById(android.R.id.content), // Or a specific CoordinatorLayout
+                        "Add Marker Successful!",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun handleMarkerClick(marker: Marker): Boolean {
+        // Store the marker data
+        currentMarker = MarkerInstance(
+            lat = marker.position.latitude,
+            lng = marker.position.longitude,
+            title = marker.title ?: "Untitled Marker",
+            color = (marker.tag ?: "unknown Color").toString(),
+            location = getCityName(this, marker.position.latitude, marker.position.longitude),
+            photoAtCurrentMarker = arrayListOf()
+        )
+        Log.d("MapsActivity", "current Marker data before match: $currentMarker")
+
+        // Find the matching marker from mapContent
+        val matchedMarker = mapContent.markerList.firstOrNull {
+            it.title == currentMarker!!.title &&
+                    it.lat == currentMarker!!.lat &&
+                    it.lng == currentMarker!!.lng
+        }
+
+        currentMarker = matchedMarker
+        Log.d("MapsActivity", "current Marker data after match: $currentMarker")
+
+        // Show or hide the gallery based on matched marker
+        matchedMarker?.let { markerInstance ->
+            showGallery(markerInstance.photoAtCurrentMarker)
+        } ?: run {
+            hideGallery()
+        }
+
+        // Show action buttons
+        fabActions.visibility = View.VISIBLE
+        fabDeleteMarker.visibility = View.VISIBLE
+
+        return false // Return false to allow default behavior (e.g., info window display)
+    }
+
 
     private fun deleteMarker() {
         lifecycleScope.launch {
@@ -542,7 +547,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     val errorMsg = response.errorBody()?.string()
                     Log.e("MapsActivity", "Failed to delete image: $fileName, Error: $errorMsg")
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 e.printStackTrace()
                 Toast.makeText(this@MapsActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
@@ -674,9 +679,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     val errorMsg = response.errorBody()?.string()
                     Toast.makeText(this@MapsActivity, "Upload failed: $errorMsg", Toast.LENGTH_LONG).show()
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 e.printStackTrace()
-                Toast.makeText(this@MapsActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -782,7 +787,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     Log.e("MapsActivity", "Failed to update marker: ${response.errorBody()?.string()}")
                 }
 
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 e.printStackTrace()
                 Toast.makeText(this@MapsActivity, "Error: Network error, check internet.", Toast.LENGTH_LONG).show()
                 Log.e("MapsActivity", "Network request failed.", e)
