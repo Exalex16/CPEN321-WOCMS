@@ -1,28 +1,60 @@
 import request from "supertest";
 import { app, closeServer } from "../../index";
+import { MongoClient } from "mongodb";
+
+// Define the shape of the mocked 'clinet' object
+interface MockedClient extends Partial<MongoClient> {
+    db: jest.Mock;
+}
+
+// jest.mock("../../services", () => {
+//     const actualServices = jest.requireActual("../../services");
+
+//     return {
+//         ...actualServices,
+//         clinet: {
+//             db: jest.fn(() => ({
+//                 collection: jest.fn(() => ({
+//                     findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
+//                     updateOne: jest.fn().mockRejectedValue(new Error("MongoDB Update Error")),
+//                     insertOne: jest.fn().mockResolvedValue({ insertedId: "mockedId" }),
+//                     find: jest.fn(() => ({
+//                         toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
+//                     })),
+//                     deleteOne: jest.fn().mockRejectedValue(new Error("MongoDB Delete Error")),
+//                 })),
+//             })),
+//             connect: jest.fn().mockResolvedValue(undefined),
+//             close: jest.fn(),
+//         },
+//     };
+// });
 
 jest.mock("../../services", () => {
     const actualServices = jest.requireActual("../../services");
-
-    return {
-        ...actualServices,
-        clinet: {
-            db: jest.fn(() => ({
-                collection: jest.fn(() => ({
-                    findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
-                    updateOne: jest.fn().mockRejectedValue(new Error("MongoDB Update Error")),
-                    insertOne: jest.fn().mockResolvedValue({ insertedId: "mockedId" }),
-                    find: jest.fn(() => ({
-                        toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
-                    })),
-                    deleteOne: jest.fn().mockRejectedValue(new Error("MongoDB Delete Error")),
-                })),
-            })),
-            connect: jest.fn().mockResolvedValue(undefined),
-            close: jest.fn(),
-        },
+  
+    // Create the mock implementations with explicit types
+    const mockedClient: MockedClient = {
+      db: jest.fn(() => ({
+        collection: jest.fn(() => ({
+          findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
+          updateOne: jest.fn().mockRejectedValue(new Error("MongoDB Update Error")),
+          insertOne: jest.fn().mockResolvedValue({ insertedId: "mockedId" }),
+          find: jest.fn(() => ({
+            toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
+          })),
+          deleteOne: jest.fn().mockRejectedValue(new Error("MongoDB Delete Error")),
+        })),
+      })),
+      connect: jest.fn().mockResolvedValue(undefined),
+      close: jest.fn(),
     };
-});
+  
+    return {
+      ...actualServices,
+      clinet: mockedClient,
+    };
+  });
 
 const TEST_USER = "exalex16@gmail.com";
 const TEST_USER_NAME = "Alex Example";
