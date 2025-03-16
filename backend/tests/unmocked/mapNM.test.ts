@@ -1,6 +1,4 @@
 import path from "path";
-import "../../controllers/mapController";
-import "../../routes/mapRoutes";
 import {app, closeServer} from "../../index"
 import request from "supertest";
 

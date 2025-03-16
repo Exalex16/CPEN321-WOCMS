@@ -1,5 +1,3 @@
-import "../../controllers/mapController";
-import "../../routes/mapRoutes";
 import { app, closeServer } from "../../index";
 import request from "supertest";
 import * as turf from "@turf/turf";
@@ -18,7 +16,7 @@ jest.mock("../../services", () => {
             db: jest.fn(() => ({
                 collection: jest.fn(() => ({
                     find: jest.fn(() => ({
-                        toArray: jest.fn(async () => [
+                        toArray: jest.fn(() => [
                             {
                                 location: {
                                     position: { lat: 49.195, lng: -122.699 },

@@ -1,6 +1,4 @@
 import path from "path";
-import "../../controllers/imageController";
-import "../../routes/imageRoutes";
 import {app, closeServer} from "../../index"
 import request from "supertest";
 

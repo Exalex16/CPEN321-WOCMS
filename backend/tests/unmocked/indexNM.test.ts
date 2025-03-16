@@ -1,4 +1,3 @@
-import "../../index";
 import {app, closeServer} from "../../index"
 import request from "supertest";
 

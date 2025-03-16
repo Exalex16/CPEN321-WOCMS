@@ -1,5 +1,3 @@
-import "../../controllers/mapController";
-import "../../routes/mapRoutes";
 import { app, closeServer } from "../../index";
 import request from "supertest";
 import { clinet } from "../../services"; 

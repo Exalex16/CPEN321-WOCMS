@@ -1,11 +1,10 @@
 import { s3, clinet} from "../../services";
 import {PutObjectCommand } from "@aws-sdk/client-s3";
-import "../../controllers/imageController";
-import "../../routes/imageRoutes";
-import { rekognition } from "../../controllers/imageController";
 import request from "supertest";
 import { app, closeServer } from "../../index";
 import * as ImageController from "../../controllers/imageController";
+const { rekognition } = ImageController;
+
 
 jest.mock("../../services", () => {
     const actualServices = jest.requireActual("../../services");
