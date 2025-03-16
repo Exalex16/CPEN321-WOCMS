@@ -16,25 +16,26 @@
 
 | **Interface**                 | **Describe Group Location, No Mocks**                | **Describe Group Location, With Mocks**            | **Mocked Components**              |
 | ----------------------------- | ---------------------------------------------------- | -------------------------------------------------- | ---------------------------------- |
-| **POST /user/login**          | [`tests/unmocked/authenticationLogin.test.js#L1`](#) | [`tests/mocked/authenticationLogin.test.js#L1`](#) | Google Authentication API, User DB |
-| **POST /study-groups/create** | ...                                                  | ...                                                | Study Group DB                     |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
-| ...                           | ...                                                  | ...                                                | ...                                |
+| **POST /upload** | [`backend/tests/unmocked/imageNM.test.ts#L35`](#) | [`backend/tests/mocked/imageM.test.ts#L65`](#) | User DB, Image DB, AWS S3, sharp, S3 presign URL |
+| **GET /metadata/:key** | [`backend/tests/unmocked/imageNM.test.ts#L150`](#) | [`backend/tests/mocked/imageM.test.ts#L233`](#) | Image DB, AWS S3 |
+| **GET /images/uploader/:uploaderEmail** | [`backend/tests/unmocked/imageNM.test.ts#L172`](#) | [`backend/tests/mocked/imageM.test.ts#L280`](#) | User DB, AWS S3 |
+| **GET /images** | [`backend/tests/unmocked/imageNM.test.ts#L195`](#) | [`backend/tests/mocked/imageM.test.ts#L366`](#) | Image DB, AWS S3 |
+| **PUT /image/update-description** | [`backend/tests/unmocked/imageNM.test.ts#L207`](#) | [`backend/tests/mocked/imageM.test.ts#L410`](#) | Image DB |
+| **POST /image/share** | [`backend/tests/unmocked/imageNM.test.ts#L249`](#) | [`backend/tests/mocked/imageM.test.ts#L483`](#) | Image DB |
+| **GET /image/shared/:userEmail** | [`backend/tests/unmocked/imageNM.test.ts#L353`](#) | [`backend/tests/mocked/imageM.test.ts#L510`](#) | Image DB, AWS S3 |
+| **POST /image/cancel-share** | [`backend/tests/unmocked/imageNM.test.ts#L368`](#) | [`backend/tests/mocked/imageM.test.ts#L554`](#) | Image DB |
+| **DELETE /image/:key** | [`backend/tests/unmocked/imageNM.test.ts#L434`](#) | [`backend/tests/mocked/imageM.test.ts#L328`](#) | Image DB, AWS S3 |
+| **DELETE /image/delete-all/:userEmail** | [`backend/tests/unmocked/imageNM.test.ts#L457`](#) | [`backend/tests/mocked/imageM.test.ts#L440`](#) | Image DB, User DB, AWS S3 |
+| **POST /user** | [`backend/tests/unmocked/userNM.test.ts#L24`](#) | [`backend/tests/mocked/userM.test.ts#L37`](#) | User DB |
+| **GET /user/:googleEmail** | [`backend/tests/unmocked/userNM.test.ts#L76`](#) | [`backend/tests/mocked/userM.test.ts#L59`](#) | User DB |
+| **PUT /user/:googleEmail** | [`backend/tests/unmocked/userNM.test.ts#L102`](#) | [`backend/tests/mocked/userM.test.ts#L79`](#) | User DB |
+| **GET /users** | [`backend/tests/unmocked/userNM.test.ts#L176`](#) | [`backend/tests/mocked/userM.test.ts#L101`](#) | User DB |
+| **POST /user/:googleEmail/location** | [`backend/tests/unmocked/userNM.test.ts#L192`](#) | [`backend/tests/mocked/userM.test.ts#L141`](#) | User DB |
+| **POST /user/add-friend** | [`backend/tests/unmocked/userNM.test.ts#L267`](#) | [`backend/tests/mocked/userM.test.ts#L163`](#) | User DB |
+| **GET /user/:googleEmail/friends** | [`backend/tests/unmocked/userNM.test.ts#L340`](#) | [`backend/tests/mocked/userM.test.ts#L185`](#) | User DB |
+| **POST /user/delete-friend** | [`backend/tests/unmocked/userNM.test.ts#L367`](#) | [`backend/tests/mocked/userM.test.ts#L205`](#) | User DB |
+| **DELETE /user/:googleEmail** | [`backend/tests/unmocked/userNM.test.ts#L432`](#) | [`backend/tests/mocked/userM.test.ts#L121`](#) | User DB |
+| **GET /map/popular-locations/:userEmail** | [`backend/tests/unmocked/mapNM.test.ts#L432`](#) | [`backend/tests/mocked/mapM.test.ts#L121`](#) [`backend/tests/mocked/mapM_specialReturn.test.ts#L121`](#) | Image DB |
 
 
 #### 2.1.2. Commit Hash Where Tests Run
@@ -47,22 +48,53 @@
 
    - Open your terminal and run:
      ```
-     git clone https://github.com/example/your-project.git
+     git clone https://github.com/cpen321-wocms/CPEN321-WOCMS.git
      ```
 
-2. **...**
+2. **Move to Backend Folder**
+    -Run following code in terminal (Windows user)
+     ```
+     cd .\CPEN321-WOCMS\backend
+     ```
+    
+3. **Install Dependencies**
+    - In the backend folder run
+     ```
+     npm install
+     ```
+
+4. **Run Test For All**
+    - Run following commend for all the test
+     ```
+     npm test
+     ```
+
+5. **(Optional) Run Test For Without Mocking**
+    - Run 
+     ```
+     npm test tests/unmocked
+     ```
+
+5. **(Optional) Run Test For With Mocking**
+    - Run 
+     ```
+     npm test tests/mocked
+     ```
 
 ### 2.2. GitHub Actions Configuration Location
 
-`~/.github/workflows/backend-tests.yml`
+`~/.github/workflows/test.yml`
 
 ### 2.3. Jest Coverage Report Screenshots With Mocks
 
-_(Placeholder for Jest coverage screenshot with mocks enabled)_
+<img src="images/BackendTestM.png" alt="Alt text" width="500">
+  
+  - Line that not corvered in services.ts is the environment variable check, run acitivite if there is no environment variable
+  - The two lines in index.ts is the 400 route validation check. Since our route did not have validation check, so it won't activite. It is copied from tutorial video, and keep for furture. Instead of validation check, we check input in each controller with 404 or 403 status.
 
 ### 2.4. Jest Coverage Report Screenshots Without Mocks
 
-_(Placeholder for Jest coverage screenshot without mocks)_
+_<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
 ---
 
@@ -165,13 +197,6 @@ _(Placeholder for screenshots of Codacyâ€™s Issues page)_
         - In Jest, it's common practice to mock modules or partials by returning a custom implementation within the jest.mock function. This approach allows us to control the behavior of dependencies during testing. 
         - In Jest 29.7 Mock Functions, Mocking Partials part, it also use the same way as we did. Therefore, our jest mock is a reasonable way to use it.
         - Also, I tried many way to defined the jest, but none of my solution work. At the end, I decide to leave it like this.
-
-  2. **Unsafe return of an `any` typed value.**
-
-     - **Location in Git:** [`backend/controllers/mapController.ts#L45`](#)
-     - **Justification:** ​
-        - asd
-
 
 - **Code Pattern: [@typescript eslint: No unsafe member access](#)**
 

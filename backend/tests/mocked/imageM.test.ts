@@ -362,15 +362,15 @@ describe(" Mocked API Tests - delete /image/:key", () => {
     });
 });
 
-// Interface: DELETE /image/delete-all/:userEmail
+// Interface: GET /images
 describe("Mocked API Tests - get /images", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    // Mocked behavior: MongoDB fails while fetching images to delete
-    // Input: A request to delete all images for a specific user
+    // Mocked behavior: MongoDB fails while fetching images
+    // Input: A request get all images
     // Expected status code: 500
     // Expected behavior: Server should return an "Internet Error"
     // Expected output: { error: "Internet Error" }
@@ -384,8 +384,8 @@ describe("Mocked API Tests - get /images", () => {
         expect(res.body.error).toBe("Internet Error");
     });
 
-    // Mocked behavior: S3 fails while deleting objects
-    // Input: A request to delete all images for a specific user
+    // Mocked behavior: S3 fails while getting objects
+    // Input: A request to get all images
     // Expected status code: 500
     // Expected behavior: Server should return an "Internet Error"
     // Expected output: { error: "Internet Error" }
