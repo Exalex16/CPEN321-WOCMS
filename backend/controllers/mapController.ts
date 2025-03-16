@@ -56,7 +56,7 @@ export class mapController {
         // console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
 
         // Track the largest cluster
-        let largestClusterId: string | null = null;
+        let largestClusterId: string = "";
         let largestClusterSize = 0;
         let largestCluster: [number, number][] = [];
 
@@ -86,9 +86,7 @@ export class mapController {
         });
 
         // Get the largest cluster's data
-        if (largestClusterId) {
-            largestCluster = clusterData[largestClusterId].positions;
-        }
+        largestCluster = clusterData[largestClusterId].positions;
         const allTagsInLargestCluster = largestClusterId ? clusterData[largestClusterId].tags : [];
 
         // Compute average lat/lng for the largest cluster
