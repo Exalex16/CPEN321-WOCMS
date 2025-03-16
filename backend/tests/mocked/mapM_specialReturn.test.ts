@@ -13,8 +13,8 @@ jest.mock("../../services", () => {
         clinet: {
             connect: jest.fn().mockResolvedValue(undefined), 
             close: jest.fn(),
-            db: jest.fn(() => ({
-                collection: jest.fn(() => ({
+            db: jest.fn((): Record<string, unknown> => ({
+                collection: jest.fn((): Record<string, unknown> => ({
                     find: jest.fn(() => ({
                         toArray: jest.fn(() => [
                             {

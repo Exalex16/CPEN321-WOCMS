@@ -12,8 +12,8 @@ jest.mock("../../services", () => {
     return {
         ...actualServices,
         clinet: {
-            db: jest.fn(() => ({
-                collection: jest.fn(() => ({
+            db: jest.fn((): Record<string, unknown> => ({
+                collection: jest.fn((): Record<string, unknown> => ({
                     updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
                     findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),  
                     insertOne: jest.fn().mockRejectedValue(new Error("MongoDB Insert Error")),  

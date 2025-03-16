@@ -39,7 +39,7 @@ export class mapController {
                     return null;
                 }
 
-                return turf.point([lng, lat], { imageData: image as Record<string, unknown> });
+                return turf.point([lng, lat], { imageData: image as unknown });
             })
             .filter(point => point !== null);
 
