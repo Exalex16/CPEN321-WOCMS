@@ -86,10 +86,8 @@ export class mapController {
         });
 
         // Get the largest cluster's data
-        if (largestClusterId !== null && clusterData[largestClusterId]) {
+        if (largestClusterId) {
             largestCluster = clusterData[largestClusterId].positions;
-        } else {
-            largestCluster = [];
         }
         const allTagsInLargestCluster = largestClusterId ? clusterData[largestClusterId].tags : [];
 
