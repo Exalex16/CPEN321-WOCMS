@@ -56,7 +56,7 @@ export class mapController {
         // console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
 
         // Track the largest cluster
-        let largestClusterId: string = "";
+        let largestClusterId = "";
         let largestClusterSize = 0;
         let largestCluster: [number, number][] = [];
 
