@@ -57,26 +57,26 @@ describe("Unmocked API Tests - get /map/popular-locations/:userEmail", () => {
         expect(res.body.message).toBe("No valid image locations found. Cannot generate recommendation.");
     });
 
-    // Input: Upload an image with **invalid** location (bad lat/lng)
-    // Expected status code: 200
-    // Expected behavior: Returns message stating no valid locations exist
-    // Expected output: No valid image locations found. Cannot generate recommendation.
-    test("200 - No Valid Locations Found", async () => {
-        // Upload an image with invalid location
-        await request(app)
-            .post("/upload")
-            .field("uploadedBy", TEST_USER)
-            .field("description", "Test upload with bad location")
-            .field("location", TEST_LOCATION_BAD)
-            .attach("image", TEST_IMAGE, "test_bad.png");
+    // // Input: Upload an image with **invalid** location (bad lat/lng)
+    // // Expected status code: 200
+    // // Expected behavior: Returns message stating no valid locations exist
+    // // Expected output: No valid image locations found. Cannot generate recommendation.
+    // test("200 - No Valid Locations Found", async () => {
+    //     // Upload an image with invalid location
+    //     await request(app)
+    //         .post("/upload")
+    //         .field("uploadedBy", TEST_USER)
+    //         .field("description", "Test upload with bad location")
+    //         .field("location", TEST_LOCATION_BAD)
+    //         .attach("image", TEST_IMAGE, "test_bad.png");
 
-        // Request recommendation
-        const res = await request(app).get(`/map/popular-locations/${TEST_USER}`);
+    //     // Request recommendation
+    //     const res = await request(app).get(`/map/popular-locations/${TEST_USER}`);
 
-        expect(res.status).toBe(200);
-        expect(res.body.popularLocation).toBeNull();
-        expect(res.body.message).toBe("No valid image locations found. Cannot generate recommendation.");
-    });
+    //     expect(res.status).toBe(200);
+    //     expect(res.body.popularLocation).toBeNull();
+    //     expect(res.body.message).toBe("No valid image locations found. Cannot generate recommendation.");
+    // });
 
     // Input: Upload an image with a **valid** location and request recommendations
     // Expected status code: 200

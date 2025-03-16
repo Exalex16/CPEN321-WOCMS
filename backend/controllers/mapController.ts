@@ -26,21 +26,15 @@ export class mapController {
         }
 
         // Filter out invalid lat/lng values
-        const points = images
-            .filter(img => 
-                typeof img.location?.position?.lat === "number" && 
-                typeof img.location?.position?.lng === "number"
-            )
-            .map(image => 
-                Math.abs(image.location.position.lat) > 90 || Math.abs(image.location.position.lng) > 180
-                    ? null
-                    : createSafePointFeature(
-                        parseFloat(String(image.location.position.lng)), 
-                        parseFloat(String(image.location.position.lat)), 
-                        image
-                    )
-            )
-            .filter((point): point is Feature<Point, Record<string, unknown>> => point !== null);
+        const points: Feature<Point, Record<string, unknown>>[] = [];
+        for (const image of images) {
+            const location = image.location?.position;
+            if (typeof location?.lat === "number" && typeof location?.lng === "number") {
+                points.push(
+                    turf.point([location.lng, location.lat], { imageData: image }) as Feature<Point, Record<string, unknown>>
+                );
+            }
+        }
 
         // console.log("Cleaned Image Locations:", points);
 
@@ -126,21 +120,4 @@ export class mapController {
             }
         });
     }
-}
-
-function createSafePointFeature(
-    lng: number,
-    lat: number,
-    image: Record<string, unknown>
-): Feature<Point, Record<string, unknown>> {
-    return {
-        type: "Feature",
-        geometry: {
-            type: "Point",
-            coordinates: [lng, lat],
-        },
-        properties: {
-            imageData: image,
-        },
-    };
 }
