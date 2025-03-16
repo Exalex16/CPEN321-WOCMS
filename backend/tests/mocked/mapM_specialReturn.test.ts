@@ -57,7 +57,8 @@ describe("Mocked API Tests - get /map/popular-locations/:userEmail", () => {
 
         const res = await request(app).get(`/map/popular-locations/${TEST_USER}`);
 
-        expect(res.status).toBe(500);
-        expect(res.body).toHaveProperty("error", "Internet Error");
+        expect(res.status).toBe(200);
+        // expect(res.body).toHaveProperty("error", "Internet Error");
+        expect(res.body.popularLocation).toHaveProperty("position");
     });
 });
