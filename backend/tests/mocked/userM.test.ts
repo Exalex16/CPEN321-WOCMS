@@ -30,7 +30,7 @@ interface MockedClient extends Partial<MongoClient> {
 //     };
 // });
 
-jest.mock("../../services", () => {
+jest.mock("../../services", (): { clinet: MockedClient } => {
     const actualServices = jest.requireActual("../../services");
   
     // Create the mock implementations with explicit types
