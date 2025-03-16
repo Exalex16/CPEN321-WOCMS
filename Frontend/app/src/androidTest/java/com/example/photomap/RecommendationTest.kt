@@ -2,6 +2,7 @@ package com.example.photomap
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
@@ -39,7 +40,13 @@ import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.containsString
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.DELETE
+import retrofit2.http.Path
 
 
 @RunWith(AndroidJUnit4::class)
@@ -47,12 +54,19 @@ import org.hamcrest.CoreMatchers.containsString
 class RecommendationTest {
 
     private lateinit var scenario: ActivityScenario<MapsActivity>
+    private val retrofit = Retrofit.Builder()
+        .baseUrl("https://wocmpphotomap.com/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    private val photoApi = retrofit.create(PhotoApi::class.java)
 
     @get:Rule
     val activityRule = ActivityScenarioRule(MapsActivity::class.java)
 
     @Before
     fun setUp() {
+
         // 1. Set user email in SharedPreferences
         val context = ApplicationProvider.getApplicationContext<Context>()
         val prefs = context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
@@ -63,11 +77,12 @@ class RecommendationTest {
 
         // 3. Override pickImageLauncher with a fake launcher
         scenario.onActivity { activity ->
+
             // Create a test double that simulates picking an image
             val fakeLauncher = object : ActivityResultLauncher<String>() {
                 override fun launch(input: String, options: ActivityOptionsCompat?) {
                     // Immediately simulate the user picking a "test.jpg"
-                    val fakeUri = Uri.parse("android.resource://com.example.photomap/drawable/upload")
+                    val fakeUri = Uri.parse("android.resource://com.example.photomap/drawable/restaurant")
                     // Simulate the inline lambda from your production code:
                     activity.selectedImageUri = fakeUri
                 }
@@ -80,6 +95,18 @@ class RecommendationTest {
 
             // Replace the real launcher with our fake launcher.
             activity.pickImageLauncherTest = fakeLauncher
+        }
+    }
+
+    @Before
+    fun cleanUpImages() {
+        runBlocking {
+            val response = photoApi.deleteAllImages("frontenduser@gmail.com")
+            if (response.isSuccessful) {
+                Log.d("TestSetup", "Images deleted successfully.")
+            } else {
+                Log.e("TestSetup", "Failed to delete images: ${response.errorBody()?.string()}")
+            }
         }
     }
 
@@ -103,20 +130,6 @@ class RecommendationTest {
 
     @Test
     fun testSuccessfulRecommendWithMatch() {
-        scenario.onActivity { activity ->
-            val fakeLauncher = object : ActivityResultLauncher<String>() {
-                override fun launch(input: String, options: ActivityOptionsCompat?) {
-                    // Simulate no image being picked by setting the URI to null
-                    activity.selectedImageUri = Uri.parse("android.resource://com.example.photomap/drawable/bloodmoon")
-                }
-                override fun unregister() {
-                    // No-op for testing purposes
-                }
-                override val contract: ActivityResultContract<String, *>
-                    get() = ActivityResultContracts.GetContent()
-            }
-            activity.pickImageLauncherTest = fakeLauncher
-        }
         // Add a marker for upload test
         simulateMapClick(1000, 1400)
 
@@ -158,7 +171,7 @@ class RecommendationTest {
         onView(withId(R.id.btn_submit_upload))
             .perform(click())
 
-        Thread.sleep(5000)
+        Thread.sleep(3000)
 
         // 5. Verify success message (e.g., via Snackbar)
         onView(withId(com.google.android.material.R.id.snackbar_text))
@@ -203,6 +216,10 @@ class RecommendationTest {
 
     @Test
     fun testSuccessfulRecommendWithNoMatch() {
+
+        scenario.onActivity { activity ->
+            activity.centerMapOn(-21.2554, -55.2487, 15f) // Africa
+        }
 
         // Add a marker for upload test
         simulateMapClick(1000, 1400)
@@ -286,4 +303,10 @@ class RecommendationTest {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         device.click(x, y)
     }
+
+    interface PhotoApi {
+        @DELETE("image/delete-all/{email}")
+        suspend fun deleteAllImages(@Path("email") email: String): Response<Unit>
+    }
+
 }

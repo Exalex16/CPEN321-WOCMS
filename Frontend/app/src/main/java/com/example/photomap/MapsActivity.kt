@@ -327,10 +327,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         // Optionally, adjust the camera to the first marker
-        mapContent.markerList.firstOrNull()?.let {
-            val position = LatLng(it.lat, it.lng)
+        val firstMarker = mapContent.markerList.firstOrNull()
+        if (firstMarker != null) {
+            val position = LatLng(firstMarker.lat, firstMarker.lng)
             Log.d("MapsActivity", "Moving camera to: $position")
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
+        } else {
+            centerMapOn(49.2827, -123.1207) // Default Vancouver
         }
 
         // Draw markers onto the map
@@ -798,6 +801,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         addMarkerDialog?.dismiss()
         addMarkerDialog = null
         super.onDestroy()
+    }
+
+    fun centerMapOn(latitude: Double, longitude: Double, zoom: Float = 15f) {
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), zoom))
     }
 
 }
