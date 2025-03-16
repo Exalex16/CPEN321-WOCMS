@@ -524,9 +524,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     Log.e("MapsActivity", "Failed to delete marker: $errorMsg")
                     Toast.makeText(this@MapsActivity, "Failed to delete marker: $errorMsg", Toast.LENGTH_LONG).show()
                 }
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 e.printStackTrace()
-                Toast.makeText(this@MapsActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_SHORT).show()
             }
         }
     }
