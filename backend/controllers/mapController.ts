@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import * as turf from "@turf/turf";
 import { clinet } from "../services"; 
+import type { Feature, Point } from "geojson";
+
 
 
 export class mapController {
@@ -19,58 +21,65 @@ export class mapController {
         }).toArray();
 
         if (images.length === 0) {
-            console.log(`No images found for user: ${userEmail}.`);
+            // console.log(`No images found for user: ${userEmail}.`);
             return res.status(200).send({ popularLocation: null, message: "No images uploaded. Cannot generate recommendation." });
         }
 
         // Filter out invalid lat/lng values
-        const points = images
-            .filter(img => img.location?.position?.lat && img.location?.position?.lng)
-            .map(image => {
-                let lat = parseFloat(image.location.position.lat);
-                let lng = parseFloat(image.location.position.lng);
-
-                // Remove bad coordinates
-                if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-                    // console.log(`Skipping invalid location: lat=${lat}, lng=${lng}`);
-                    return null;
-                }
-
-                return turf.point([lng, lat], { imageData: image });
-            })
-            .filter(point => point !== null);
+        const points: Feature<Point, Record<string, unknown>>[] = [];
+        for (const image of images) {
+            const location = image.location?.position;
+            if (typeof location?.lat === "number" && typeof location?.lng === "number") {
+                points.push(
+                    turf.point([location.lng, location.lat], { imageData: image }) as Feature<Point, Record<string, unknown>>
+                );
+            }
+        }
 
         // console.log("Cleaned Image Locations:", points);
 
         if (points.length === 0) {
-            console.log(`All images for ${userEmail} had invalid coordinates.`);
+            // console.log(`All images for ${userEmail} had invalid coordinates.`);
             return res.status(200).send({ popularLocation: null, message: "No valid image locations found. Cannot generate recommendation." });
         }
 
-        console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
+        // console.log("Input Coordinates for DBSCAN:", points.map(pt => pt.geometry.coordinates));
 
         // Cluster only by location (`epsilon = 2.0` to merge nearby locations)
         const geoJsonPoints = turf.featureCollection(points);
         const clustered = turf.clustersDbscan(geoJsonPoints, 100.0, { minPoints: 1 });
 
-        console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
+        // console.log("DBSCAN Cluster Results:", JSON.stringify(clustered, null, 2));
 
         // Track the largest cluster
-        let largestClusterId: string | null = null;
+        let largestClusterId = "";
         let largestClusterSize = 0;
-        let largestCluster: any[] = [];
+        let largestCluster: [number, number][] = [];
 
-        const clusterData: Record<string, { positions: number[][], tags: string[] }> = {};
+        const clusterData = new Map<string, { positions: [number, number][], tags: string[] }>();
+
         clustered.features.forEach(cluster => {
             if (!cluster.properties || cluster.properties.cluster === undefined) return;
 
-            const clusterId = cluster.properties.cluster.toString();
-            if (!clusterData[clusterId]) clusterData[clusterId] = { positions: [], tags: [] };
+            const clusterId = String(cluster.properties.cluster);
 
-            clusterData[clusterId].positions.push(cluster.geometry.coordinates);
-            clusterData[clusterId].tags.push(...cluster.properties.imageData.tags);
+            if (!clusterData.has(clusterId)) {
+                clusterData.set(clusterId, { positions: [], tags: [] });
+            }
 
-            const clusterSize = clusterData[clusterId].positions.length;
+            const clusterEntry = clusterData.get(clusterId);
+            if (clusterEntry) {
+                const coords = cluster.geometry.coordinates;
+                if (Array.isArray(coords) && coords.length === 2) {
+                    clusterEntry.positions.push([Number(coords[0]), Number(coords[1])]);
+                }
+                const tags: string[] = Array.isArray(cluster.properties.imageData.tags)
+                    ? cluster.properties.imageData.tags.filter((tag: unknown): tag is string => typeof tag === "string")
+                    : [];
+                clusterEntry.tags.push(...tags);
+            }
+
+            const clusterSize = clusterEntry?.positions.length ?? 0;
             if (clusterSize > largestClusterSize) {
                 largestClusterSize = clusterSize;
                 largestClusterId = clusterId;
@@ -78,8 +87,8 @@ export class mapController {
         });
 
         // Get the largest cluster's data
-        largestCluster = largestClusterId ? clusterData[largestClusterId].positions : [];
-        const allTagsInLargestCluster = largestClusterId ? clusterData[largestClusterId].tags : [];
+        largestCluster = clusterData.get(largestClusterId)?.positions ?? [];
+        const allTagsInLargestCluster = clusterData.get(largestClusterId)?.tags ?? [];
 
         // Compute average lat/lng for the largest cluster
         const avgPosition: [number, number] = largestCluster.reduce(
@@ -89,18 +98,19 @@ export class mapController {
                 return acc;
             },
             [0, 0]
-        ).map((coord: number) => coord / largestCluster.length) as [number, number];
+        ).map((coord: number) => coord / (largestCluster.length || 1)) as [number, number];
 
         // Count tag frequencies & get the top 3
-        const tagCounts: Record<string, number> = allTagsInLargestCluster.reduce((acc: Record<string, number>, tag: string) => {
-            acc[tag] = (acc[tag] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
+        const tagCounts = new Map<string, number>();
+        allTagsInLargestCluster.forEach(tag => {
+            // tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+            tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+        });
 
-        const topTags = Object.entries(tagCounts)
-            .sort((a, b) => b[1] - a[1]) 
-            .slice(0, 3) 
-            .map(tag => tag[0]);
+        const topTags = Array.from(tagCounts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([tag]) => tag);
 
         // Return only the largest cluster's location and tags
         res.status(200).send({

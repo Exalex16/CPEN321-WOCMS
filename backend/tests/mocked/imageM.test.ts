@@ -1,11 +1,10 @@
 import { s3, clinet} from "../../services";
 import {PutObjectCommand } from "@aws-sdk/client-s3";
-import "../../controllers/imageController";
-import "../../routes/imageRoutes";
-import { rekognition } from "../../controllers/imageController";
 import request from "supertest";
 import { app, closeServer } from "../../index";
 import * as ImageController from "../../controllers/imageController";
+const { rekognition } = ImageController;
+
 
 jest.mock("../../services", () => {
     const actualServices = jest.requireActual("../../services");
@@ -13,14 +12,14 @@ jest.mock("../../services", () => {
     return {
         ...actualServices,
         clinet: {
-            db: jest.fn((dbName) => ({
+            db: jest.fn(() => ({
                 collection: jest.fn(() => ({
                     updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
                     findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),  
                     insertOne: jest.fn().mockRejectedValue(new Error("MongoDB Insert Error")),  
-                    find: jest.fn().mockReturnValue({ 
+                    find: jest.fn(() => ({
                         toArray: jest.fn().mockRejectedValue(new Error("MongoDB Find Error")),  
-                    }),
+                    })),
                     deleteOne: jest.fn().mockRejectedValue(new Error("MongoDB Delete Error")),  
                 })),
             })),
@@ -363,15 +362,15 @@ describe(" Mocked API Tests - delete /image/:key", () => {
     });
 });
 
-// Interface: DELETE /image/delete-all/:userEmail
+// Interface: GET /images
 describe("Mocked API Tests - get /images", () => {
     beforeEach(() => {
         jest.restoreAllMocks();
         jest.clearAllMocks();
     });
 
-    // Mocked behavior: MongoDB fails while fetching images to delete
-    // Input: A request to delete all images for a specific user
+    // Mocked behavior: MongoDB fails while fetching images
+    // Input: A request get all images
     // Expected status code: 500
     // Expected behavior: Server should return an "Internet Error"
     // Expected output: { error: "Internet Error" }
@@ -385,8 +384,8 @@ describe("Mocked API Tests - get /images", () => {
         expect(res.body.error).toBe("Internet Error");
     });
 
-    // Mocked behavior: S3 fails while deleting objects
-    // Input: A request to delete all images for a specific user
+    // Mocked behavior: S3 fails while getting objects
+    // Input: A request to get all images
     // Expected status code: 500
     // Expected behavior: Server should return an "Internet Error"
     // Expected output: { error: "Internet Error" }

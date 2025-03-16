@@ -1,26 +1,39 @@
-import express, {NextFunction, Request, Response} from "express";
+import express, {Request, Response, RequestHandler, Application} from "express";
 import { clinet } from "./services";
 import { imageRoutes } from "./routes/imageRoutes";
 import { userRoutes } from "./routes/userRoutes";
 import { mapRoutes } from "./routes/mapRoutes";
 import { validationResult } from "express-validator";
 import morgan from "morgan"
-
+import { Server } from "http";
 
 export const app = express();
 
 app.use(express.json()) 
 app.use(morgan('tiny'))
-const Routes = [ ...imageRoutes, ...userRoutes, ...mapRoutes];
+
+export interface RouteDefinition {
+    method: keyof Application;  // Ensure only valid HTTP methods
+    route: string;
+    validation: RequestHandler[]; // Ensure validation handlers are correct
+    action: RequestHandler;
+}
+
+const Routes: RouteDefinition[] = [
+    ...imageRoutes as RouteDefinition[],
+    ...userRoutes as RouteDefinition[],
+    ...mapRoutes as RouteDefinition[],
+];
 
 app.get("/", (_: Request, res: Response) => {
     res.send("CPEN321 2024W2 PhotoMap Placeholder");
 })
 
+
 Routes.forEach((route) => {
-    (app as any)[route.method](
+    (app as Application)[route.method](
         route.route,
-        route.validation,
+        ...route.validation,
         async (req: Request, res: Response) => {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
@@ -37,13 +50,13 @@ Routes.forEach((route) => {
     );
 });
 
-let server: any;
+let server: Server | null = null; 
 
 clinet.connect().then(() => {
-    console.log("MongoDB Client Connected: " + process.env.DB_URI);
+    // console.log(`MongoDB Client Connected: ${JSON.stringify(process.env.DB_URI)}`);
 
     server = app.listen(process.env.PORT, () => {
-        console.log("Listening on port " + process.env.PORT);
+        // console.log(`Listening on port ${JSON.stringify(process.env.PORT)}`);
     });
 }).catch(err => {
     console.error(err);
@@ -51,12 +64,12 @@ clinet.connect().then(() => {
 });
 
 export const closeServer = async () => {
-    if (server) {
-        await server.close(); // Delay closing server
+    if (server !== null) {
+        server.close();
+        server = null; // Ensure it's reset properly
     }
     if (clinet) {
         await clinet.close();
     }
 };
 export { server };
-

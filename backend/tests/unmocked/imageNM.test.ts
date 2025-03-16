@@ -1,6 +1,4 @@
 import path from "path";
-import "../../controllers/imageController";
-import "../../routes/imageRoutes";
 import {app, closeServer} from "../../index"
 import request from "supertest";
 
@@ -135,7 +133,7 @@ describe("Unmocked API Tests - post /upload", () => {
     // Expected status code: 400
     // Expected behavior: Request fails with an error message
     // Expected output: "Invalid form data"
-    test("❌ 400 - Invalid Form Data (Incorrect File Type)", async () => {
+    test("400 - Invalid Form Data (Incorrect File Type)", async () => {
         const res = await request(app)
             .post("/upload")
             .field("uploadedBy", TEST_USER) 

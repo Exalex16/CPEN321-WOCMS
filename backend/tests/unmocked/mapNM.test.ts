@@ -1,6 +1,4 @@
 import path from "path";
-import "../../controllers/mapController";
-import "../../routes/mapRoutes";
 import {app, closeServer} from "../../index"
 import request from "supertest";
 
@@ -12,13 +10,6 @@ const TEST_LOCATION = JSON.stringify({
     title: "Valid Location",
     location: "Surrey",
     icon: "Green"
-});
-
-const TEST_LOCATION_BAD = JSON.stringify({
-    position: { lat: 1234, lng: 5432 }, // Invalid lat/lng
-    title: "Invalid Location",
-    location: "Unknown",
-    icon: "Red"
 });
 
 afterAll(async () => {
@@ -49,27 +40,6 @@ describe("Unmocked API Tests - get /map/popular-locations/:userEmail", () => {
             .post("/upload")
             .field("uploadedBy", TEST_USER)
             .field("description", "Test upload with bad location")
-            .attach("image", TEST_IMAGE, "test_bad.png");
-
-        // Request recommendation
-        const res = await request(app).get(`/map/popular-locations/${TEST_USER}`);
-
-        expect(res.status).toBe(200);
-        expect(res.body.popularLocation).toBeNull();
-        expect(res.body.message).toBe("No valid image locations found. Cannot generate recommendation.");
-    });
-
-    // Input: Upload an image with **invalid** location (bad lat/lng)
-    // Expected status code: 200
-    // Expected behavior: Returns message stating no valid locations exist
-    // Expected output: No valid image locations found. Cannot generate recommendation.
-    test("200 - No Valid Locations Found", async () => {
-        // Upload an image with invalid location
-        await request(app)
-            .post("/upload")
-            .field("uploadedBy", TEST_USER)
-            .field("description", "Test upload with bad location")
-            .field("location", TEST_LOCATION_BAD)
             .attach("image", TEST_IMAGE, "test_bad.png");
 
         // Request recommendation

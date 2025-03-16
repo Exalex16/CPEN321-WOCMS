@@ -1,5 +1,3 @@
-import "../../controllers/userController";
-import "../../routes/userRoutes";
 import {app, closeServer} from "../../index"
 import request from "supertest";
 

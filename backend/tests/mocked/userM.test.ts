@@ -1,26 +1,27 @@
-import "../../controllers/userController";
-import "../../routes/userRoutes";
 import request from "supertest";
 import { app, closeServer } from "../../index";
 
 jest.mock("../../services", () => {
     const actualServices = jest.requireActual("../../services");
+
     return {
+        __esModule: true,
         ...actualServices,
         clinet: {
             db: jest.fn(() => ({
                 collection: jest.fn(() => ({
-                    findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")), // Default to failure
+                    findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
                     updateOne: jest.fn().mockRejectedValue(new Error("MongoDB Update Error")),
                     insertOne: jest.fn().mockResolvedValue({ insertedId: "mockedId" }),
-                    find: jest.fn().mockReturnValue({
+                    find: jest.fn(() => ({
                         toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),
-                    }),
+                    })),
                     deleteOne: jest.fn().mockRejectedValue(new Error("MongoDB Delete Error")),
                 })),
             })),
             connect: jest.fn().mockResolvedValue(undefined),
             close: jest.fn(),
+            default: jest.fn(() => 'mocked client'),
         },
     };
 });
