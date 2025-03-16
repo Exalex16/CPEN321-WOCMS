@@ -50,6 +50,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.selects.select
+import retrofit2.HttpException
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -150,10 +151,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     Log.e("MapsActivity", "Receive recommendation failed: $errorMsg")
 
                 }
-            } catch (e: Exception) {
-                // Handle the error
+            } catch (e: HttpException) {
                 e.printStackTrace()
-                Toast.makeText(this@MapsActivity, "Failed to fetch recommendation.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MapsActivity, "Server error, please try again later. ", Toast.LENGTH_LONG).show()
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -587,7 +590,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
             if (currentMarker == null) {
                 Toast.makeText(this, "No marker selected!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+                bottomSheetDialog.dismiss()
             }
 
             Toast.makeText(this, "Submit button clicked", Toast.LENGTH_SHORT).show()
