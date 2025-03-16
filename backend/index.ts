@@ -3,7 +3,7 @@ import { clinet } from "./services";
 import { imageRoutes } from "./routes/imageRoutes";
 import { userRoutes } from "./routes/userRoutes";
 import { mapRoutes } from "./routes/mapRoutes";
-import { validationResult, check } from "express-validator";
+import { validationResult } from "express-validator";
 import morgan from "morgan"
 import { Server } from "http";
 
@@ -65,10 +65,10 @@ clinet.connect().then(() => {
 
 export const closeServer = async () => {
     if (server) {
-        await server.close();
+        server.close();
     }
     if (clinet) {
-        await clinet.close();
+        clinet.close();
     }
 };
 export { server };

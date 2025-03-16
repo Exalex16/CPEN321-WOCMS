@@ -58,16 +58,23 @@ export class mapController {
         // Track the largest cluster
         let largestClusterId: string | null = null;
         let largestClusterSize = 0;
-        let largestCluster: any[] = [];
+        let largestCluster: [number, number][] = [];
 
-        const clusterData: Record<string, { positions: number[][], tags: string[] }> = {};
+        const clusterData: Record<string, { positions: [number, number][], tags: string[] }> = {};
+
         clustered.features.forEach(cluster => {
             if (!cluster.properties || cluster.properties.cluster === undefined) return;
 
             const clusterId = cluster.properties.cluster.toString();
-            if (!clusterData[clusterId]) clusterData[clusterId] = { positions: [], tags: [] };
+            clusterData[clusterId] ??= { positions: [], tags: [] };
 
-            clusterData[clusterId].positions.push(cluster.geometry.coordinates);
+            const coords = cluster.geometry.coordinates;
+
+            // clusterData[clusterId].positions.push(cluster.geometry.coordinates);
+            if (Array.isArray(coords) && coords.length === 2) {
+                clusterData[clusterId].positions.push([coords[0], coords[1]] as [number, number]); 
+            }
+
             clusterData[clusterId].tags.push(...cluster.properties.imageData.tags);
 
             const clusterSize = clusterData[clusterId].positions.length;
@@ -78,7 +85,11 @@ export class mapController {
         });
 
         // Get the largest cluster's data
-        largestCluster = largestClusterId ? clusterData[largestClusterId].positions : [];
+        if (largestClusterId !== null && clusterData[largestClusterId]) {
+            largestCluster = clusterData[largestClusterId].positions;
+        } else {
+            largestCluster = [];
+        }
         const allTagsInLargestCluster = largestClusterId ? clusterData[largestClusterId].tags : [];
 
         // Compute average lat/lng for the largest cluster
