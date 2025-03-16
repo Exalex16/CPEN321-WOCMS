@@ -41,7 +41,8 @@ export class mapController {
                     return null;
                 }
 
-                return turf.point([lng, lat], { imageData: image as Record<string, unknown> }) as Feature<Point, GeoJsonProperties>;
+                return turf.point([lng, lat], { imageData: image as Record<string, unknown> }) as Feature<Point, Record<string, unknown>>;
+
             })
             .filter(point => point !== null);
 
