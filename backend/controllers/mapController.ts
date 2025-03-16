@@ -42,7 +42,11 @@ export class mapController {
                     return null;
                 }
 
-                return turf.point([lng, lat], { imageData: image as Record<string, unknown> }) as Feature<Point, Record<string, unknown>>;
+                const pointFeature: Feature<Point, { imageData: Record<string, unknown> }> = turf.point(
+                    [lng, lat], 
+                    { imageData: image as Record<string, unknown> }
+                );
+                return pointFeature;
 
             })
             .filter(point => point !== null);
