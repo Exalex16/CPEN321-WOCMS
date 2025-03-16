@@ -31,21 +31,16 @@ export class mapController {
                 typeof img.location?.position?.lat === "number" && 
                 typeof img.location?.position?.lng === "number"
             )
-            .map(image => {
-                let lat = parseFloat(String(image.location.position.lat));
-                let lng = parseFloat(String(image.location.position.lng));
-
-
-                // Remove bad coordinates
-                if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-                    // console.log(`Skipping invalid location: lat=${lat}, lng=${lng}`);
-                    return null;
-                }
-
-                const pointFeature = createSafePointFeature(lng, lat, image);
-                return pointFeature;
-            })
-            .filter(point => point !== null);
+            .map(image => 
+                Math.abs(image.location.position.lat) > 90 || Math.abs(image.location.position.lng) > 180
+                    ? null
+                    : createSafePointFeature(
+                        parseFloat(String(image.location.position.lng)), 
+                        parseFloat(String(image.location.position.lat)), 
+                        image
+                    )
+            )
+            .filter((point): point is Feature<Point, Record<string, unknown>> => point !== null);
 
         // console.log("Cleaned Image Locations:", points);
 
