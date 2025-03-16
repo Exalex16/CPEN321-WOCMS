@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import * as turf from "@turf/turf";
 import { clinet } from "../services"; 
-import type { Feature, Point, GeoJsonProperties } from "geojson";
+import type { Feature, Point } from "geojson";
 
 
 
@@ -32,8 +32,9 @@ export class mapController {
                 typeof img.location?.position?.lng === "number"
             )
             .map(image => {
-                let lat = parseFloat(image.location.position.lat);
-                let lng = parseFloat(image.location.position.lng);
+                let lat = parseFloat(String(image.location.position.lat));
+                let lng = parseFloat(String(image.location.position.lng));
+
 
                 // Remove bad coordinates
                 if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
@@ -81,9 +82,12 @@ export class mapController {
             if (clusterEntry) {
                 const coords = cluster.geometry.coordinates;
                 if (Array.isArray(coords) && coords.length === 2) {
-                    clusterEntry.positions.push([coords[0], coords[1]]);
+                    clusterEntry.positions.push([Number(coords[0]), Number(coords[1])]);
                 }
-                clusterEntry.tags.push(...(cluster.properties.imageData.tags || []));
+                const tags = Array.isArray(cluster.properties.imageData.tags) 
+                    ? cluster.properties.imageData.tags.filter((tag: unknown): tag is string => typeof tag === "string") 
+                    : [];
+                clusterEntry.tags.push(...tags);
             }
 
             const clusterSize = clusterEntry?.positions.length ?? 0;
