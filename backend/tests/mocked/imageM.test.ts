@@ -13,7 +13,7 @@ jest.mock("../../services", () => {
     return {
         ...actualServices,
         clinet: {
-            db: jest.fn((dbName) => ({
+            db: jest.fn(() => ({
                 collection: jest.fn(() => ({
                     updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
                     findOne: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")),  

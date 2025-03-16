@@ -1,4 +1,4 @@
-import express, {NextFunction, Request, Response} from "express";
+import express, {Request, Response} from "express";
 import { clinet } from "./services";
 import { imageRoutes } from "./routes/imageRoutes";
 import { userRoutes } from "./routes/userRoutes";
@@ -40,10 +40,10 @@ Routes.forEach((route) => {
 let server: Server | null = null;
 
 clinet.connect().then(() => {
-    console.log("MongoDB Client Connected: " + process.env.DB_URI);
+    console.log(`MongoDB Client Connected: ${JSON.stringify(process.env.DB_URI)}`);
 
     server = app.listen(process.env.PORT, () => {
-        console.log("Listening on port " + process.env.PORT);
+        console.log(`Listening on port ${JSON.stringify(process.env.PORT)}`);
     });
 }).catch(err => {
     console.error(err);
