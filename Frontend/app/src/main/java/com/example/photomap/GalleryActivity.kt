@@ -160,7 +160,6 @@ class GalleryActivity : ComponentActivity() {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         var count = 0
                         for (imageUrl in rowImages) {
-
                             Image(
                                 painter = rememberImagePainter(imageUrl.imageURL),
                                 contentDescription = "Gallery Image",
@@ -324,6 +323,7 @@ class GalleryActivity : ComponentActivity() {
 
     @Composable
     fun DialogController(images: List<Pair<MarkerInstance,PhotoInstance>>, pagerState: PagerState,coroutineScope: CoroutineScope, showDialog: MutableState<Boolean>) {
+        val context = LocalContext.current
         var expanded by remember { mutableStateOf(false) }
         val options = MainActivity.userInfo.friends
         var userInput by remember { mutableStateOf("") }
@@ -418,15 +418,20 @@ class GalleryActivity : ComponentActivity() {
                                                     Log.d("DialogInput", "API Success: ${response.body()?.string()}")
                                                     MainActivity.userInfo.friends.add(userInput.trim())
                                                     Log.d("friends", MainActivity.userInfo.friends.toString())
+                                                    Toast.makeText(context, "Friend is successfully added", Toast.LENGTH_SHORT).show()
                                                 } else {
                                                     Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
+                                                    Toast.makeText(context, "Invalid Input. Please Enter the correct user email", Toast.LENGTH_SHORT).show()
                                                 }
                                             }catch (e: HttpException) {
                                                 Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
+                                                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
                                             } catch (e: JsonParseException) {
                                                 Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
+                                                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
                                             } catch (e: IOException) {
                                                 Log.e("DialogInput", "Network Error: ${e.message}") // ✅ Handles internet connection failures
+                                                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
                                             }
                                             expanded = false
                                         }
@@ -478,16 +483,21 @@ class GalleryActivity : ComponentActivity() {
                                             images[pagerState.currentPage].second.sharedTo.add(userInput.trim())
                                             images[pagerState.currentPage].second.shared = true
                                             images[pagerState.currentPage].second.sharedBy = userToken.toString().trim()
+                                            Toast.makeText(context,"Image is shared successfully", Toast.LENGTH_SHORT).show()
                                         } else {
                                             Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
+                                            Toast.makeText(context,"You may enter is invalid user email or you may sharing the duplicate image", Toast.LENGTH_SHORT).show()
 
                                         }
                                     }catch (e: HttpException) {
                                         Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
+                                        Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
                                     } catch (e: JsonParseException) {
                                         Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
+                                        Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
                                     } catch (e: IOException) {
                                         Log.e("DialogInput", "Unexpected Error: ${e.message}") // ✅ Catches any unknown errors
+                                        Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                                 showDialog.value = false
