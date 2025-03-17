@@ -36,6 +36,8 @@ import junit.framework.TestCase.assertTrue
 import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 
+import com.example.photomap.PhotoUploader
+
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -64,7 +66,7 @@ class UploadTest {
                     // Immediately simulate the user picking a "test.jpg"
                     val fakeUri = Uri.parse("android.resource://com.example.photomap/drawable/upload")
                     // Simulate the inline lambda from your production code:
-                    activity.selectedImageUri = fakeUri
+                    activity.photoUploader.selectedImageUri = fakeUri
                 }
                 override fun unregister() {
                     // No-op for testing purposes
@@ -74,7 +76,7 @@ class UploadTest {
             }
 
             // Replace the real launcher with our fake launcher.
-            activity.pickImageLauncherTest = fakeLauncher
+            activity.photoUploader.pickImageLauncher= fakeLauncher
         }
     }
 
@@ -193,7 +195,7 @@ class UploadTest {
             val fakeLauncher = object : ActivityResultLauncher<String>() {
                 override fun launch(input: String, options: ActivityOptionsCompat?) {
                     // Simulate no image being picked by setting the URI to null
-                    activity.selectedImageUri = null
+                    activity.photoUploader.selectedImageUri = null
                 }
                 override fun unregister() {
                     // No-op for testing purposes
@@ -201,7 +203,7 @@ class UploadTest {
                 override val contract: ActivityResultContract<String, *>
                     get() = ActivityResultContracts.GetContent()
             }
-            activity.pickImageLauncherTest = fakeLauncher
+            activity.photoUploader.pickImageLauncher = fakeLauncher
         }
 
         simulateScreenTap(1000, 1400)

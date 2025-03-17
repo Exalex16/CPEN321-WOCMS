@@ -81,7 +81,7 @@ class RecommendationTest {
                     // Immediately simulate the user picking a "test.jpg"
                     val fakeUri = Uri.parse("android.resource://com.example.photomap/drawable/restaurant")
                     // Simulate the inline lambda from your production code:
-                    activity.selectedImageUri = fakeUri
+                    activity.photoUploader.selectedImageUri = fakeUri
                 }
                 override fun unregister() {
                     // No-op for testing purposes
@@ -91,7 +91,7 @@ class RecommendationTest {
             }
 
             // Replace the real launcher with our fake launcher.
-            activity.pickImageLauncherTest = fakeLauncher
+            activity.photoUploader.pickImageLauncher = fakeLauncher
         }
     }
 

@@ -60,7 +60,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val TAG: String = "MapsActivity"
     private val PLACE_SEARCH_RADIUS: Int = 10000
     private var addMarkerDialog: AlertDialog? = null
-
     private val addedPlaces = mutableListOf<Place>()
 
     private lateinit var USER_EMAIL: String
@@ -76,20 +75,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var previewImageView: ImageView? = null
     private var currentMarker: MarkerInstance? = null
 
+    lateinit var photoUploader: PhotoUploader
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Gallery display container
-        galleryContainer = findViewById(R.id.galleryContainer)
-        noImagesText = findViewById(R.id.noImagesText)
-        imageGalleryRecycler = findViewById(R.id.imageGalleryRecycler)
+        photoUploader = PhotoUploader(
+            activity = this,
+            galleryContainer = findViewById(R.id.galleryContainer),
+            imageGalleryRecycler = findViewById(R.id.imageGalleryRecycler),
+            noImagesText = findViewById(R.id.noImagesText)
+        )
 
-        // Set up horizontal layout manager
-        imageGalleryRecycler.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-
+        // Hidden Buttons
         fabActions = findViewById(R.id.fab_actions)
         fabActions.visibility = View.GONE
 
@@ -327,7 +329,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         fabActions.setOnClickListener {
-            showUploadBottomSheet()
+            photoUploader.showUploadBottomSheet(currentMarker, USER_EMAIL){
+                Snackbar.make(
+                    findViewById(android.R.id.content), // Or a specific CoordinatorLayout
+                    "Upload Successful!",
+                    Snackbar.LENGTH_LONG
+                ).show()
+            }
         }
 
         fabDeleteMarker.setOnClickListener {
@@ -336,7 +344,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             builder.setMessage("If you delete this marker, all images tagged to this marker will also be deleted. Do you wish to proceed?")
             // Set the positive button action: user confirms deletion
             builder.setPositiveButton("Yes") { _, _ ->
-                deleteMarker()  // Execute the deletion function
+                deleteMarker()
                 Toast.makeText(this, "Marker deleted", Toast.LENGTH_SHORT).show()
                 Log.d("MapsActivity", "Alert dialog confirm: marker deleted.")
             }
@@ -403,7 +411,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Views: Upload off, Gallery Off
         fabActions.visibility = View.GONE
         fabDeleteMarker.visibility = View.GONE
-        hideGallery()
+        photoUploader.hideGallery()
 
         // Build and display the AlertDialog
         addMarkerDialog = AlertDialog.Builder(this)
@@ -457,9 +465,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Show or hide the gallery based on matched marker
         matchedMarker?.let { markerInstance ->
-            showGallery(markerInstance.photoAtCurrentMarker)
+            photoUploader.showGallery(markerInstance.photoAtCurrentMarker)
         } ?: run {
-            hideGallery()
+            photoUploader.hideGallery()
         }
 
         // Show action buttons
@@ -510,7 +518,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     currentMarker?.drawnMarker?.remove() // Remove visual marker on map.
                     Log.d("MapsActivity", "Marker list before: ${mapContent.markerList}")
                     mapContent.markerList.remove(currentMarker)
-                    hideGallery()
+                    photoUploader.hideGallery()
                     Log.d("MapsActivity", "Marker list after: ${mapContent.markerList}")
                     Toast.makeText(this@MapsActivity, "Marker deleted successfully", Toast.LENGTH_SHORT).show()
                 } else {
@@ -544,155 +552,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-
-    private fun showGallery(imageUrls: List<PhotoInstance>) {
-        if (imageUrls.isEmpty()) {
-            // No images to display
-            imageGalleryRecycler.visibility = View.GONE
-            noImagesText.visibility = View.VISIBLE
-        } else {
-            // Display images in RecyclerView
-            imageGalleryRecycler.visibility = View.VISIBLE
-            noImagesText.visibility = View.GONE
-            val urlList = imageUrls.map { it.imageURL }
-            imageGalleryRecycler.adapter = GalleryAdapter(urlList)
-        }
-        // Make container visible
-        galleryContainer.visibility = View.VISIBLE
-    }
-
-    private fun hideGallery() {
-        galleryContainer.visibility = View.GONE
-    }
-
-    // Upload photos
-    private fun showUploadBottomSheet() {
-        val bottomSheetDialog = BottomSheetDialog(this)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_upload, null)
-        bottomSheetDialog.setContentView(view)
-
-        val pickPhotoButton = view.findViewById<Button>(R.id.btn_pick_photo)
-        val submitButton = view.findViewById<Button>(R.id.btn_submit_upload)
-        val previewImageView = view.findViewById<ImageView>(R.id.imagePreview)
-        this.previewImageView = previewImageView
-
-        pickPhotoButton.setOnClickListener {
-            pickImageLauncherTest.launch("image/*")
-        }
-
-        submitButton.setOnClickListener {
-            if (selectedImageUri == null) {
-                Log.d("MapsActivity", "No image selected.")
-                Snackbar.make(
-                    findViewById(android.R.id.content), // Or a specific CoordinatorLayout
-                    "No image selected.",
-                    Snackbar.LENGTH_SHORT
-                ).show()
-                bottomSheetDialog.dismiss()
-            }
-
-            if (currentMarker == null) {
-                Toast.makeText(this, "No marker selected!", Toast.LENGTH_SHORT).show()
-                bottomSheetDialog.dismiss()
-            }
-
-            Toast.makeText(this, "Submit button clicked", Toast.LENGTH_SHORT).show()
-            uploadPhotoToAWS()
-            bottomSheetDialog.dismiss()
-        }
-
-        bottomSheetDialog.show()
-    }
-
-    private val pickImageLauncher = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-            selectedImageUri = uri
-            // Show the preview in your ImageView
-            previewImageView?.visibility = View.VISIBLE
-            previewImageView?.setImageURI(uri)
-    }
-
-    var pickImageLauncherTest : ActivityResultLauncher<String> = pickImageLauncher
-
-
-    private fun uploadPhotoToAWS() {
-        lifecycleScope.launch {
-            try {
-                val locationJson = JSONObject().apply {
-                    put("position", JSONObject().apply {
-                        put("lat", currentMarker?.lat ?: 0.0)
-                        put("lng", currentMarker?.lng ?: 0.0)
-                    })
-                    put("title", currentMarker?.title ?: "Untitled")
-                    put("location", currentMarker?.location ?: "Unknown")
-                    put("icon", currentMarker?.color ?: "red")
-                }.toString()
-                val locationBody = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
-
-                val response = RetrofitClient.api.uploadPhoto(
-                    image = createImagePart(selectedImageUri!!),
-                    description = "This is a test description".toRequestBody("text/plain".toMediaTypeOrNull()),
-                    uploader = (USER_EMAIL).toRequestBody("text/plain".toMediaTypeOrNull()),
-                    location = locationBody,
-                    sharedTo = "[]".toRequestBody("application/json".toMediaTypeOrNull()),
-                    shared = "false".toRequestBody("text/plain".toMediaTypeOrNull()),
-                    sharedBy = "".toRequestBody("text/plain".toMediaTypeOrNull())
-                )
-
-                if (response.isSuccessful) {
-                    Snackbar.make(
-                        findViewById(android.R.id.content), // Or a specific CoordinatorLayout
-                        "Upload Successful!",
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                    val uploadData = response.body()
-                    Log.d("MapsActivity", "Upload response: $uploadData")
-
-                    currentMarker?.photoAtCurrentMarker?.add(PhotoInstance(
-                        imageURL = uploadData?.presignedUrl?: "no url available.",
-                        time = Instant.now(),
-                        fileName = uploadData?.fileName?: "no file name available.",
-                        sharedTo = mutableListOf(),
-                        shared = false,
-                        sharedBy = null
-                    ))
-
-                    currentMarker?.let { markerInstance ->
-                        val photos = markerInstance.photoAtCurrentMarker
-                        showGallery(photos)
-                    } ?: run {
-                        hideGallery()
-                    }
-                } else {
-                    val errorMsg = response.errorBody()?.string()
-                    Toast.makeText(this@MapsActivity, "Upload failed: $errorMsg", Toast.LENGTH_LONG).show()
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun createImagePart(uri: Uri): MultipartBody.Part {
-        val inputStream = contentResolver.openInputStream(uri) ?: throw IllegalStateException("Unable to open image")
-
-        val fileBytes = inputStream.readBytes()
-        inputStream.close()
-
-        // Create RequestBody for the image
-        val requestFile = fileBytes.toRequestBody("image/*".toMediaTypeOrNull())
-
-        // Wrap it in MultipartBody.Part with form field name "image"
-        return MultipartBody.Part.createFormData(
-            "image",
-            "filename",
-            requestFile
-        )
-    }
-
-    // Helper function to map color names to hue values
+    // Helper to map color names to hue values
     private fun getHueFromColor(color: String): Float {
         return when (color.lowercase()) {
             "red" -> BitmapDescriptorFactory.HUE_RED
