@@ -84,7 +84,11 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("com.google.accompanist:accompanist-pager:0.32.0")
 
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.0.5")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.0.5")
 
+    // Mocking API responses
+    testImplementation("io.mockk:mockk:1.12.0")
 
     // Retrofit
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")

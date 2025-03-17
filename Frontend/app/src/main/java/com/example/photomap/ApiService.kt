@@ -77,6 +77,9 @@ interface ApiService {
     ):  Response<ResponseBody>
 
 
+    @DELETE("image/delete-all/{email}")
+    suspend fun deleteAllImages(@Path("email") email: String): Response<Unit>
+
 }
 
 interface GooglePlacesApi {
