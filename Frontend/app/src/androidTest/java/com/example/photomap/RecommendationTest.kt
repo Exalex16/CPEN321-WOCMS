@@ -215,7 +215,7 @@ class RecommendationTest {
     fun testSuccessfulRecommendWithNoMatch() {
 
         scenario.onActivity { activity ->
-            activity.centerMapOn(-21.2554, -55.2487, 15f) // Africa
+            MapUtils.centerMapOn(activity.mMap, -21.2554, -55.2487, 15f) // Africa
         }
 
         // Add a marker for upload test

@@ -32,7 +32,7 @@ class PlaceAdapter(private val context: Context,
         val place = places[position]
         holder.tvPlaceName.text = place.name
         // Convert geometry to a city name. Implement this function based on your needs.
-        holder.tvCityName.text = getCityName(context, place.geometry.location.lat, place.geometry.location.lng)
+        holder.tvCityName.text = MapUtils.getCityName(context, place.geometry.location.lat, place.geometry.location.lng)
         // Display the rating or a fallback value
         holder.tvRating.text = "Rating: ${place.rating ?: "N/A"}"
 
@@ -52,14 +52,4 @@ class PlaceAdapter(private val context: Context,
 
     override fun getItemCount(): Int = places.size
 
-    fun getCityName(context: Context, lat: Double, lng: Double): String {
-        val geocoder = Geocoder(context, Locale.getDefault())
-        return try {
-            val addresses = geocoder.getFromLocation(lat, lng, 1)
-            addresses?.firstOrNull()?.locality ?: "Unknown"
-        } catch (e: IOException) {
-            e.printStackTrace()
-            "Unknown"
-        }
-    }
 }

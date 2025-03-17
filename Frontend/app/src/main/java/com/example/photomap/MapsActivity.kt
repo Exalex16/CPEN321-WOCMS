@@ -56,26 +56,20 @@ import retrofit2.HttpException
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // Constants
-    private val MAX_REC_PLACES: Int = 20
     private val TAG: String = "MapsActivity"
-    private val PLACE_SEARCH_RADIUS: Int = 10000
     private var addMarkerDialog: AlertDialog? = null
     private val addedPlaces = mutableListOf<Place>()
 
     private lateinit var USER_EMAIL: String
-    private lateinit var mMap: GoogleMap
+    internal lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fabActions: FloatingActionButton
     private lateinit var fabDeleteMarker: FloatingActionButton
-    private lateinit var galleryContainer: FrameLayout
-    private lateinit var noImagesText: TextView
-    private lateinit var imageGalleryRecycler: RecyclerView
 
-    internal var selectedImageUri: Uri? = null
-    private var previewImageView: ImageView? = null
     private var currentMarker: MarkerInstance? = null
 
     lateinit var photoUploader: PhotoUploader
+    lateinit var recommendationManager: RecommendationManager
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,12 +78,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Classes
         photoUploader = PhotoUploader(
             activity = this,
             galleryContainer = findViewById(R.id.galleryContainer),
             imageGalleryRecycler = findViewById(R.id.imageGalleryRecycler),
             noImagesText = findViewById(R.id.noImagesText)
         )
+        recommendationManager = RecommendationManager(this, addedPlaces)
 
         // Hidden Buttons
         fabActions = findViewById(R.id.fab_actions)
@@ -102,7 +98,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val fabRecommendation: FloatingActionButton = findViewById(R.id.recommendation)
         fabRecommendation.visibility = View.VISIBLE
         fabRecommendation.setOnClickListener {
-            fetchRecommendation()
+            recommendationManager.fetchRecommendation(USER_EMAIL) { selectedPlace ->
+                addRecommendationMarkerOnMap(selectedPlace)
+            }
         }
 
         // Album Button
@@ -120,154 +118,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
     }
 
-    private fun fetchRecommendation() {
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.api.getPopularLocations(USER_EMAIL)
-
-                if (response.isSuccessful && response.body() != null) {
-                    val popularLocation = response.body()!!.popularLocation
-
-                    if (popularLocation == null) {
-                        //Display custom backend message for no recommendation
-                        Snackbar.make(
-                            findViewById(android.R.id.content), // Or a specific CoordinatorLayout
-                            "No recommendation available! Insufficient images or markers.",
-                            Snackbar.LENGTH_LONG
-                        ).show()
-                        Log.e("MapsActivity", "No recommendation available: insufficient images or markers.")
-
-                    } else {
-                        val lat = popularLocation.position.lat
-                        val lng = popularLocation.position.lng
-                        val tags = popularLocation.tags
-
-                        Toast.makeText(this@MapsActivity, "Got recommendation", Toast.LENGTH_SHORT).show()
-                        Log.d("MapsActivity", "Got recommendation at ($lat, $lng), with tags: $tags")
-
-                        fetchNearbyPlaces("$lat,$lng", lat, lng, tags)
-                    }
-                } else {
-                    val errorMsg = response.errorBody()?.string()
-                    Toast.makeText(this@MapsActivity, "Recommendation failed, no places found match. ", Toast.LENGTH_LONG).show()
-                    Log.e("MapsActivity", "Receive recommendation failed: $errorMsg")
-
-                }
-            } catch (e: HttpException) {
-                e.printStackTrace()
-                Toast.makeText(this@MapsActivity, "Server error, please try again later. ", Toast.LENGTH_LONG).show()
-            } catch (e: IOException) {
-                e.printStackTrace()
-                Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-
-    // Uses Places API to get nearby places
-    private fun fetchNearbyPlaces(coordinate: String, lat: Double, lng: Double, tags: List<String>) {
-        lifecycleScope.launch {
-
-            val finalPlacesList = mutableListOf<Place>()
-
-            // Launch async calls for the top 3 tags concurrently
-            val deferredResults = tags.map { tag ->
-                async {  // Specify that this async returns a List<Place>
-                    try {
-                        val response = RetrofitPlacesClient.api.nearbySearch(
-                            location = coordinate,
-                            radius = PLACE_SEARCH_RADIUS, // adjust as needed
-                            keyword = tag,
-                            apiKey = MAPS_API_KEY
-                        )
-                        Log.d("MapsActivity", "Tag used: $tag")
-                        if (response.isSuccessful) {
-                            response.body()!!.results // Ensure this is a List<Place>
-                        } else {
-                            Log.e("MapsActivity", "Zero response found??")
-                            emptyList()
-                        }
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_LONG).show()
-                        emptyList()
-                    } catch (e: HttpException) {
-                        e.printStackTrace()
-                        Toast.makeText(this@MapsActivity, "Server error, please try again later. ", Toast.LENGTH_LONG).show()
-                        emptyList()
-                    }
-                }
-            }
-
-            // Await all results and combine them into the final list
-            deferredResults.awaitAll().forEach { results ->
-                finalPlacesList.addAll(results)
-            }
-
-            // Optionally, deduplicate results based on a unique property such as place id
-            var uniquePlaces = finalPlacesList.distinctBy { it.placeId }.take(MAX_REC_PLACES)
-
-            uniquePlaces = uniquePlaces.filterNot { place -> addedPlaces.any { it.placeId == place.placeId } }
-
-            Log.d("MapsActivity", "Final places list size: ${uniquePlaces.size}")
-
-            showRecommendationBottomSheet(lat, lng, tags, uniquePlaces)
-        }
-    }
-
-    private fun showRecommendationBottomSheet(lat: Double, lng: Double, tags: List<String>, places: List<Place>) {
-        val bottomSheetDialog = BottomSheetDialog(this)
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_recommendation, null)
-        bottomSheetDialog.setContentView(view)
-
-        // Get references to UI elements in the BottomSheet
-        val tvSummary = view.findViewById<TextView>(R.id.tvSummary)
-        val rvSuggestedPlaces = view.findViewById<RecyclerView>(R.id.rvSuggestedPlaces)
-        val tvNoPlacesMessage = view.findViewById<TextView>(R.id.tvNoPlacesMessage)
-
-        // Construct a summary string with the recommendation details
-        val tagsString = if (tags.isNotEmpty()) tags.joinToString(", ") else "No tags available"
-        val cityName = getCityName(this, lat, lng)
-        val summaryText = HtmlCompat.fromHtml(
-            "<b>You appear to be most active around:</b><br> $cityName <br><br>" +
-                    "<b>Your uploaded photos commonly feature these objects or themes:</b><br> $tagsString <br><br>" +
-                    "Here is a list of locations matching your photo themes that might pique your interest!",
-            HtmlCompat.FROM_HTML_MODE_LEGACY
-        )
-        tvSummary.text = summaryText
-
-        // Configure the RecyclerView based on whether there are suggested places
-        if (places.isEmpty()) {
-            tvNoPlacesMessage.visibility = View.VISIBLE
-            rvSuggestedPlaces.visibility = View.GONE
-        } else {
-            tvNoPlacesMessage.visibility = View.GONE
-            rvSuggestedPlaces.visibility = View.VISIBLE
-            // Set up the adapter for the list of places
-            val adapter = PlaceAdapter(this, places, { selectedPlace ->
-                addRecommendationMarkerOnMap(selectedPlace)
-                bottomSheetDialog.dismiss() // Close BottomSheet
-            })
-            rvSuggestedPlaces.layoutManager = LinearLayoutManager(this)
-            rvSuggestedPlaces.adapter = adapter
-        }
-
-        // Finally, show the BottomSheet
-        bottomSheetDialog.show()
-    }
-
     private fun addRecommendationMarkerOnMap(selectedPlace: Place) {
         val lat = selectedPlace.geometry.location.lat
         val lng = selectedPlace.geometry.location.lng
 
         if (mapContent.markerList.any { it.lat == lat && it.lng == lng }) {
+            addedPlaces.add(selectedPlace)
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 15f))
             Log.d(TAG, "Marker already exists at this location, skipping duplicate.")
             return
         }
 
         val markerTitle = "Popular - " + selectedPlace.name
         val selectedColor = "azure"
-        val cityName = getCityName(this, lat, lng)
+        val cityName = MapUtils.getCityName(this, lat, lng)
 
         // Store the marker data
         currentMarker = MarkerInstance(
@@ -286,6 +150,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 Snackbar.LENGTH_SHORT
             ).show()
             addedPlaces.add(selectedPlace)
+            Log.d("MapsActivity", "Addedplaces: $addedPlaces")
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 15f))
         }
     }
 
@@ -371,7 +237,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 MarkerOptions()
                     .position(position)
                     .title(marker.title)
-                    .icon(BitmapDescriptorFactory.defaultMarker(getHueFromColor(marker.color)))
+                    .icon(BitmapDescriptorFactory.defaultMarker(MapUtils.getHueFromColor(marker.color)))
             )
 
             // Assign marker tag and reference
@@ -386,7 +252,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d("MapsActivity", "Moving camera to: $position")
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 15f))
         } else {
-            centerMapOn(49.2827, -123.1207) // Default Vancouver
+            MapUtils.centerMapOn(mMap, 49.2827, -123.1207) // Default Vancouver
         }
     }
 
@@ -425,7 +291,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     lng = latLng.longitude,
                     title = if (titleEditText.text.toString().isBlank()) "NoName Marker" else titleEditText.text.toString(),
                     color = colorSpinner.selectedItem.toString(),
-                    location = getCityName(this, latLng.latitude, latLng.longitude),
+                    location = MapUtils.getCityName(this, latLng.latitude, latLng.longitude),
                     photoAtCurrentMarker = arrayListOf(),
                 )
 
@@ -448,7 +314,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             lng = marker.position.longitude,
             title = marker.title ?: "Untitled Marker",
             color = (marker.tag ?: "unknown Color").toString(),
-            location = getCityName(this, marker.position.latitude, marker.position.longitude),
+            location = MapUtils.getCityName(this, marker.position.latitude, marker.position.longitude),
             photoAtCurrentMarker = arrayListOf()
         )
         Log.d("MapsActivity", "current Marker data before match: $currentMarker")
@@ -552,31 +418,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    // Helper to map color names to hue values
-    private fun getHueFromColor(color: String): Float {
-        return when (color.lowercase()) {
-            "red" -> BitmapDescriptorFactory.HUE_RED
-            "blue" -> BitmapDescriptorFactory.HUE_BLUE
-            "green" -> BitmapDescriptorFactory.HUE_GREEN
-            "yellow" -> BitmapDescriptorFactory.HUE_YELLOW
-            "orange" -> BitmapDescriptorFactory.HUE_ORANGE
-            "violet" -> BitmapDescriptorFactory.HUE_VIOLET
-            "azure" -> BitmapDescriptorFactory.HUE_AZURE
-            else -> BitmapDescriptorFactory.HUE_RED  // Default color if none match
-        }
-    }
-
-    private fun getCityName(context: Context, lat: Double, lng: Double): String {
-        val geocoder = Geocoder(context, Locale.getDefault())
-        return try {
-            val addresses = geocoder.getFromLocation(lat, lng, 1)
-            addresses?.firstOrNull()?.locality ?: "Unknown"
-        } catch (e: IOException) {
-            e.printStackTrace()
-            "Unknown"
-        }
-    }
-
     // Send newly create marker to server
     private fun sendMarkerUpdate(email: String, markerData: MarkerInstance,  onSuccess: (() -> Unit)? = null) {
         lifecycleScope.launch {
@@ -597,7 +438,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
                 if (response.isSuccessful) {
                     val latlng = LatLng(markerData.lat, markerData.lng)
-                    val hue = getHueFromColor(markerData.color)
+                    val hue = MapUtils.getHueFromColor(markerData.color)
 
                     // Marker attributes: push this information to DB
                     val marker = mMap.addMarker(
@@ -635,9 +476,4 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         addMarkerDialog = null
         super.onDestroy()
     }
-
-    fun centerMapOn(latitude: Double, longitude: Double, zoom: Float = 15f) {
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), zoom))
-    }
-
 }
