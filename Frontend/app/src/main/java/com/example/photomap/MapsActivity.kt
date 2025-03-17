@@ -360,7 +360,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     })
                 }.toString()
 
-                val response = RetrofitClient.api.deleteMarker(USER_EMAIL, locationJson.toRequestBody("application/json".toMediaTypeOrNull()))
+                val response = RetrofitClient.apiUser.deleteMarker(USER_EMAIL, locationJson.toRequestBody("application/json".toMediaTypeOrNull()))
                 if (response.isSuccessful) {
                     Log.d("MapsActivity", "Marker delete successful from DB. Now deleting images.")
                     Log.d("MapsActivity", "Photos at current marker before: ${currentMarker?.photoAtCurrentMarker}")
@@ -434,7 +434,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         })
                     }.toString()
 
-                val response = RetrofitClient.api.putLocation(email, locationJson.toRequestBody("application/json".toMediaTypeOrNull()))
+                val response = RetrofitClient.apiUser.putLocation(email, locationJson.toRequestBody("application/json".toMediaTypeOrNull()))
 
                 if (response.isSuccessful) {
                     val latlng = LatLng(markerData.lat, markerData.lng)

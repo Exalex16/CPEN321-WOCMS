@@ -14,6 +14,10 @@ object RetrofitClient {
     val api: ApiService by lazy {
         retrofit.create(ApiService::class.java)
     }
+
+    val apiUser: ApiServiceUser by lazy {
+        retrofit.create(ApiServiceUser::class.java)
+    }
 }
 
 object RetrofitPlacesClient {

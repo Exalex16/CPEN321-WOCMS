@@ -31,34 +31,19 @@ interface ApiService {
         @Part("sharedBy") sharedBy: RequestBody
     ): Response<UploadResponse>
 
-    @POST("user")
-    suspend fun createUser(@Body request: UserPostRequest)
+
 
     @GET("images/uploader/{email}")
     suspend fun getImagesByUser(@Path("email") email: String): Response<ResponseBody>
 
-    @GET("user/{email}")
-    suspend fun getMarkerByUser(@Path("email") email: String): Response<ResponseBody>
 
-    @GET("user/{email}/friends")
-    suspend fun getFriendsByUser(@Path("email") email: String): Response<ResponseBody>
 
     @GET("map/popular-locations/{username}")
     suspend fun getPopularLocations(
         @Path("username") username: String
     ): Response<PopularLocationResponse>
 
-    @PUT("user/{email}")
-    suspend fun putLocation(
-        @Path("email") email: String,
-        @Body location: RequestBody
-    ): Response<PutLocationResponse>
 
-    @POST("user/{email}/location")
-    suspend fun deleteMarker(
-        @Path("email") userEmail: String,
-        @Body location: RequestBody
-    ): Response<DeleteMarkerResponse>
 
     @DELETE("image/{fileName}")
     suspend fun deleteImage(
@@ -69,11 +54,6 @@ interface ApiService {
     @POST("image/share")
     suspend fun shareImage(
         @Body request: ShareImageRequest
-    ):  Response<ResponseBody>
-
-    @POST("user/add-friend")
-    suspend fun addFriend(
-        @Body request: addFriendRequest
     ):  Response<ResponseBody>
 
 
@@ -90,4 +70,31 @@ interface GooglePlacesApi {
         @Query("keyword") keyword: String,            // e.g., "park"
         @Query("key") apiKey: String
     ): Response<PlacesResponse>  // Define this data class to match the JSON response structure
+}
+
+interface ApiServiceUser{
+    @POST("user/add-friend")
+    suspend fun addFriend(
+        @Body request: addFriendRequest
+    ):  Response<ResponseBody>
+    @PUT("user/{email}")
+    suspend fun putLocation(
+        @Path("email") email: String,
+        @Body location: RequestBody
+    ): Response<PutLocationResponse>
+
+    @POST("user/{email}/location")
+    suspend fun deleteMarker(
+        @Path("email") userEmail: String,
+        @Body location: RequestBody
+    ): Response<DeleteMarkerResponse>
+
+    @GET("user/{email}")
+    suspend fun getMarkerByUser(@Path("email") email: String): Response<ResponseBody>
+
+    @GET("user/{email}/friends")
+    suspend fun getFriendsByUser(@Path("email") email: String): Response<ResponseBody>
+
+    @POST("user")
+    suspend fun createUser(@Body request: UserPostRequest)
 }

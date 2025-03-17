@@ -149,7 +149,7 @@ class LoginActivity : AppCompatActivity() {
     private suspend fun postUser(name: String, email: String): Boolean {
 
         try {
-            RetrofitClient.api.createUser(UserPostRequest(email,name))
+            RetrofitClient.apiUser.createUser(UserPostRequest(email,name))
             println("✅ User created successfully!")
             return true
         } catch (e: Exception) {

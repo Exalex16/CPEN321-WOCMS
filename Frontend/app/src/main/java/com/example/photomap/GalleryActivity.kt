@@ -71,6 +71,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
+import java.io.IOException
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -406,7 +407,7 @@ class GalleryActivity : ComponentActivity() {
 
                                         coroutineScope.launch {
                                             try {
-                                                val response = RetrofitClient.api.addFriend(
+                                                val response = RetrofitClient.apiUser.addFriend(
                                                     addFriendRequest(
                                                         googleEmail = userToken.toString().trim(), // Get current image URL
                                                         friendEmail = userInput.trim() // Use user input as description
@@ -424,8 +425,8 @@ class GalleryActivity : ComponentActivity() {
                                                 Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
                                             } catch (e: JsonParseException) {
                                                 Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
-                                            } catch (e: Exception) {
-                                                Log.e("DialogInput", "Unexpected Error: ${e.message}") // ✅ Catches any unknown errors
+                                            } catch (e: IOException) {
+                                                Log.e("DialogInput", "Network Error: ${e.message}") // ✅ Handles internet connection failures
                                             }
                                             expanded = false
                                         }
