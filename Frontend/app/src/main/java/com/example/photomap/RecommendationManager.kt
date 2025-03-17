@@ -76,9 +76,6 @@ class RecommendationManager(
         }
     }
 
-    /**
-     * Uses the Places API to fetch nearby places.
-     */
     private fun fetchNearbyPlaces(coordinate: String, lat: Double, lng: Double, tags: List<String>, onPlaceSelected: (Place) -> Unit) {
         activity.lifecycleScope.launch {
             val finalPlacesList = mutableListOf<Place>()
@@ -124,9 +121,6 @@ class RecommendationManager(
         }
     }
 
-    /**
-     * Displays a bottom sheet with the recommendation details and list of places.
-     */
     private fun showRecommendationBottomSheet(lat: Double, lng: Double, tags: List<String>, places: List<Place>, onPlaceSelected: (Place) -> Unit) {
         val bottomSheetDialog = BottomSheetDialog(activity)
         val view = activity.layoutInflater.inflate(R.layout.bottom_sheet_recommendation, null)

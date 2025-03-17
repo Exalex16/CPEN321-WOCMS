@@ -103,16 +103,13 @@ class PhotoUploader(
                     Snackbar.LENGTH_SHORT
                 ).show()
                 bottomSheetDialog.dismiss()
-                return@setOnClickListener
             }
             if (currentMarker == null) {
                 Toast.makeText(activity, "No marker selected!", Toast.LENGTH_SHORT).show()
                 bottomSheetDialog.dismiss()
-                return@setOnClickListener
             }
-
             // Call the upload function with currentMarker and userEmail.
-            uploadPhotoToAWS(currentMarker, userEmail) { success ->
+            uploadPhotoToAWS(currentMarker!!, userEmail) { success ->
                 if (success) {
                     onUploadSuccess()
                 }
@@ -185,9 +182,6 @@ class PhotoUploader(
         }
     }
 
-    /**
-     * Creates a MultipartBody.Part from the given URI for uploading.
-     */
     private fun createImagePart(uri: Uri): MultipartBody.Part {
         val inputStream = activity.contentResolver.openInputStream(uri) ?: throw IllegalStateException("Unable to open image")
         val fileBytes = inputStream.readBytes()
