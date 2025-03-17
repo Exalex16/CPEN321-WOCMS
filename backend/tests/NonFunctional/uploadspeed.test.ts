@@ -35,12 +35,16 @@ let overallEndTime: number;
 let upload1Start: number, upload1End: number;
 let upload2Start: number, upload2End: number;
 
+const safeLog = (message: string) => {
+    process.stdout.write(message.replace(/[\r\n]/g, '') + '\n'); // Ensures no CRLF injection
+};
+
 afterAll(async () => {
     overallEndTime = Date.now();
-    console.log(`\nTotal Test Execution Time: ${(overallEndTime - overallStartTime) / 1000}s`);
-    console.log(`Image Upload Test 1 Execution Time: ${(upload1End - upload1Start) / 1000}s`);
-    console.log(`Image Upload Test 2 Execution Time: ${(upload2End - upload2Start) / 1000}s`);
-    await closeServer(); 
+    safeLog(`Total Test Execution Time: ${(overallEndTime - overallStartTime) / 1000}s`);
+    safeLog(`Image Upload Test 1 Execution Time: ${(upload1End - upload1Start) / 1000}s`);
+    safeLog(`Image Upload Test 2 Execution Time: ${(upload2End - upload2Start) / 1000}s`);
+    await closeServer();
 });
 
 // Non Functional one: Upload speed
