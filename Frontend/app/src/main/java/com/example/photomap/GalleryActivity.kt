@@ -66,9 +66,11 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
+import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -418,8 +420,12 @@ class GalleryActivity : ComponentActivity() {
                                                 } else {
                                                     Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
                                                 }
+                                            }catch (e: HttpException) {
+                                                Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
+                                            } catch (e: JsonParseException) {
+                                                Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
                                             } catch (e: Exception) {
-                                                Log.e("DialogInput", "API Exception: ${e.message}")
+                                                Log.e("DialogInput", "Unexpected Error: ${e.message}") // ✅ Catches any unknown errors
                                             }
                                             expanded = false
                                         }
@@ -475,9 +481,12 @@ class GalleryActivity : ComponentActivity() {
                                             Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
 
                                         }
+                                    }catch (e: HttpException) {
+                                        Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
+                                    } catch (e: JsonParseException) {
+                                        Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
                                     } catch (e: Exception) {
-
-                                        Log.e("DialogInput", "API Exception: ${e.message}")
+                                        Log.e("DialogInput", "Unexpected Error: ${e.message}") // ✅ Catches any unknown errors
                                     }
                                 }
                                 showDialog.value = false
