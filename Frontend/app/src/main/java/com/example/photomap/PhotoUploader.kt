@@ -104,19 +104,18 @@ class PhotoUploader(
                 ).show()
                 bottomSheetDialog.dismiss()
             }
-            if (currentMarker == null) {
+            else if (currentMarker == null) {
                 Toast.makeText(activity, "No marker selected!", Toast.LENGTH_SHORT).show()
                 bottomSheetDialog.dismiss()
-            }
-            // Call the upload function with currentMarker and userEmail.
-            uploadPhotoToAWS(currentMarker!!, userEmail) { success ->
-                if (success) {
-                    onUploadSuccess()
+            } else {
+                uploadPhotoToAWS(currentMarker, userEmail) { success ->
+                    if (success) {
+                        onUploadSuccess()
+                    }
                 }
+                bottomSheetDialog.dismiss()
             }
-            bottomSheetDialog.dismiss()
         }
-
         bottomSheetDialog.show()
     }
 
