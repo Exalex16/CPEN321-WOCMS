@@ -74,9 +74,9 @@ class MainActivity : AppCompatActivity() {
                         userInfo.friends.add(friendsList.optString(i))
                     }
                 }
-
-                if((photoResponse.isSuccessful && photoResponse.body() != null) &&
-                    (markerResponse.isSuccessful && markerResponse.body() != null)){
+                val isPhotoResponseValid = photoResponse.isSuccessful && photoResponse.body() != null
+                val isMarkerResponseValid = markerResponse.isSuccessful && markerResponse.body() != null
+                if(isPhotoResponseValid && isMarkerResponseValid){
 
                     mapContentInit(photoResponse,markerResponse)
 
