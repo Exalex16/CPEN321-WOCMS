@@ -1,5 +1,6 @@
 package com.example.photomap
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
@@ -10,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +37,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,9 +64,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
+import com.google.gson.JsonParseException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
+import java.io.IOException
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,6 +125,17 @@ class GalleryActivity : ComponentActivity() {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 Spacer(modifier = Modifier.height(40.dp))
+                Text(
+                    text = "Gallery",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 16.dp)
+                        .testTag("Title")
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
             }
 
             val allImages: MutableList<Pair<MarkerInstance, PhotoInstance>> = mutableListOf()
@@ -141,7 +160,6 @@ class GalleryActivity : ComponentActivity() {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         var count = 0
                         for (imageUrl in rowImages) {
-
                             Image(
                                 painter = rememberImagePainter(imageUrl.imageURL),
                                 contentDescription = "Gallery Image",
@@ -155,7 +173,9 @@ class GalleryActivity : ComponentActivity() {
                                         selectedImages = allImages // ✅ Store all images, not just row
                                         Log.d("Gallery", "Clicked Image: $imageUrl")
                                         Log.d("Gallery", "All Images: $allImages")
+                                        Log.d("Gallery", "GalleryImage_${allImages.indexOfFirst { it.second == imageUrl }}")
                                     }
+                                    .testTag("GalleryImage_${allImages.indexOfFirst { it.second == imageUrl }}")
                             )
                             count++
                         }
@@ -176,6 +196,7 @@ class GalleryActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("UnrememberedMutableState")
     @Composable
     fun FullScreenImageViewer(images: List<Pair<MarkerInstance,PhotoInstance>>, startIndex: Int, onDismiss: () -> Unit) {
         val pagerState = rememberPagerState( // ✅ Move pageCount inside `rememberPagerState`
@@ -185,15 +206,18 @@ class GalleryActivity : ComponentActivity() {
         val coroutineScope = rememberCoroutineScope()
 
 
-        var showDialog by remember { mutableStateOf(false) }  // Controls the dialog visibility
-        var userInput by remember { mutableStateOf("") }
+        //var showDialog by remember { mutableStateOf(false) }  // Controls the dialog visibility
+
+        val showDialog = remember { mutableStateOf(false) }
+
         Log.d("Gallery", "Opening Full-Screen Viewer at Index: $startIndex")
 
         Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 1f))
-                .pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) },
+                .pointerInput(Unit) { detectTapGestures(onTap = { onDismiss() }) }
+                .testTag("FullScreenViewer"),
             color = Color.Transparent
         ) {
             HorizontalPager(
@@ -214,6 +238,7 @@ class GalleryActivity : ComponentActivity() {
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .testTag("GalleryImage_${page}_full")
                              // Makes image take most of the space
                     )
 
@@ -259,35 +284,51 @@ class GalleryActivity : ComponentActivity() {
                                 .padding(8.dp),
                             horizontalAlignment = Alignment.End // Aligns content to the right
                         ) {
-                            Button(
-                                onClick = {
-                                    Log.d("Gallery", "Icon Button Clicked")
-                                    showDialog = true},
-                                modifier = Modifier.size(64.dp), // Adjust size as needed
-                                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                    containerColor = Color.Transparent
-                                )
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.share), // Replace with actual drawable name
-                                    contentDescription = "Button Icon",
-                                    modifier = Modifier.fillMaxSize() // Adjust icon size as needed
-                                )
+                            if(!images[page].second.shared || (images[page].second.shared && images[page].second.sharedBy.equals(userToken))){
+                                Button(
+                                    onClick = {
+                                        Log.d("Gallery", "Icon Button Clicked")
+                                        showDialog.value = true
+
+                                              },
+                                    modifier = Modifier.size(64.dp).testTag("IconButton"), // Adjust size as needed
+                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                        containerColor = Color.Transparent
+                                    )
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.share), // Replace with actual drawable name
+                                        contentDescription = "Button Icon",
+                                        modifier = Modifier.fillMaxSize() // Adjust icon size as needed
+                                    )
+                                }
                             }
                         }
                     }
                 }
-
-
             }
         }
 
+        if (showDialog.value) {
+            DialogController(images,pagerState,coroutineScope,showDialog)
+        }
+
+        LaunchedEffect(pagerState.currentPage) {
+            coroutineScope.launch {
+                Log.d("Gallery", "Currently Viewing Image Index: ${pagerState.currentPage}")
+            }
+        }
+    }
+
+
+    @Composable
+    fun DialogController(images: List<Pair<MarkerInstance,PhotoInstance>>, pagerState: PagerState,coroutineScope: CoroutineScope, showDialog: MutableState<Boolean>) {
+        val context = LocalContext.current
         var expanded by remember { mutableStateOf(false) }
         val options = MainActivity.userInfo.friends
-
-        if (showDialog) {
+        var userInput by remember { mutableStateOf("") }
             Dialog(onDismissRequest = {
-                showDialog = false
+                showDialog.value = false
                 userInput = ""
                 expanded = false
             }) {
@@ -295,9 +336,10 @@ class GalleryActivity : ComponentActivity() {
                     modifier = Modifier
                         .size(320.dp)
                         .background(Color.White, shape = RoundedCornerShape(16.dp))
-                        .padding(10.dp),
+                        .padding(10.dp)
+                        .testTag("ShareDialog"),
 
-                ) {
+                    ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Spacer(Modifier.height(8.dp))
                         Text("Share Photo", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
@@ -319,7 +361,8 @@ class GalleryActivity : ComponentActivity() {
 
                                 modifier = Modifier
                                     .menuAnchor()
-                                    .fillMaxWidth(),
+                                    .fillMaxWidth()
+                                    .testTag("TextInputField"),
                                 readOnly = false, // ✅ Allows typing without affecting dropdown
                                 colors = TextFieldDefaults.colors(
                                     unfocusedIndicatorColor = Color.Transparent,
@@ -364,7 +407,7 @@ class GalleryActivity : ComponentActivity() {
 
                                         coroutineScope.launch {
                                             try {
-                                                val response = RetrofitClient.api.addFriend(
+                                                val response = RetrofitClient.apiUser.addFriend(
                                                     addFriendRequest(
                                                         googleEmail = userToken.toString().trim(), // Get current image URL
                                                         friendEmail = userInput.trim() // Use user input as description
@@ -375,18 +418,23 @@ class GalleryActivity : ComponentActivity() {
                                                     Log.d("DialogInput", "API Success: ${response.body()?.string()}")
                                                     MainActivity.userInfo.friends.add(userInput.trim())
                                                     Log.d("friends", MainActivity.userInfo.friends.toString())
-
-
+                                                    Toast.makeText(context, "Friend is successfully added", Toast.LENGTH_SHORT).show()
                                                 } else {
                                                     Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
-
+                                                    Toast.makeText(context, "Invalid Input. Please Enter the correct user email", Toast.LENGTH_SHORT).show()
                                                 }
-                                            } catch (e: Exception) {
-                                                Log.e("DialogInput", "API Exception: ${e.message}")
+                                            }catch (e: HttpException) {
+                                                Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
+                                                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+                                            } catch (e: JsonParseException) {
+                                                Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
+                                                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+                                            } catch (e: IOException) {
+                                                Log.e("DialogInput", "Network Error: ${e.message}") // ✅ Handles internet connection failures
+                                                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
                                             }
                                             expanded = false
                                         }
-
                                     },
                                     modifier = Modifier.height(30.dp)
                                 )
@@ -409,13 +457,12 @@ class GalleryActivity : ComponentActivity() {
                                 repeat(images[pagerState.currentPage].second.sharedTo.size) { index ->
                                     Text(
                                         text = images[pagerState.currentPage].second.sharedTo[index],
-                                        modifier = Modifier.padding(vertical = 4.dp),
+                                        modifier = Modifier.padding(vertical = 4.dp).testTag("shareText_${index}"),
                                         fontSize = 16.sp
                                     )
                                 }
                             }
                         }
-
                         Spacer(Modifier.height(30.dp))
                         Button(
                             onClick = {
@@ -436,22 +483,30 @@ class GalleryActivity : ComponentActivity() {
                                             images[pagerState.currentPage].second.sharedTo.add(userInput.trim())
                                             images[pagerState.currentPage].second.shared = true
                                             images[pagerState.currentPage].second.sharedBy = userToken.toString().trim()
+                                            Toast.makeText(context,"Image is shared successfully", Toast.LENGTH_SHORT).show()
                                         } else {
                                             Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
+                                            Toast.makeText(context,"You may enter is invalid user email or you may sharing the duplicate image", Toast.LENGTH_SHORT).show()
 
                                         }
-                                    } catch (e: Exception) {
-
-                                        Log.e("DialogInput", "API Exception: ${e.message}")
+                                    }catch (e: HttpException) {
+                                        Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
+                                        Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+                                    } catch (e: JsonParseException) {
+                                        Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
+                                        Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+                                    } catch (e: IOException) {
+                                        Log.e("DialogInput", "Unexpected Error: ${e.message}") // ✅ Catches any unknown errors
+                                        Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
                                     }
                                 }
-                                showDialog = false
+                                showDialog.value = false
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color.Blue,  // Background color
                                 contentColor = Color.White    // Text color
                             ),
-                            modifier = Modifier.fillMaxWidth(0.3f).align(Alignment.End)
+                            modifier = Modifier.fillMaxWidth(0.3f).align(Alignment.End).testTag("ShareButton")
                         ) {
                             Text("Share", fontWeight = FontWeight.SemiBold)
                         }
@@ -459,16 +514,9 @@ class GalleryActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-
-
-
-        LaunchedEffect(pagerState.currentPage) {
-            coroutineScope.launch {
-                Log.d("Gallery", "Currently Viewing Image Index: ${pagerState.currentPage}")
-            }
-        }
     }
+
+
 
 
 }
