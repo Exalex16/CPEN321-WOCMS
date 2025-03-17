@@ -486,7 +486,7 @@ class GalleryActivity : ComponentActivity() {
                                         Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
                                     } catch (e: JsonParseException) {
                                         Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
-                                    } catch (e: Exception) {
+                                    } catch (e: IOException) {
                                         Log.e("DialogInput", "Unexpected Error: ${e.message}") // ✅ Catches any unknown errors
                                     }
                                 }

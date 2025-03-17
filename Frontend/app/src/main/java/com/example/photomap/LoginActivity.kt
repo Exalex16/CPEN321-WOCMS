@@ -27,6 +27,9 @@ import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.util.UUID
 import androidx.lifecycle.lifecycleScope
+import com.google.gson.JsonParseException
+import retrofit2.HttpException
+import java.io.IOException
 
 
 class LoginActivity : AppCompatActivity() {
@@ -152,8 +155,14 @@ class LoginActivity : AppCompatActivity() {
             RetrofitClient.apiUser.createUser(UserPostRequest(email,name))
             println("✅ User created successfully!")
             return true
-        } catch (e: Exception) {
-            println("❌ User creation failed: ${e.message}")
+        }catch (e: IOException) {
+            println("❌ Network Error: No Internet or Timeout (${e.message})") // ✅ Handles internet issues
+            return false
+        } catch (e: HttpException) {
+            println("❌ API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP 4xx & 5xx responses
+            return false
+        } catch (e: JsonParseException) {
+            println("❌ JSON Parsing Error: ${e.message}") // ✅ Handles invalid JSON responses
             return false
         }
     }
