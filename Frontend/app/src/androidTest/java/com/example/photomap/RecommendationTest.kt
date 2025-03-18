@@ -37,6 +37,7 @@ import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.RootMatchers.isPlatformPopup
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.containsString
 import retrofit2.Response
@@ -57,6 +58,9 @@ class RecommendationTest {
         .build()
 
     private val photoApi = retrofit.create(PhotoApi::class.java)
+
+    // Non-functional Testing: Recommendation Response
+    private val MAX_RESPONSE_TIME = 2000
 
     @get:Rule
     val activityRule = ActivityScenarioRule(MapsActivity::class.java)
@@ -299,5 +303,87 @@ class RecommendationTest {
         @DELETE("image/delete-all/{email}")
         suspend fun deleteAllImages(@Path("email") email: String): Response<Unit>
     }
+
+
+    /**
+     * Non-Functional Requirement: Recommendation Response time
+     *
+     * With two API calls: one for backend and one for frontend, a suitable response time
+     * no longer than 3 seconds is preferred.
+     */
+
+    @Test
+    fun testRecommendationResponseTime() {
+        // Add a marker for upload test
+        simulateScreenTap(1000, 1400)
+
+        onView(withId(R.id.markerTitle))
+            .inRoot(isDialog())
+            .perform(typeText("Test Marker"), closeSoftKeyboard())
+
+        onView(withId(R.id.colorSpinner))
+            .inRoot(isDialog())
+            .perform(click())
+        onData(allOf(`is`(instanceOf(String::class.java)), `is`("Red")))
+            .inRoot(isPlatformPopup())   // Use isPlatformPopup() for the spinner dropdown
+            .perform(click())
+
+        onView(withText("Add"))
+            .inRoot(isDialog())
+            .perform(click())
+
+        Thread.sleep(1000)
+
+        // 7. Click the center of the screen to open title of marker.
+        simulateScreenTap(540, 1200)
+
+        Thread.sleep(1000)
+
+        //    b) Tap the upload photo button (ensure its ID is set correctly)
+        onView(withId(R.id.fab_actions))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        //    c) Bottom sheet should appear; click "Pick Photo" to trigger the fake launcher
+        onView(withId(R.id.btn_pick_photo))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        Thread.sleep(1000)
+
+        // 4. Press "Submit" to upload
+        onView(withId(R.id.btn_submit_upload))
+            .perform(click())
+
+        Thread.sleep(3000)
+
+        // 5. Verify success message (e.g., via Snackbar)
+        onView(withId(com.google.android.material.R.id.snackbar_text))
+            .check(matches(withText("Upload Successful!")))
+            .check(matches(isDisplayed()))
+
+        Thread.sleep(1000)
+
+        // Click Recommendation
+        val startTime = System.currentTimeMillis()
+        onView(withId(R.id.recommendation))
+            .check(matches(isDisplayed()))
+            .perform(click())
+
+        // Timer logic check
+
+
+        // Receives response.
+        onView(withId(R.id.tvSummary))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+            .check(matches(withText(containsString("You appear to be most active around"))))
+
+        val endTime = System.currentTimeMillis()
+        val responseTime = endTime - startTime
+        Log.d("Non-Func Test", "Recommendation response time: $responseTime ms")
+        assertTrue("Response time was too long: $responseTime ms", responseTime <= MAX_RESPONSE_TIME)
+    }
+
 
 }
