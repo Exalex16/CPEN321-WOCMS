@@ -139,22 +139,30 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
                 - 4a. The system encounters a server error or network issue and cannot fetch recommendations.
                     - 4a1. The system displays an error message and prompts the user to retry later.
     
-6. **View Gallery** 
+6. **Share Images** 
     - **Overview**:
-        1. View Gallery
+        1. View and Share  Images inside Gallery
     
     - **Detailed Flow for Each Independent Scenario**: 
-        1. **Supervise Account**:
-            - **Description**: User can view all the image they uploaded by time, in a separated activity.
+        1. **Share a Photo from Gallery**:
+            - **Description**: The user goes to the photo gallery and chooses  to share  photos (one photo at a time) to the other user of the app.
             - **Primary actor(s)**: User
             - **Main success scenario**:
-                1. The user clicks the button "Gallery"
-                2. The application go to a new activity page.
-                3. The system try to fetch all the image for current user.
-                4. The gallery page displays all photos in chronological order.
+                1. The user navigates to “Gallery” and selects a picture for sharing
+                2. The user clicks the image that they want to share and goes to full screen view mode.
+                3. The user click the share button on the bottom right corner below the image.
+                4. The user can either manually enter the user email of the people they want to share to or click the dropdown menu to select the person if he/she is already the user's friend.
+                5. Users click the button on the pop up window with the text “share” to share the image.
+                6. System confirms the image has been shared.
             - **Failure scenario(s)**:
-                - 3a. Network or server error, cannot display the image
-                    - 3a1. The system displays a error message, and suggest to click gallery and fetch image again. 
+                - 3a. If the image is shared by someone else to you, then you don’t have permission to share this image and thus the share button will not appear.
+                    - 3a1. User can choose to perform other actions other than share image.
+                - 5a.  The system notifies the email that the user wants to share the image to is either invalid or not a user of this app.
+                    - 5a1. The user is prompted to click the share button again and re-enter the email.
+                - 5b. The system encounters a server error or network issue and cannot process the sharing request from the user.
+                    - 5b1. The system displays an error message and prompts the user to retry later.
+
+
                 
 
 ### **3.4. Screen Mockups**
