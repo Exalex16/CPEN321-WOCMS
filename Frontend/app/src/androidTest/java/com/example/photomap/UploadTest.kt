@@ -2,6 +2,7 @@ package com.example.photomap
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -125,6 +126,9 @@ class UploadTest {
      */
     @Test
     fun testCancelButtonDismissesDialog() {
+
+        val sizeOld = MainActivity.mapContent.markerList.size
+        Log.d("testCancelButtonDismissesDialog", "Old size: $sizeOld")
         simulateScreenTap(200, 300)
 
         // Wait for the "Add Marker" dialog to appear in its dialog window
@@ -140,6 +144,9 @@ class UploadTest {
         // Verify the dialog is dismissed (i.e. "Add Marker" is no longer present)
         onView(withText("Add Marker"))
             .check(doesNotExist())
+
+        val sizeNew = MainActivity.mapContent.markerList.size
+        assertTrue("Marker list size changed!", sizeOld == sizeNew)
     }
 
 

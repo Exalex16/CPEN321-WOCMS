@@ -309,7 +309,7 @@ class RecommendationTest {
      * Non-Functional Requirement: Recommendation Response time
      *
      * With two API calls: one for backend and one for frontend, a suitable response time
-     * no longer than 3 seconds is preferred.
+     * no longer than 2 seconds is preferred.
      */
 
     @Test
@@ -370,9 +370,6 @@ class RecommendationTest {
             .check(matches(isDisplayed()))
             .perform(click())
 
-        // Timer logic check
-
-
         // Receives response.
         onView(withId(R.id.tvSummary))
             .inRoot(isDialog())
@@ -381,6 +378,7 @@ class RecommendationTest {
 
         val endTime = System.currentTimeMillis()
         val responseTime = endTime - startTime
+
         Log.d("Non-Func Test", "Recommendation response time: $responseTime ms")
         assertTrue("Response time was too long: $responseTime ms", responseTime <= MAX_RESPONSE_TIME)
     }

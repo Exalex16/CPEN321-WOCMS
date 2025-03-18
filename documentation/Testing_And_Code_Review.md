@@ -105,7 +105,7 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 | **Non-Functional Requirement**  | **Location in Git**                              |
 | ------------------------------- | ------------------------------------------------ |
 | **Photo Gallery Upload Speed (Response Time)** | [`tests/NonFunctional/uploadspeed.test.js`](#) |
-| **Chat Data Security**          | [`tests/nonfunctional/chat_security.test.js`](#) |
+| **Recommendation Delivery Speed (Response Time)**          | [`Frontend/app/src/androidTest/java/com/example/photomap/RecommendationTest.kt`](#) |
 
 ### 3.2. Test Verification and Logs
 
@@ -138,12 +138,12 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
         at tests/NonFunctional/uploadspeed.test.ts:42:13
     ```
 
-- **Chat Data Security**
-  - **Verification:** ...
+- **Recommendation Delivery Speed (Response Time)**
+  - **Verification:** This test measures the time taken from clicking the "Recommendation" button to receiving a response and displaying the recommendation bottom sheet. The test captures the response time for both the backend server call and the external Places API call, ensuring a realistic performance evaluation. Companies such as Google recommend server response thresholds to be around 800 milliseconds. Hence, we determine a suitable requirement of a response time not exceeding 2 seconds, accounting for both backend server response and Places API response. To consider both calls, this test suite is deployed on the frontend, automatically failing if the total response time exceeds the 2-second timeout.
   - **Log Output**
-    ```
-    [Placeholder for chat security test logs]
-    ```
+    <p align="center">
+    <img src="images/Non-functional2.png" alt="Alt text" width="500">
+</p>
 
 ---
 
@@ -151,28 +151,72 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
 ### 4.1. Location in Git of Front-end Test Suite:
 
-`frontend/src/androidTest/java/com/studygroupfinder/`
+`Frontend/app/src/androidTest/java/com/example/photomap/`
 
 ### 4.2. Tests
 
-- **Use Case: Login**
+- **Use Case: Upload Photo**
 
-  - **Expected Behaviors:**
+  - **Expected Behaviors - Add Marker:**
     | **Scenario Steps** | **Test Case Steps** |
     | ------------------ | ------------------- |
-    | 1. The user opens â€œAdd Todo Itemsâ€ screen. | Open â€œAdd Todo Itemsâ€ screen. |
-    | 2. The app shows an input text field and an â€œAddâ€ button. The add button is disabled. | Check that the text field is present on screen.<br>Check that the button labelled â€œAddâ€ is present on screen.<br>Check that the â€œAddâ€ button is disabled. |
-    | 3a. The user inputs an ill-formatted string. | Input â€œ_^_^^OQ#$â€ in the text field. |
-    | 3a1. The app displays an error message prompting the user for the expected format. | Check that a dialog is opened with the text: â€œPlease use only alphanumeric charactersâ€. |
-    | 3. The user inputs a new item for the list and the add button becomes enabled. | Input â€œbuy milkâ€ in the text field.<br>Check that the button labelled â€œaddâ€ is enabled. |
-    | 4. The user presses the â€œAddâ€ button. | Click the button labelled â€œaddâ€. |
-    | 5. The screen refreshes and the new item is at the bottom of the todo list. | Check that a text box with the text â€œbuy milkâ€ is present on screen.<br>Input â€œbuy chocolateâ€ in the text field.<br>Click the button labelled â€œaddâ€.<br>Check that two text boxes are present on the screen with â€œbuy milkâ€ on top and â€œbuy chocolateâ€ at the bottom. |
-    | 5a. The list exceeds the maximum todo-list size. | Repeat steps 3 to 5 ten times.<br>Check that a dialog is opened with the text: â€œYou have too many items, try completing one firstâ€. |
+    | 1. The user clicks on any non-marker-occupied location on the map. | Simulate a screen tap on a non-marker-occupied location|
+    | 2. A form appears prompting the user to fill in marker info. | Check that the "Add Marker" dialog appears on screen.<br>Check that the text input field for the marker title is present.<br>Check that the color selection spinner is present.<br>Check that the "Add" and "Cancel" buttons are visible. |
+    | 3. The user fills in the marker title and selects a marker color from the form. | Input "Test Marker" into the title text field.<br>Click on the color spinner to open the dropdown.<br>Select the color "Red" from the dropdown list. |
+    | 4. The user confirms by clicking "Add." | Click the "Add" button in the dialog. |
+    | 5. The marker is created and saved to the database. A message appears notifying the user of success. | Check for a Snackbar message: "Add Marker Successful!".<br>Verify that the new marker is now present on the map. |
+    | 3a. The user changes their mind and clicks cancel to abort marker creation. | Click the "Cancel" button in the dialog. |
+     | 3a1. The bottom sheet disappears and no marker is created at the frontend. | Check that the "Add Marker" dialog is dismissed.<br>Verify that no new marker has been added to the map. |
 
   - **Test Logs:**
-    ```
-    [Placeholder for Espresso test execution logs]
-    ```
+    - `testAddMarkerDialogAppears`
+     <img src="images/TestMarker1.png" alt="Alt text" width="500">
+    - `testCancelButtonDismissesDialog`
+     <img src="images/TestMarker2.png" alt="Alt text" width="500">
+    - `testAddMarkerAndVerifyTitle`
+     <img src="images/TestMarker3.png" alt="Alt text" width="500">
+
+  - **Expected Behaviors - Upload Photo:**
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. The user selects a marker, and the upload photo button appears. | Tap on an existing marker location.<br>Check that the upload photo button is now visible. |
+    | 2. The user clicks the upload button, and a bottom sheet appears prompting them to select a photo. | Click the upload photo button.<br>Verify that the bottom sheet dialog is displayed.<br>Check that the "Pick Photo" button is visible. |
+    | 3. The user selects a photo from their device and clicks submit. | Click the "Pick Photo" button.<br>Select an image from the device.<br>Click the "Submit" button. |
+    | 4. The system displays a success message. | Check for a success message. |
+    | 3a. The user tries to upload a null image. | Open the upload bottom sheet but do not select an image.<br>Click the "Submit" button. |
+    | 3a1. The system outputs a message: "No image selected." | Check for an error message indicating that no image was selected. |
+   
+
+  - **Test Logs:**
+    - `testUploadPhotoNoImageFailure`
+     <img src="images/TestPhoto1.png" alt="Alt text" width="500">
+    - `testUploadPhotoWithMockedPicker`
+     <img src="images/TestPhoto2.png" alt="Alt text" width="500">
+
+
+
+- **Use Case: Receive Recommended Locations**
+
+  - **Expected Behaviors: Receive Recommendation**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. The user clicks the button "Popular Location Notification". | Tap the "Popular Location Notification" button.<br>Verify that a bottom sheet appears. |
+    | 2. The system displays a bottom sheet with the user’s most active location and relevant tags. The bottom sheet also contains a list of recommended locations. | Check that the bottom sheet contains the user’s most active location.<br>Verify that relevant tags are displayed.<br>Check that a list of recommended locations is shown. |
+    | 3. The user selects a recommended location, and the system creates a marker at the selected location. | Tap on a recommended location from the list.<br>Verify that a new marker is created at the selected location. |
+    | 2a1. The user uploads no images or creates no markers. | Ensure the user has no uploaded images or created markers.<br>Click the "Popular Location Notification" button. |
+    | 2a1.1. The system displays a message prompting the user to create more markers and upload more images. | Check for a message notifying the user that they need to create more markers and upload more images. |
+    | 2a2. No relevant recommendations are available. | Ensure there are no relevant recommendations based on the user’s preferences.<br>Click the "Popular Location Notification" button. |
+    | 2a2.1. The system notifies the user that there are no relevant locations that match the user’s preferences. | Check for a message notifying the user that no relevant locations were found. |
+
+
+  - **Test Logs:**
+    - `testRawClickRecommend`
+     <img src="images/TestRecommend1.png" alt="Alt text" width="500">
+    - `testSuccessfulRecommendWithMatch`
+     <img src="images/TestRecommend2.png" alt="Alt text" width="500">
+    - `testSuccessfulRecommendWithNoMatch`
+     <img src="images/TestRecommend3.png" alt="Alt text" width="500">
 
 - **Use Case: ...**
 
@@ -186,8 +230,6 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
     ```
     [Placeholder for Espresso test execution logs]
     ```
-
-- **...**
 
 ---
 
