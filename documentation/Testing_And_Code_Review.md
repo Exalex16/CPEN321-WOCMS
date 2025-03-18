@@ -141,9 +141,8 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 - **Recommendation Delivery Speed (Response Time)**
   - **Verification:** This test measures the time taken from clicking the "Recommendation" button to receiving a response and displaying the recommendation bottom sheet. The test captures the response time for both the backend server call and the external Places API call, ensuring a realistic performance evaluation. Companies such as Google recommend server response thresholds to be around 800 milliseconds. Hence, we determine a suitable requirement of a response time not exceeding 2 seconds, accounting for both backend server response and Places API response. To consider both calls, this test suite is deployed on the frontend, automatically failing if the total response time exceeds the 2-second timeout.
   - **Log Output**
-    <p align="center">
-    <img src="images/Non-functional2.png" alt="Alt text" width="500">
-</p>
+
+    <img src="images/Non-functional2.png" alt="Alt text" width="800">
 
 ---
 
@@ -170,11 +169,16 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
   - **Test Logs:**
     - `testAddMarkerDialogAppears`
-     <img src="images/TestMarker1.png" alt="Alt text" width="500">
+
+     <img src="images/TestMarker1.png" alt="Alt text" width="800">
+
     - `testCancelButtonDismissesDialog`
-     <img src="images/TestMarker2.png" alt="Alt text" width="500">
+
+     <img src="images/TestMarker2.png" alt="Alt text" width="800">
+
     - `testAddMarkerAndVerifyTitle`
-     <img src="images/TestMarker3.png" alt="Alt text" width="500">
+
+     <img src="images/TestMarker3.png" alt="Alt text" width="800">
 
   - **Expected Behaviors - Upload Photo:**
     | **Scenario Steps** | **Test Case Steps** |
@@ -189,9 +193,12 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
   - **Test Logs:**
     - `testUploadPhotoNoImageFailure`
-     <img src="images/TestPhoto1.png" alt="Alt text" width="500">
+
+     <img src="images/TestPhoto1.png" alt="Alt text" width="800">
+
     - `testUploadPhotoWithMockedPicker`
-     <img src="images/TestPhoto2.png" alt="Alt text" width="500">
+
+     <img src="images/TestPhoto2.png" alt="Alt text" width="800">
 
 
 
@@ -212,11 +219,17 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
   - **Test Logs:**
     - `testRawClickRecommend`
-     <img src="images/TestRecommend1.png" alt="Alt text" width="500">
+
+     <img src="images/TestRecommend1.png" alt="Alt text" width="800">
+
     - `testSuccessfulRecommendWithMatch`
-     <img src="images/TestRecommend2.png" alt="Alt text" width="500">
+
+     <img src="images/TestRecommend2.png" alt="Alt text" width="800">
+
     - `testSuccessfulRecommendWithNoMatch`
-     <img src="images/TestRecommend3.png" alt="Alt text" width="500">
+    
+     <img src="images/TestRecommend3.png" alt="Alt text" width="800">
+
 
 - **Use Case: ...**
 
