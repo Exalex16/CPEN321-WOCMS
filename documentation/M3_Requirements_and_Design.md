@@ -29,7 +29,8 @@ therefore the ban algorithm is not implement yet. Therefore, the main actor of o
 
 7. Add new framework: AWS Route 53, and External Modules (2.20.2024)
 
-
+8. Clarified and modified use cases: View Map Info, Upload Photos, Receive Recommendation. 
+- Past descriptors misaligned with our vision during development, and we incorporated concrete tests to test for specific behavior. (3.18)
 
 
 ## 2. Project Description
@@ -75,31 +76,30 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
     - **Detailed Flow for Each Independent Scenario**:
 
         1. **Create Marker**:
-            - **Description**: The user create marker on the map, then they can use this loaction marker to upload and view their photo
+            - **Description**: The user creates a marker, pinpointing a location  on the map. They can use this loaction marker to upload and view their photos
             - **Primary actor(s)**: User
             - **Main success scenario**:
-                1. The user selects a location on map and click on it.
-                2. The user click "create marker" button.
-                3. The user input the name, and the color of this marker. Then click create. 
-                4. The marker displays on the map.
+                1. The user clicks on any non-marker-occupied location on the map. A form appears prompting the user to fill in marker info.
+                2. The user fills in the marker title and selects a marker color from the form, and clicks "Add" to confirm.
+                3. The marker is created and saved to the database. A message appears notifying the user that the marker is successfully added. 
+                4. The camera moves to center on the newly created marker. 
             - **Failure scenario(s)**:
-                - 4a. Create Error: the marker does not show on the map
-                    - 4a1. The system notifies the user of failure to add marker. User is prompted to try again.
+                - 3a. The user changes their mind and clicks cancel to abort marker creation
+                    - 3a1. The bottomsheet disappears and no marker is shown on the map.  
 
         2. **Upload Photos**:
-            - **Description**: The user uploads photos from their local device to the system. 
+            - **Description**: The user uploads photos from their local device to the system by clicking "Upload Photos". 
             - **Primary actor(s)**: User
             - **Main success scenario**:
-                1. The user selects “Add Photo” within their account.
-                2. The user chooses one photo from their device.
-                3. The user optionally enters descriptive tags or captions.
-                4. The user confirms and the system uploads the photos.
-                5. The system displays a success message and shows the newly uploaded photos in the user’s gallery.
+                1. The user selects a marker and the upload photo button appears. It should not appear if a user does not have a button selected. 
+                2. The user clicks the upload button, and a bottomsheet appears prompting the user to select a photo from their device.
+                3. The user selects a photo from their device and clicks submit. 
+                4. The system displays a success message and shows the newly uploaded photos in a recyclerview update above the marker.
             - **Failure scenario(s)**:
-                - 4a. The system detects an unsupported format or an excessively large file.
-                    - 4a1. The system notifies the user with an error message and aborts the upload.
-                - 5a. Network or server error: the upload fails due to a connection issue.
-                    - 5a1. The system notifies the user and offers the option to retry or cancel.
+                - 3a. The user tries to upload a null image.
+                    - 3a1. The system outputs a message: No image selected. 
+                - 4a. Network or server error: the upload fails due to a connection issue.
+                    - 4a1. The system notifies the user and offers the option to retry or cancel.
 
 3. **View Map Info** 
     - **Overview**:
@@ -113,29 +113,27 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
                 1. The user navigates to the “Map” section.
                 2. The system loads the map interface with the user’s current location and saved locations.
                 3. The user can zoom in/out or pan around the map.
-                4. The user selects a specific location or marker to view more details (e.g., addresses, user photos tagged to that location).
+                4. The user selects a specific location or marker to view more details (e.g., marker name, photo preview, option to delete marker).
             - **Failure scenario(s)**:
-                - 1a. The system fails to retrieve map data from the external API.
-                    - 1a1. An error message is displayed indicating that the map cannot be loaded and to check internet connection.
-
+                - 2a. The system fails to retrieve marker or photo data from the backend.
+                    - 2a1. An error message is displayed indicating that marker and photo data fetching has failed. 
 4. **Receive Location Recommendation** 
     - **Overview**:
         1. Receive Location Recommendation
     
     - **Detailed Flow for Each Independent Scenario**: 
         1. **Receive Location Recommendation**:
-            - **Description**: The system provides location recommendations in notification form, based on popular spots with high user ratings or photo upvotes. Additionally, the user may periodically receive nearby photo spot recommendations based on their current location.
+            - **Description**: The system provides location recommendations based on previously uploaded photos and marker density. Once the "Recommend" button is clikced, the user receives a summary of their major photo themes and most active locations. The recommendation also includes a list of locations matching the user's preferences.
             - **Primary actor(s)**: User
             - **Main success scenario**:
                 1. The user clicks the button "Popular Location Notification"
-                2. The system retrieves popular locations based on user photo history location, prefer photo type.
-                3. The system displays the top location as an app notification to the user’s phone. More info (rating, distance, user reviews) is shown when the user clicks the notification and enters the app.
-                4. The user selects a recommended location for more details or navigation assistance.
+                2. The system displays a bottomsheet with the user’s most active location and relevant tags. The bottomsheet also contains a list of recommended locations. 
+                3. The user selects a recommended location and the system creates a marker at the selected location. 
             - **Failure scenario(s)**:
-                - 2a. Location services are disabled or unavailable
-                    - 2a1. The system displays a message prompting the user to enable location services for better recommendations.
-                - 3a. No relevant recommendations are available
-                    - 3a1. The system notifies the user that there are no current recommendations and suggests waiting longer. 
+                - 2a1.  User uploads no images or creates no markers before clicking "Recommend".
+                    - 2a1.1. The system displays a message prompting the user to create more markers and upload more images. 
+                - 2a2. No relevant recommendations are available
+                    - 2a2.1. The system notifies the user that there are no relevant locations that match the user’s preferences. 
                 - 4a. The system encounters a server error or network issue and cannot fetch recommendations.
                     - 4a1. The system displays an error message and prompts the user to retry later.
     
