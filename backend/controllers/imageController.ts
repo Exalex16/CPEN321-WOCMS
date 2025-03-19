@@ -1,10 +1,10 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
+import type { Multer } from "multer";
 import { s3, clinet, uploadMiddleware } from "../services"; 
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sharp from "sharp";
 import { RekognitionClient, DetectLabelsCommand, DetectModerationLabelsCommand } from "@aws-sdk/client-rekognition";
-
 export const rekognition = new RekognitionClient({ region: "us-west-2" });
 
 export class imageController {
@@ -23,8 +23,7 @@ export class imageController {
             });
         });
 
-        const file = req.file as Express.Multer.File;
-
+        const file = req.file as UploadedFile
         // Extract metadata fields
         const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
         const timestamp = new Date().toISOString();
@@ -452,10 +451,14 @@ const allowedMimeTypes: Record<string, string> = {
     "png": "image/png",
 };
 
+interface UploadedFile {
+    originalname: string;
+    buffer: Buffer;
+}
 
-export async function processImage(file: Express.Multer.File) {
-    let fileExtension = file.originalname.split(".").pop()?.toLowerCase() || "jpg"; 
-    let mimeType = allowedMimeTypes[fileExtension] || "image/jpeg"; 
+
+export async function processImage(file: UploadedFile) {
+    let fileExtension = file.originalname.split(".").pop()?.toLowerCase() || "jpg";  
 
     // Convert any image to JPG/PNG (force JPG by default)
     const convertedImage = await sharp(file.buffer)
