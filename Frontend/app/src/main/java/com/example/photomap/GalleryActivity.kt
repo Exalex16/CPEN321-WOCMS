@@ -506,7 +506,7 @@ class GalleryActivity : ComponentActivity() {
                                         } else {
                                             Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
                                             withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                                Toast.makeText(context,"You may enter is invalid user email or you may sharing the duplicate image", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context,"The email you entered is invalid", Toast.LENGTH_SHORT).show()
                                             }
 
 

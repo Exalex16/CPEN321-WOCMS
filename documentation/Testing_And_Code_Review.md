@@ -231,18 +231,35 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
      <img src="images/TestRecommend3.png" alt="Alt text" width="800">
 
 
-- **Use Case: ...**
+- **Use Case: Share Image**
 
-  - **Expected Behaviors:**
+  - **Expected Behaviors: Share a Photo from Gallery**
 
     | **Scenario Steps** | **Test Case Steps** |
     | ------------------ | ------------------- |
-    | ...                | ...                 |
+    | 1. The user navigates to “Gallery” and selects a picture for sharing | The test simulate this by directly jumping to the gallery activity.<br> Check the image that want to share exist. |
+    | 2. The user clicks the image that they want to share and goes to full screen view mode. | Check the full screen is exist. <br>Check the share button exist. <br> Simulate a click on the image that user decided to share |
+    | 3. The user click the share button on the bottom right corner below the image.|Check it share button exist. <br> Simlate a click on the share button|
+    | 4. The user can either manually enter the user email of the people they want to share to or click the dropdown menu to select the person if he/she is already the user's friend.| Check the dialog for user to enter sharing information exist. <br> Simulate user enters text input.|
+    | 5. Users click the button on the pop up window with the text “share” to share the image.| Check the button with text "Share" exist.<br>Simute a click to button|
+    | 6. System confirms the image has been shared.| Simulate a click to the share button. <br> Check if the email for the person shared to is included in "People with access" section|
+    | 3a. If the image is shared by someone else to you, then you don’t have permission to share this image and thus the share button will not appear.| Check the share button does not exist|
+    | 6a. The system notifies the email that the user wants to share the image to is either invalid or not a user of this app. | Simulate a click to the share button. <br> Check if the email for the person shared to is not included in "People with access" section |
+
+
 
   - **Test Logs:**
-    ```
-    [Placeholder for Espresso test execution logs]
-    ```
+    - `testShareWithAnSharedImage`
+
+     <img src="images/TestShare1.png" alt="Alt text" width="800">
+
+    - `testShareWithInvalidInput`
+
+     <img src="images/TestShare2.png" alt="Alt text" width="800">
+
+    - `testSuccessShare`
+    
+     <img src="images/TestShare3.png" alt="Alt text" width="800">
 
 ---
 
