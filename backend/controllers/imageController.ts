@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import type { Multer } from "multer";
 import { s3, clinet, uploadMiddleware } from "../services"; 
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -10,7 +9,7 @@ export const rekognition = new RekognitionClient({ region: "us-west-2" });
 export class imageController {
     
     uploadImage = async (req: Request, res: Response) => {
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
             uploadMiddleware(req, res, (err) => {
                 if (!req.file) {
                     res.status(400).send({ error: "No file uploaded" });
@@ -260,7 +259,11 @@ export class imageController {
         }
 
         // Update the description field
-        const updateResult = await db.collection("metadata").updateOne(
+        // const updateResult = await db.collection("metadata").updateOne(
+        //     { fileName },
+        //     { $set: { description: newDescription } }
+        // );
+        await db.collection("metadata").updateOne(
             { fileName },
             { $set: { description: newDescription } }
         );
@@ -444,12 +447,6 @@ export class imageController {
     }
     
 }
-
-const allowedMimeTypes: Record<string, string> = {
-    "jpg": "image/jpeg",
-    "jpeg": "image/jpeg",
-    "png": "image/png",
-};
 
 interface UploadedFile {
     originalname: string;
