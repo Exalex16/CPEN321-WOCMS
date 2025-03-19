@@ -40,7 +40,7 @@
 
 #### 2.1.2. Commit Hash Where Tests Run
 
-`763b87d4eb45f65c37035fcc21fbc6df8deaef07`
+`4b36b6ab7d5c677504536205c65ae45bf3e63393`
 
 #### 2.1.3. Explanation on How to Run the Tests
 
@@ -267,7 +267,7 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
 ### 5.1. Commit Hash Where Codacy Ran
 
-`763b87d4eb45f65c37035fcc21fbc6df8deaef07`
+`f78b01ee70ee2adc8dc8c3faffa3ec827e003555`
 
 ### 5.2. Unfixed Issues per Codacy Category
 
