@@ -137,7 +137,7 @@ export class userController {
      * Delete user from a location.
      */
     removeLocation = async (req: Request, res: Response) => {
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
             formDataMiddleware(req, res, (err) => {
                 if (err) {
                     return res.status(400).send({ error: "Invalid form data" });
