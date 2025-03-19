@@ -83,10 +83,10 @@ export class userController {
         }
 
         // Build update object dynamically
-        const updateFields: any = { updatedAt: new Date() };
+        const updateFields: Record<string, string | Date | object> = { updatedAt: new Date() };
         if (googleName) updateFields.googleName = googleName;
 
-        const updateQuery: any = { $set: updateFields };
+        const updateQuery: Record<string, unknown> = { $set: updateFields };
         if (location) updateQuery.$addToSet = { locations: location }; 
 
         // Execute update
