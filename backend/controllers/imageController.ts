@@ -321,7 +321,7 @@ export class imageController {
         }
 
         // Check if the recipient already has the image
-        if (image.sharedTo && image.sharedTo.includes(recipientEmail)) {
+        if (image.sharedTo?.includes(recipientEmail)) {
             return res.status(400).send({ error: "Recipient already has access to this image" });
         }
 
@@ -340,7 +340,7 @@ export class imageController {
         if (image.location) {
             const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
 
-            if (!recipient?.locations?.some((loc: any) => 
+            if (!recipient?.locations?.some((loc: LocationData) => 
                 loc.position.lat === image.location.position.lat && 
                 loc.position.lng === image.location.position.lng
             )) {
@@ -456,9 +456,19 @@ interface UploadedFile {
     buffer: Buffer;
 }
 
+interface LocationData {
+    position: {
+        lat: number;
+        lng: number;
+    };
+    title?: string;
+    location?: string;
+    icon?: string;
+}
+
 
 export async function processImage(file: UploadedFile) {
-    let fileExtension = file.originalname.split(".").pop()?.toLowerCase() || "jpg";  
+    let fileExtension = file.originalname.split(".").pop()?.toLowerCase() ?? "jpg"; 
 
     // Convert any image to JPG/PNG (force JPG by default)
     const convertedImage = await sharp(file.buffer)
