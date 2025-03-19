@@ -1,16 +1,15 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { s3, clinet, uploadMiddleware } from "../services"; 
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sharp from "sharp";
 import { RekognitionClient, DetectLabelsCommand, DetectModerationLabelsCommand } from "@aws-sdk/client-rekognition";
-
 export const rekognition = new RekognitionClient({ region: "us-west-2" });
 
 export class imageController {
     
     uploadImage = async (req: Request, res: Response) => {
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
             uploadMiddleware(req, res, (err) => {
                 if (!req.file) {
                     res.status(400).send({ error: "No file uploaded" });
@@ -23,8 +22,7 @@ export class imageController {
             });
         });
 
-        const file = req.file as Express.Multer.File;
-
+        const file = req.file as UploadedFile
         // Extract metadata fields
         const uploadedBy = req.body.uploadedBy || "anonymous@example.com";
         const timestamp = new Date().toISOString();
@@ -261,7 +259,11 @@ export class imageController {
         }
 
         // Update the description field
-        const updateResult = await db.collection("metadata").updateOne(
+        // const updateResult = await db.collection("metadata").updateOne(
+        //     { fileName },
+        //     { $set: { description: newDescription } }
+        // );
+        await db.collection("metadata").updateOne(
             { fileName },
             { $set: { description: newDescription } }
         );
@@ -322,7 +324,7 @@ export class imageController {
         }
 
         // Check if the recipient already has the image
-        if (image.sharedTo && image.sharedTo.includes(recipientEmail)) {
+        if (image.sharedTo?.includes(recipientEmail)) {
             return res.status(400).send({ error: "Recipient already has access to this image" });
         }
 
@@ -341,7 +343,7 @@ export class imageController {
         if (image.location) {
             const recipient = await userDb.collection("users").findOne({ googleEmail: recipientEmail });
 
-            if (!recipient?.locations?.some((loc: any) => 
+            if (!recipient?.locations?.some((loc: LocationData) => 
                 loc.position.lat === image.location.position.lat && 
                 loc.position.lng === image.location.position.lng
             )) {
@@ -446,16 +448,24 @@ export class imageController {
     
 }
 
-const allowedMimeTypes: Record<string, string> = {
-    "jpg": "image/jpeg",
-    "jpeg": "image/jpeg",
-    "png": "image/png",
-};
+interface UploadedFile {
+    originalname: string;
+    buffer: Buffer;
+}
+
+interface LocationData {
+    position: {
+        lat: number;
+        lng: number;
+    };
+    title?: string;
+    location?: string;
+    icon?: string;
+}
 
 
-export async function processImage(file: Express.Multer.File) {
-    let fileExtension = file.originalname.split(".").pop()?.toLowerCase() || "jpg"; 
-    let mimeType = allowedMimeTypes[fileExtension] || "image/jpeg"; 
+export async function processImage(file: UploadedFile) {
+    let fileExtension = file.originalname.split(".").pop()?.toLowerCase() ?? "jpg"; 
 
     // Convert any image to JPG/PNG (force JPG by default)
     const convertedImage = await sharp(file.buffer)
