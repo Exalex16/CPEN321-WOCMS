@@ -40,7 +40,7 @@
 
 #### 2.1.2. Commit Hash Where Tests Run
 
-`[Insert Commit SHA here]`
+`763b87d4eb45f65c37035fcc21fbc6df8deaef07`
 
 #### 2.1.3. Explanation on How to Run the Tests
 
@@ -267,53 +267,17 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
 ### 5.1. Commit Hash Where Codacy Ran
 
-`[Insert Commit SHA here]`
+`763b87d4eb45f65c37035fcc21fbc6df8deaef07`
 
 ### 5.2. Unfixed Issues per Codacy Category
 
-_(Placeholder for screenshots of Codacyâ€™s Category Breakdown table in Overview)_
+_<img src="images/Test_5_2.png" alt="Alt text" width="800">_
 
 ### 5.3. Unfixed Issues per Codacy Code Pattern
 
-_(Placeholder for screenshots of Codacyâ€™s Issues page)_
+_<img src="images/Test_5_3.png" alt="Alt text" width="800">_
 
 ### 5.4. Justifications for Unfixed Issues
-
-- **Code Pattern: [@typescript eslint: No unsafe return](#)**
-
-  1. **Unsafe return of an `any` typed value.**
-
-     - **Location in Git:** [`backend/tests/mocked/imageM.test.ts#L12`](#)
-     [`backend/tests/mocked/mapM_specialReturn.test.ts#L11`](#)
-     [`backend/tests/mocked/userM.test.ts#L7`](#)
-     - **Justification:** ​
-        - In Jest, it's common practice to mock modules or partials by returning a custom implementation within the jest.mock function. This approach allows us to control the behavior of dependencies during testing. 
-        - In Jest 29.7 Mock Functions, Mocking Partials part, it also use the same way as we did. Therefore, our jest mock is a reasonable way to use it.
-        - Also, I tried many way to defined the jest, but none of my solution work. At the end, I decide to leave it like this.
-
-- **Code Pattern: [@typescript eslint: No unsafe member access](#)**
-
-  1. **Unsafe member access .get on an `error` typed value.**
-
-     - **Location in Git:** Too many, most of them are locate in jest test file
-     - **Justification:** ​
-        - Reference to Piazza Post @181, investigation found these warnings to be potentially incorrect
-
-- **Code Pattern: [@typescript eslint: No unsafe call](#)**
-
-  1. **Unsafe call of an `error` type typed value.**
-
-     - **Location in Git:** Too many, most of them are locate in jest test file
-     - **Justification:** ​
-        - Reference to Piazza Post @181, investigation found these warnings to be potentially incorrect
-
-- **Code Pattern: [@typescript eslint: No unsafe assignment](#)**
-
-  1. **Unsafe assignment of an error typed value.**
-
-     - **Location in Git:** Too many, most of them are locate in jest test file
-     - **Justification:** ​
-        - Reference to Piazza Post @181, investigation found these warnings to be potentially incorrect
 
 - **Code Pattern: [One method should have one responsibility. Long methods tend to handle many things at once. Prefer smaller methods to make them easier to understand.](#)**
 
