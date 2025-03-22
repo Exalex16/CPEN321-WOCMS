@@ -63,33 +63,19 @@
      npm install
      ```
 
-4. **Create .env**
-    - In the backend folder, create a new file call `.env` and copy following code into the file, and save it.
-     ```
-    DB_URI=mongodb://localhost:27017
-    PORT=3000
-    AWS_ACCESS_KEY_ID=AKIAXTORPLYGLB2MSIEU
-    AWS_SECRET_ACCESS_KEY=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
-    AWS_REGION=us-west-2
-    AWS_S3_BUCKET_NAME=cpen321-photomap
-    PROD_DB_URI = mongodb://mongo:27017
-    PROD_PORT = 3000
-     ```
-
-
-5. **Run Test For All**
+4. **Run Test For All**
     - Run following commend for all the test
      ```
      npm test
      ```
 
-6. **(Optional) Run Test For Without Mocking**
+5. **(Optional) Run Test For Without Mocking**
     - Run 
      ```
      npm test tests/unmocked
      ```
 
-7. **(Optional) Run Test For With Mocking**
+6. **(Optional) Run Test For With Mocking**
     - Run 
      ```
      npm test tests/mocked
