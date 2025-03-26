@@ -65,4 +65,10 @@ export const imageRoutes = [
         action: (req: Request, res: Response) => controller.cancelShare(req, res),
         validation: [],
     },
+    {
+        method: "post",
+        route: "/image/cancel-share-individual",
+        action: (req: Request, res: Response) => controller.cancelShareForUser(req, res),
+        validation: [],
+    },
 ]
