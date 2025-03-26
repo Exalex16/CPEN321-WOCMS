@@ -131,6 +131,7 @@ data class MarkerInstance(
     var drawnMarker: Marker? = null
 )
 
+
 data class DeleteMarkerResponse(
     val message: String
 )

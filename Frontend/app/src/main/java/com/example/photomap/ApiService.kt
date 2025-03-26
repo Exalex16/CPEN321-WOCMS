@@ -31,12 +31,8 @@ interface ApiService {
         @Part("sharedBy") sharedBy: RequestBody
     ): Response<UploadResponse>
 
-
-
     @GET("images/uploader/{email}")
     suspend fun getImagesByUser(@Path("email") email: String): Response<ResponseBody>
-
-
 
     @GET("map/popular-locations/{username}")
     suspend fun getPopularLocations(
