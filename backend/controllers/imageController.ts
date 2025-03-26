@@ -445,6 +445,64 @@ export class imageController {
 
         res.status(200).send({ message: "Sharing canceled successfully", imageKey });
     }
+
+    cancelShareForUser = async (req: Request, res: Response) => {
+        const { imageKey, senderEmail, recipientEmail } = req.body;
+    
+        if (!imageKey || !senderEmail || !recipientEmail) {
+            return res.status(400).send({ error: "imageKey, senderEmail, and recipientEmail are required" });
+        }
+    
+        const db = clinet.db("images");
+        const image = await db.collection("metadata").findOne({ fileName: imageKey });
+    
+        if (!image) {
+            return res.status(404).send({ error: "Image not found" });
+        }
+    
+        // Ensure only the original sharer can unshare
+        if (image.sharedBy !== senderEmail) {
+            return res.status(403).send({ error: "Only the original sharer can cancel sharing" });
+        }
+    
+        // Unshare with the specific user
+        const updateResult = await db.collection("metadata").updateOne(
+            { fileName: imageKey },
+            { $pull: { sharedTo: recipientEmail } }
+        );
+    
+        if (updateResult.modifiedCount === 0) {
+            return res.status(400).send({ error: "Recipient was not in the shared list" });
+        }
+    
+        // Check if this was the last user — if so, reset shared flags
+        const updatedImage = await db.collection("metadata").findOne({ fileName: imageKey });
+        if (updatedImage && updatedImage.sharedTo.length === 0) {
+            await db.collection("metadata").updateOne(
+                { fileName: imageKey },
+                { $set: { shared: false, sharedBy: null } }
+            );
+        }
+    
+        // Also remove the location from the user's profile if no other shared images at that location
+        const userDb = clinet.db("User");
+        const otherImages = await db.collection("metadata").find({
+            sharedTo: recipientEmail,
+            "location.position": image.location?.position
+        }).toArray();
+    
+        if (otherImages.length === 0 && image.location) {
+            await userDb.collection("users").updateOne(
+                { googleEmail: recipientEmail },
+                { $pull: { locations: image.location } }
+            );
+        }
+    
+        res.status(200).send({
+            message: `Image unshared from ${recipientEmail}`,
+            imageKey,
+        });
+    };
     
 }
 
