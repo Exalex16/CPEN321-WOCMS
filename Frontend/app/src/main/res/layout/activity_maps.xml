@@ -1,110 +1,160 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+
+<androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MapsActivity">
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_anchor="@+id/map"
-        app:layout_anchorGravity="center" />
+        tools:context=".MapsActivity">
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/album"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="500dp"
-        android:layout_marginEnd="10dp"
-        android:visibility="gone"
-        app:srcCompat="@drawable/album"
-        android:contentDescription="gallery"
-        app:tint = "@null"
-        app:maxImageSize="50dp"
-        app:backgroundTint="@color/gray"
-        android:layout_gravity="bottom|end"
-        />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/recommendation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="400dp"
-        android:layout_marginEnd="10dp"
-        android:visibility="gone"
-        app:srcCompat="@drawable/idea"
-        android:contentDescription="@string/recommendation"
-        app:tint = "@null"
-        app:maxImageSize="50dp"
-        app:backgroundTint="@color/gray"
-        android:layout_gravity="bottom|end"
-        />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_actions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="300dp"
-        android:layout_marginEnd="10dp"
-        android:visibility="gone"
-        app:srcCompat="@drawable/upload"
-        android:contentDescription="@string/actions"
-        app:tint = "@null"
-        app:maxImageSize="50dp"
-        app:backgroundTint="@color/gray"
-        android:layout_gravity="bottom|end"
-        />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/deleteMarker"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="200dp"
-        android:layout_marginEnd="10dp"
-        android:visibility="gone"
-        app:srcCompat="@drawable/delete_marker"
-        android:contentDescription="@string/deletemarker"
-        app:tint = "@null"
-        app:maxImageSize="50dp"
-        app:backgroundTint="@color/gray"
-        android:layout_gravity="bottom|end"
-        />
-
-    <FrameLayout
-        android:id="@+id/galleryContainer"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:layout_alignParentTop="true"
-        android:visibility="gone"
-        android:background="@color/white"
-        android:padding="8dp">
-
-        <!-- TextView shown if no images -->
-        <TextView
-            android:id="@+id/noImagesText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="No images here"
-            android:layout_gravity="center"
-            android:visibility="gone"
-            android:textSize="16sp"
-            android:textColor="@android:color/black"/>
-
-        <!-- RecyclerView for scrolling images horizontally -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/imageGalleryRecycler"
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:clipToPadding="false"
-            android:padding="8dp"/>
+            app:layout_anchor="@+id/map"
+            app:layout_anchorGravity="center" />
 
-    </FrameLayout>
+        <ImageView
+            android:id="@+id/arrow_hint"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/next" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/usercentre"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="600dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/people"
+            android:contentDescription="usercentre"
+            app:tint = "@null"
+            app:maxImageSize="50dp"
+            app:backgroundTint="@color/gray"
+            android:layout_gravity="bottom|end"
+            />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/album"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="500dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/album"
+            android:contentDescription="gallery"
+            app:tint = "@null"
+            app:maxImageSize="50dp"
+            app:backgroundTint="@color/gray"
+            android:layout_gravity="bottom|end"
+            />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/recommendation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="400dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/idea"
+            android:contentDescription="@string/recommendation"
+            app:tint = "@null"
+            app:maxImageSize="50dp"
+            app:backgroundTint="@color/gray"
+            android:layout_gravity="bottom|end"
+            />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_actions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="300dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/upload"
+            android:contentDescription="@string/actions"
+            app:tint = "@null"
+            app:maxImageSize="50dp"
+            app:backgroundTint="@color/gray"
+            android:layout_gravity="bottom|end"
+            />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/deleteMarker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="200dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/delete_marker"
+            android:contentDescription="@string/deletemarker"
+            app:tint = "@null"
+            app:maxImageSize="50dp"
+            app:backgroundTint="@color/gray"
+            android:layout_gravity="bottom|end"
+            />
+
+        <FrameLayout
+            android:id="@+id/galleryContainer"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:layout_alignParentTop="true"
+            android:visibility="gone"
+            android:background="@color/white"
+            android:padding="8dp">
+
+            <!-- TextView shown if no images -->
+            <TextView
+                android:id="@+id/noImagesText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No images here"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"/>
+
+            <!-- RecyclerView for scrolling images horizontally -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/imageGalleryRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:clipToPadding="false"
+                android:padding="8dp"/>
+
+        </FrameLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+        <LinearLayout
+            android:id="@+id/drawer_panel"
+            android:layout_width="280dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:orientation="vertical"
+            android:layout_marginTop="200dp"
+            android:gravity="center_vertical">
+
+            <!-- RecyclerView to display your marker items -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/marker_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>
 
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+

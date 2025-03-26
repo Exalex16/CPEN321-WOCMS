@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="10dp"
+    android:gravity="center_vertical"
+    android:baselineAligned="true">
+
+    <!-- Color indicator view -->
+    <View
+        android:id="@+id/markerColor"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/circle_shape" />
+
+    <!-- Marker title -->
+    <TextView
+        android:id="@+id/markerTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:fontFamily="sans-serif-medium"
+        android:text="Marker Title"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:maxLines="3"
+        android:ellipsize="end" />
+</LinearLayout>

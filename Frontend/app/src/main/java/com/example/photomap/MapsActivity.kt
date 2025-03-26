@@ -21,6 +21,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
 import androidx.core.text.HtmlCompat
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -65,6 +67,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var binding: ActivityMapsBinding
     private lateinit var fabActions: FloatingActionButton
     private lateinit var fabDeleteMarker: FloatingActionButton
+    private lateinit var markerAdapter: MarkerAdapter
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var recyclerView: RecyclerView
 
     private var currentMarker: MarkerInstance? = null
 
@@ -87,12 +92,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         )
         recommendationManager = RecommendationManager(this, addedPlaces)
 
+        // Normal buttons
+
         // Hidden Buttons
         fabActions = findViewById(R.id.fab_actions)
         fabActions.visibility = View.GONE
 
         fabDeleteMarker = findViewById(R.id.deleteMarker)
         fabDeleteMarker.visibility = View.GONE
+
+        // Drawer Layout
+        drawerLayout = findViewById(R.id.drawer_layout)
+        recyclerView = findViewById(R.id.marker_recycler_view)
 
         // Recommendation button
         val fabRecommendation: FloatingActionButton = findViewById(R.id.recommendation)
@@ -110,6 +121,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             Toast.makeText(this, "Album clicked!", Toast.LENGTH_SHORT).show()
             val intent = Intent(this, GalleryActivity::class.java)
             startActivity(intent)
+        }
+
+        // User Centre Button
+        val fabUserCentre: FloatingActionButton = findViewById(R.id.usercentre)
+        fabUserCentre.visibility = View.VISIBLE
+        fabUserCentre.setOnClickListener {
+            Toast.makeText(this, "User Centre clicked!", Toast.LENGTH_SHORT).show()
+            //val intent = Intent(this, UserCentreActivity::class.java)
+            //startActivity(intent)
         }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -193,6 +213,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.setOnMarkerClickListener { marker ->
             handleMarkerClick(marker)
         }
+
+        // Navigation panel
+        markerAdapter = MarkerAdapter(mapContent.markerList) { markerInstance ->
+            // Animate the map camera to the selected marker's location
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(markerInstance.lat, markerInstance.lng), 15f))
+            // Close the drawer after selection
+            drawerLayout.closeDrawer(GravityCompat.START)
+        }
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = markerAdapter
 
         fabActions.setOnClickListener {
             photoUploader.showUploadBottomSheet(currentMarker, USER_EMAIL){
