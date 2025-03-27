@@ -107,6 +107,21 @@
             android:layout_gravity="bottom|end"
             />
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/help"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="100dp"
+            android:layout_marginEnd="10dp"
+            android:visibility="gone"
+            app:srcCompat="@drawable/help"
+            android:contentDescription="@string/help"
+            app:tint = "@null"
+            app:maxImageSize="50dp"
+            app:backgroundTint="@color/gray"
+            android:layout_gravity="bottom|end"
+            />
+
         <FrameLayout
             android:id="@+id/galleryContainer"
             android:layout_width="match_parent"

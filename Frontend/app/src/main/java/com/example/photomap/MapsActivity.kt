@@ -134,6 +134,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             //startActivity(intent)
         }
 
+        // Help Button
+        val fabHelp: FloatingActionButton = findViewById(R.id.help)
+        fabHelp.visibility = View.VISIBLE
+        fabHelp.setOnClickListener {
+            Toast.makeText(this, "Help clicked!", Toast.LENGTH_SHORT).show()
+            val tutorialDialog = TutorialDialogFragment()
+            tutorialDialog.show(supportFragmentManager, "TutorialDialog")
+        }
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment

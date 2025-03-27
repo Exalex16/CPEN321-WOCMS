@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/transparent"> <!-- semi-transparent black to dim background -->
+
+
+    <!-- ViewPager2 for tutorial pages -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/tutorialViewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <ImageButton
+        android:id="@+id/btnClose"
+        android:layout_width="75dp"
+        android:layout_height="75dp"
+        android:layout_gravity="top|end"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="10dp"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:padding = "2dp"
+        android:layout_margin="16dp"
+        android:src="@drawable/close_tutorial" />
+
+</FrameLayout>
