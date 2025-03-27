@@ -70,6 +70,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var markerAdapter: MarkerAdapter
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var recyclerView: RecyclerView
+    private lateinit var noMarkersText: TextView
 
     private var currentMarker: MarkerInstance? = null
 
@@ -104,6 +105,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         // Drawer Layout
         drawerLayout = findViewById(R.id.drawer_layout)
         recyclerView = findViewById(R.id.marker_recycler_view)
+        noMarkersText= findViewById(R.id.noMarkersText)
 
         // Recommendation button
         val fabRecommendation: FloatingActionButton = findViewById(R.id.recommendation)
@@ -223,6 +225,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = markerAdapter
+
+        refreshMarkerList()
 
         fabActions.setOnClickListener {
             photoUploader.showUploadBottomSheet(currentMarker, USER_EMAIL){
@@ -414,6 +418,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     currentMarker?.drawnMarker?.remove() // Remove visual marker on map.
                     Log.d("MapsActivity", "Marker list before: ${mapContent.markerList}")
                     mapContent.markerList.remove(currentMarker)
+                    refreshMarkerList()
                     photoUploader.hideGallery()
                     Log.d("MapsActivity", "Marker list after: ${mapContent.markerList}")
                     Toast.makeText(this@MapsActivity, "Marker deleted successfully", Toast.LENGTH_SHORT).show()
@@ -484,6 +489,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     Log.d("MapsActivity", "After save to db, current marker data: $currentMarker")
                     // On success, add the markers
                     mapContent.markerList.add(currentMarker!!)
+                    refreshMarkerList()
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 15f))
 
                     // Trigger Callback for Frontend Success Display.
@@ -498,6 +504,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 Toast.makeText(this@MapsActivity, "Error: Network error, check internet.", Toast.LENGTH_LONG).show()
                 Log.e("MapsActivity", "Network request failed.", e)
             }
+        }
+    }
+
+    private fun refreshMarkerList() {
+        if (mapContent.markerList.isEmpty()) {
+            noMarkersText.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+        } else {
+            noMarkersText.visibility = View.GONE
+            recyclerView.visibility = View.VISIBLE
+            markerAdapter.notifyDataSetChanged()
         }
     }
 

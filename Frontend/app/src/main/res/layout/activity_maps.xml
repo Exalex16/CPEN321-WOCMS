@@ -110,21 +110,21 @@
         <FrameLayout
             android:id="@+id/galleryContainer"
             android:layout_width="match_parent"
-            android:layout_height="120dp"
+            android:layout_height="150dp"
             android:layout_alignParentTop="true"
             android:visibility="gone"
             android:background="@color/white"
-            android:padding="8dp">
+            android:padding="5dp">
 
             <!-- TextView shown if no images -->
             <TextView
                 android:id="@+id/noImagesText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="No images here"
+                android:text="No images here. Upload one!"
                 android:layout_gravity="center"
                 android:visibility="gone"
-                android:textSize="16sp"
+                android:textSize="20sp"
                 android:textColor="@android:color/black"/>
 
             <!-- RecyclerView for scrolling images horizontally -->
@@ -147,6 +147,18 @@
             android:orientation="vertical"
             android:layout_marginTop="200dp"
             android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/noMarkersText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No markers in list. Add some markers first!"
+                android:textSize="25sp"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="30dp"
+                android:layout_marginBottom="400dp"
+                android:visibility="gone"
+                android:padding="16dp" />
 
             <!-- RecyclerView to display your marker items -->
             <androidx.recyclerview.widget.RecyclerView
