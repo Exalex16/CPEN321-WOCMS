@@ -576,3 +576,30 @@ describe("Mocked API Tests - post /image/cancel-share", () => {
         await new Promise((resolve) => setTimeout(resolve, 500)); 
     });
 });
+
+// Interface: POST /image/cancel-share-individual
+describe("Mocked API Tests - post /image/cancel-share-individual", () => {
+    beforeEach(() => {
+        jest.restoreAllMocks();
+        jest.clearAllMocks();
+    });
+
+    // Mocked behavior: MongoDB fails to find the image
+    // Expected status code: 500
+    // Expected behavior: Server should return an "Internet Error"
+    test("500 - MongoDB Failure on Finding Image", async () => {
+        jest.spyOn(clinet.db("images").collection("metadata"), "findOne")
+            .mockRejectedValueOnce(new Error("MongoDB Read Error"));
+
+        const res = await request(app)
+            .post("/image/cancel-share-individual")
+            .send({
+                imageKey: "test1.jpg",
+                senderEmail: "testuser@example.com",
+                recipientEmail: "recipient@example.com",
+            });
+
+        expect(res.status).toBe(500);
+        expect(res.body.error).toBe("Internet Error");
+    });
+});

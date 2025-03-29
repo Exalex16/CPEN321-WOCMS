@@ -430,6 +430,106 @@ describe("Unmocked API Tests - post /image/cancel-share", () => {
     });
 });
 
+// Interface: POST /image/cancel-share-individual
+describe("Unmocked API Tests - post /image/cancel-share-individual", () => {
+
+    // Input: Valid recipient, image key, and sender email
+    // Expected status code: 200
+    // Expected behavior: Image is shared successfully
+    // Expected output: { message: "Image shared successfully" }
+    test("Share Image Successfully", async () => {
+        const res = await request(app)
+            .post("/image/share")
+            .send({
+                recipientEmail: TEST_RECIPIENT,
+                imageKey: uploadedFileName,
+                senderEmail: TEST_USER,
+            });
+    
+        expect(res.status).toBe(200);
+        expect(res.body.message).toBe("Image shared successfully");
+    });
+
+        // Input: Missing required fields
+    // Expected status code: 400
+    // Expected behavior: Returns error message for missing fields
+    test("400 - Missing Required Fields", async () => {
+        const res = await request(app)
+            .post("/image/cancel-share-individual")
+            .send({
+                imageKey: uploadedFileName,
+                senderEmail: TEST_USER, 
+            });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe("imageKey, senderEmail, and recipientEmail are required");
+    });
+
+    // Input: Unauthorized user (not the original sharer)
+    // Expected status code: 403
+    // Expected behavior: Only the original sharer can unshare
+    test("403 - Unauthorized User Trying to Cancel Sharing", async () => {
+        const res = await request(app)
+            .post("/image/cancel-share-individual")
+            .send({
+                imageKey: uploadedFileName,
+                senderEmail: "randomuser@example.com",
+                recipientEmail: TEST_RECIPIENT,
+            });
+
+        expect(res.status).toBe(403);
+        expect(res.body.error).toBe("Only the original sharer can cancel sharing");
+    });
+
+    // Input: Non-existent image key
+    // Expected status code: 404
+    // Expected behavior: Returns error message indicating image not found
+    test("404 - Cancel Sharing for Non-Existing Image", async () => {
+        const res = await request(app)
+            .post("/image/cancel-share-individual")
+            .send({
+                imageKey: "non-existing-image.png",
+                senderEmail: TEST_USER,
+                recipientEmail: TEST_RECIPIENT,
+            });
+
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe("Image not found");
+    });
+
+    // Input: Recipient not in the shared list
+    // Expected status code: 400
+    // Expected behavior: Returns error message indicating the recipient was not in the shared list
+    test("400 - Recipient Not in Shared List", async () => {
+        const res = await request(app)
+            .post("/image/cancel-share-individual")
+            .send({
+                imageKey: uploadedFileName,
+                senderEmail: TEST_USER,
+                recipientEmail: "nonshared@example.com",
+            });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe("Recipient was not in the shared list");
+    });
+
+    // Input: Valid image key, sender email, and recipient email
+    // Expected status code: 200
+    // Expected behavior: Image sharing with the specific user is canceled
+    test("Cancel Sharing with Specific User Successfully", async () => {
+        const res = await request(app)
+            .post("/image/cancel-share-individual")
+            .send({
+                imageKey: uploadedFileName,
+                senderEmail: TEST_USER,
+                recipientEmail: TEST_RECIPIENT,
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.message).toBe(`Image unshared from ${TEST_RECIPIENT}`);
+    });
+});
+
 // Interface: DELETE /image/:key
 describe("Unmocked API Tests - delete /image/:key", () => {
     // Input: Valid image key
