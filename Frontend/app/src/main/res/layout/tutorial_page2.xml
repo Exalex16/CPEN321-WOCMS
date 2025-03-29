@@ -1,17 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
 
+
     <!-- Instruction text -->
-    <TextView
-        android:id="@+id/tutorialText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Now, look at these buttons."
-        android:textColor="@android:color/white"
-        android:textSize="20sp"
-        android:layout_gravity="center" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="715dp">
+
+
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="63dp"
+            android:layout_height="61dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.161"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.305"
+            app:srcCompat="@drawable/people" />
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="65dp"
+            android:layout_height="63dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.146"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.513"
+            app:srcCompat="@drawable/album" />
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="68dp"
+            android:layout_height="61dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.138"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.726"
+            app:srcCompat="@drawable/idea" />
+
+
+        <ImageView
+            android:id="@+id/imageView4"
+            android:layout_width="68dp"
+            android:layout_height="61dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.138"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.934"
+            app:srcCompat="@drawable/help" />
+
+        <TextView
+            android:id="@+id/tutorial1Text2"
+            android:layout_width="193dp"
+            android:layout_height="98dp"
+            android:layout_gravity="center_horizontal|top"
+            android:text="See other users you've shared photos with."
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.715"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.288" />
+
+        <TextView
+            android:id="@+id/tutorial1Text3"
+            android:layout_width="193dp"
+            android:layout_height="83dp"
+            android:layout_gravity="center_horizontal|top"
+            android:text="View and share your photos in a marker-based album."
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toTopOf="@+id/tutorial1Text4"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.709"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tutorial1Text2"
+            app:layout_constraintVertical_bias="0.659" />
+
+        <TextView
+            android:id="@+id/tutorial1Text4"
+            android:layout_width="190dp"
+            android:layout_height="111dp"
+            android:layout_gravity="center_horizontal|top"
+            android:text="See popular locations matching your photo and location preferences!"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.703"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.74" />
+
+        <TextView
+            android:id="@+id/tutorial1Text5"
+            android:layout_width="190dp"
+            android:layout_height="49dp"
+            android:layout_gravity="center_horizontal|top"
+            android:text="View this tutorial again!"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.714"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.936" />
+
+        <TextView
+            android:id="@+id/tutorial2Text1"
+            android:layout_width="257dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|top"
+            android:text="Once you have some markers and photos, check out these buttons!"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.442"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.107" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </FrameLayout>

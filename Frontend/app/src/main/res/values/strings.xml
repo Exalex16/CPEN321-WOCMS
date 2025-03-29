@@ -17,5 +17,7 @@
     <string name="recommendation">recommendation</string>
     <string name="deletemarker">deleteMarker</string>
     <string name="help">help</string>
+    <string name="welcome_msg">Welcome to PhotoMap!</string>
+    <string name="swipe_msg">Swipe right to see a list of your added markers!</string>
 
 </resources>

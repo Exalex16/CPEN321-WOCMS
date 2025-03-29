@@ -1,19 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
 
+
     <!-- Instruction text -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="117dp"
+            android:layout_height="97dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.099"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/arrow" />
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="117dp"
+            android:layout_height="97dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.797"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.745"
+            app:srcCompat="@drawable/arrow_rev" />
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="68dp"
+            android:layout_height="61dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.724"
+            app:srcCompat="@drawable/upload" />
+
+        <TextView
+            android:id="@+id/tutorial1Text4"
+            android:layout_width="225dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|top"
+            android:text="Select your marker to see details and upload your photo!"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.836" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <TextView
-        android:id="@+id/tutorialText"
+        android:id="@+id/tutorial1Text1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="This is tutorial page 1..."
-        android:textColor="@android:color/white"
-        android:textSize="20sp"
         android:layout_gravity="top|start"
-        android:layout_marginTop="200dp"
-        android:layout_marginStart="50dp" />
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="100dp"
+        android:text="@string/welcome_msg"
+        android:textColor="@android:color/white"
+        android:textSize="30sp" />
+
+    <TextView
+        android:id="@+id/tutorial1Text2"
+        android:layout_width="257dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginTop="180dp"
+        android:text="Click anywhere on the map to add a location marker."
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/tutorial1Text3"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginTop="440dp"
+        android:text="@string/swipe_msg"
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
+
 </FrameLayout>
