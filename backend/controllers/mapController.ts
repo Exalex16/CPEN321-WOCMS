@@ -5,7 +5,7 @@ import type { Feature, Point } from "geojson";
 
 
 
-export class mapController {
+export class MapController {
     /**
      * Get popular locations based on image density
      */

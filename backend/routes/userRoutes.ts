@@ -1,8 +1,8 @@
 import { param } from "express-validator"
-import { userController } from "../controllers/userController"
+import { UserController } from "../controllers/userController"
 import { Request, Response } from 'express';
 
-const controller = new userController()
+const controller = new UserController()
 
 export const userRoutes = [
     {
