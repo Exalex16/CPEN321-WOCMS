@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { clinet, formDataMiddleware } from "../services";
 
-export class userController {
+export class UserController {
     /**
      * Create a new user info, (or update name if it is exist).
      */

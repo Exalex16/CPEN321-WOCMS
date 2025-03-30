@@ -1,7 +1,7 @@
-import { mapController } from "../controllers/mapController"
+import { MapController } from "../controllers/mapController"
 import { Request, Response } from 'express';
 
-const controller = new mapController()
+const controller = new MapController()
 
 export const mapRoutes = [
     {

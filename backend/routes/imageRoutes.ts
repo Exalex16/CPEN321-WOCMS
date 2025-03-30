@@ -1,8 +1,8 @@
 import { param } from "express-validator"
-import { imageController} from "../controllers/imageController";
+import { ImageController} from "../controllers/imageController";
 import { Request, Response } from 'express';
 
-const controller = new imageController()
+const controller = new ImageController()
 
 export const imageRoutes = [
     {

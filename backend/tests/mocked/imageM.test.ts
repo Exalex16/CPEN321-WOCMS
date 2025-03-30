@@ -313,7 +313,7 @@ describe("Mocked API Tests - get /images/uploader/:uploaderEmail", () => {
                     { fileName: "test1.jpg", location: { title: "Test", position: { lat: 49.1, lng: -122.7 } } },
                     { fileName: "test2.jpg", location: { title: "Another", position: { lat: 50.1, lng: -121.9 } } },
                 ]),
-            } as any);
+            } as never);
 
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 GetObjectCommand Failed") as never);
 
@@ -353,7 +353,7 @@ describe(" Mocked API Tests - delete /image/:key", () => {
     // Expected output: { error: "Internet Error" }
     test("500 - S3 DeleteObjectCommand Failure", async () => {
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 DeleteObjectCommand Failed") as never);
-        jest.spyOn(clinet.db("images").collection("metadata"), "deleteOne").mockResolvedValue({ deletedCount: 1 } as any);
+        jest.spyOn(clinet.db("images").collection("metadata"), "deleteOne").mockResolvedValue({ deletedCount: 1 } as never);
 
         const res = await request(app).delete("/image/test.jpg");
 
@@ -376,7 +376,7 @@ describe("Mocked API Tests - get /images", () => {
     // Expected output: { error: "Internet Error" }
     test("500 - MongoDB Failure on getAllImages", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find")
-            .mockReturnValue({ toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")) } as any);
+            .mockReturnValue({ toArray: jest.fn().mockRejectedValue(new Error("MongoDB Read Error")) } as never);
 
         const res = await request(app).get("/images");
 
@@ -395,7 +395,7 @@ describe("Mocked API Tests - get /images", () => {
                 { fileName: "test1.jpg", location: { position: { lat: 49.195, lng: -122.699 }, title: "Location1" } },
                 { fileName: "test2.jpg", location: { position: { lat: 50.123, lng: -120.456 }, title: "Location2" } },
             ]),
-        } as any);
+        } as never);
 
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 GetObjectCommand Failed") as never);
 
@@ -450,7 +450,7 @@ describe("Mocked API Tests - delete /image/delete-all/:userEmail", () => {
     // Expected output: { error: "Internet Error" }
     test("500 - MongoDB Failure on deleteAllImagesByUser", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find")
-            .mockReturnValue({ toArray: jest.fn().mockRejectedValueOnce(new Error("MongoDB Find Error")) } as any);
+            .mockReturnValue({ toArray: jest.fn().mockRejectedValueOnce(new Error("MongoDB Find Error")) } as never);
 
         const res = await request(app).delete("/image/delete-all/testuser@example.com");
 
@@ -469,7 +469,7 @@ describe("Mocked API Tests - delete /image/delete-all/:userEmail", () => {
                 { fileName: "test1.jpg" },
                 { fileName: "test2.jpg" },
             ]),
-        } as any);
+        } as never);
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 DeleteObjectCommand Failed") as never);
 
         const res = await request(app).delete("/image/delete-all/testuser@example.com");
@@ -520,7 +520,7 @@ describe("Mocked API Tests - get /image/shared/:userEmail", () => {
     // Expected output: { error: "Internet Error" }
     test("500 - MongoDB Failure on getSharedImages", async () => {
         jest.spyOn(clinet.db("images").collection("metadata"), "find")
-            .mockReturnValue({ toArray: jest.fn().mockRejectedValueOnce(new Error("MongoDB Read Error")) } as any);
+            .mockReturnValue({ toArray: jest.fn().mockRejectedValueOnce(new Error("MongoDB Read Error")) } as never);
 
         const res = await request(app).get("/image/shared/testuser@example.com");
 
@@ -539,7 +539,7 @@ describe("Mocked API Tests - get /image/shared/:userEmail", () => {
                 { fileName: "test1.jpg", location: { position: { lat: 49.195, lng: -122.699 }, title: "Location1" } },
                 { fileName: "test2.jpg", location: { position: { lat: 50.123, lng: -120.456 }, title: "Location2" } },
             ]),
-        } as any);
+        } as never);
 
         jest.spyOn(s3, "send").mockRejectedValueOnce(new Error("S3 GetObjectCommand Failed") as never);
 

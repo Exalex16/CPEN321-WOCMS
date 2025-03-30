@@ -6,7 +6,7 @@ import sharp from "sharp";
 import { RekognitionClient, DetectLabelsCommand, DetectModerationLabelsCommand } from "@aws-sdk/client-rekognition";
 export const rekognition = new RekognitionClient({ region: "us-west-2" });
 
-export class imageController {
+export class ImageController {
     
     uploadImage = async (req: Request, res: Response) => {
         await new Promise<void>((resolve) => {
