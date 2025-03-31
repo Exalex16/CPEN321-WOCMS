@@ -8,8 +8,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.photomap.MapUtils.getColorIntFromName
 
 class MarkerAdapter(
-    private val markers: List<MarkerInstance>,
-    private val onMarkerClick: (MarkerInstance) -> Unit
+    private var markers: List<MarkerInstance>,
+    private val noMarkersText: TextView, // extra view
+    private val recyclerView: RecyclerView,
+    private val onMarkerClick: (MarkerInstance) -> Unit// extra view
 ) : RecyclerView.Adapter<MarkerAdapter.MarkerViewHolder>() {
 
     inner class MarkerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -35,4 +37,18 @@ class MarkerAdapter(
     }
 
     override fun getItemCount() = markers.size
+
+    // This function refreshes the marker list inside the adapter
+    fun refreshMarkerList(newMarkers: List<MarkerInstance>) {
+        markers = newMarkers
+
+        if (markers.isEmpty()) {
+            noMarkersText.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+        } else {
+            noMarkersText.visibility = View.GONE
+            recyclerView.visibility = View.VISIBLE
+        }
+        notifyDataSetChanged()
+    }
 }
