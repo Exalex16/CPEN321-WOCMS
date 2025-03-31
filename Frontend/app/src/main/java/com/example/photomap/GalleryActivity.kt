@@ -460,76 +460,12 @@ class GalleryActivity : ComponentActivity() {
                         Spacer(Modifier.height(10.dp))
                         Text("People with Access", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
                         Spacer(Modifier.height(10.dp))
-                        Box(
-                            modifier = Modifier
-                                .height(96.dp)
-                                .fillMaxWidth()
-                                .then(if (images[pagerState.currentPage].second.sharedTo.size > 3) Modifier.verticalScroll(rememberScrollState()) else Modifier)
-                                .background(Color(0xFFf2f3f4))
-                                .padding(8.dp)
-                        ) {
-                            Column {
-                                repeat(images[pagerState.currentPage].second.sharedTo.size) { index ->
-                                    Text(
-                                        text = images[pagerState.currentPage].second.sharedTo[index],
-                                        modifier = Modifier.padding(vertical = 4.dp).testTag("shareText_${index}"),
-                                        fontSize = 16.sp
-                                    )
-                                }
-                            }
-                        }
+                        SharedUserList(images,pagerState, coroutineScope, context)
                         Spacer(Modifier.height(30.dp))
                         Button(
                             onClick = {
                                 coroutineScope.launch {
-                                    try {
-                                        Log.d("Gallery", userToken.toString().trim())
-                                        Log.d("Gallery", userInput.trim())
-                                        val response = RetrofitClient.api.shareImage(
-                                            ShareImageRequest(
-                                                recipientEmail = userInput.trim(), // Get current image URL
-                                                imageKey = images[pagerState.currentPage].second.fileName,
-                                                senderEmail = userToken.toString().trim() // Use user input as description
-                                            )
-                                        )
-
-                                        if (response.isSuccessful) {
-                                            Log.d("DialogInput", "API Success: ${response.body()?.string()}")
-                                            images[pagerState.currentPage].second.sharedTo.add(userInput.trim())
-                                            images[pagerState.currentPage].second.shared = true
-                                            images[pagerState.currentPage].second.sharedBy = userToken.toString().trim()
-
-
-                                            withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                                Toast.makeText(context,"Image is shared successfully", Toast.LENGTH_SHORT).show()
-                                            }
-                                        } else {
-                                            Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
-                                            withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                                Toast.makeText(context,"The email you entered is invalid", Toast.LENGTH_SHORT).show()
-                                            }
-
-
-                                        }
-                                    }catch (e: HttpException) {
-                                        Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
-                                        withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                            Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-                                        }
-                                        Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-                                    } catch (e: JsonParseException) {
-                                        Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
-                                        withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                            Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-                                        }
-
-                                    } catch (e: IOException) {
-                                        Log.e("DialogInput", "Unexpected Error: ${e.message}") // ✅ Catches any unknown errors
-                                        withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                            Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-                                        }
-
-                                    }
+                                    shareImageWithFeedback(context, userInput, images,pagerState.currentPage)
                                 }
                                 showDialog.value = false
                             },
@@ -541,13 +477,171 @@ class GalleryActivity : ComponentActivity() {
                         ) {
                             Text("Share", fontWeight = FontWeight.SemiBold)
                         }
-                        //new component add here
                     }
                 }
             }
     }
 
+    @Composable
+    fun SharedUserList(
+        images: List<Pair<MarkerInstance,PhotoInstance>>,
+        pagerState: PagerState,
+        coroutineScope: CoroutineScope,
+        context: Context,
+
+    ) {
+        val selectedIndex = remember { mutableStateOf<Int?>(null) }
+
+        Box(
+            modifier = Modifier
+                .height(96.dp)
+                .fillMaxWidth()
+                .then(if (images[pagerState.currentPage].second.sharedTo.size > 3) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+                .background(Color(0xFFf2f3f4))
+                .padding(8.dp)
+        ) {
+            Column {
+                repeat(images[pagerState.currentPage].second.sharedTo.size) { index ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clickable {
+                                selectedIndex.value = if (selectedIndex.value == index) null else index
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = images[pagerState.currentPage].second.sharedTo[index],
+                            fontSize = 16.sp,
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("shareText_${index}")
+                        )
+                        Log.d("DialogInput", "shareText_${index}")
+                        if (selectedIndex.value == index) {
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        cancelShareWithFeedback(context, selectedIndex.value!!, images, pagerState.currentPage)
+                                        selectedIndex.value = null
+                                    }
+                                },
+                                modifier = Modifier.size(16.dp)
+
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun shareImageWithFeedback(
+        context: Context,
+        userInput: String,
+        images: List<Pair<MarkerInstance, PhotoInstance>>,
+        currentPage: Int
+    ) {
+        try {
+            Log.d("Gallery", userToken.toString().trim())
+            Log.d("Gallery", userInput.trim())
+            val response = RetrofitClient.api.shareImage(
+                ShareImageRequest(
+                    recipientEmail = userInput.trim(),
+                    imageKey = images[currentPage].second.fileName,
+                    senderEmail = userToken.toString().trim()
+                )
+            )
+
+            if (response.isSuccessful) {
+                Log.d("DialogInput", "API Success: ${response.body()?.string()}")
+                images[currentPage].second.sharedTo.add(userInput.trim())
+                images[currentPage].second.shared = true
+                images[currentPage].second.sharedBy = userToken.toString().trim()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Image is shared successfully", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "The email you entered is invalid", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: HttpException) {
+            Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: JsonParseException) {
+            Log.e("DialogInput", "JSON Parsing Error: ${e.message}")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: IOException) {
+            Log.e("DialogInput", "Unexpected Error: ${e.message}")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
 
 
+    private suspend fun cancelShareWithFeedback(
+        context: Context,
+        index: Int,
+        images: List<Pair<MarkerInstance, PhotoInstance>>,
+        currentPage: Int
+    ) {
+        try {
+            Log.d("Gallery", userToken.toString().trim())
+            val response = RetrofitClient.api.cancelShare(
+                cancelShareRequest(
+                    imageKey = images[currentPage].second.fileName,
+                    recipientEmail = images[currentPage].second.sharedTo[index],
+                    senderEmail = userToken.toString().trim()
+                )
+            )
+
+            if (response.isSuccessful) {
+                Log.d("DialogInput", "API Success: ${response.body()?.string()}")
+                images[currentPage].second.sharedTo.removeAt(index)
+                images[currentPage].second.shared = true
+                images[currentPage].second.sharedBy = userToken.toString().trim()
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Share is canceled successfully", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Share is canceled unsuccessfully", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: HttpException) {
+            Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: JsonParseException) {
+            Log.e("DialogInput", "JSON Parsing Error: ${e.message}")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: IOException) {
+            Log.e("DialogInput", "Unexpected Error: ${e.message}")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }

@@ -56,6 +56,11 @@ interface ApiService {
     @DELETE("image/delete-all/{email}")
     suspend fun deleteAllImages(@Path("email") email: String): Response<Unit>
 
+    @POST("image/cancel-share-individual")
+    suspend fun cancelShare(
+        @Body request: cancelShareRequest
+    ):  Response<ResponseBody>
+
 }
 
 interface GooglePlacesApi {
@@ -93,4 +98,8 @@ interface ApiServiceUser{
 
     @POST("user")
     suspend fun createUser(@Body request: UserPostRequest)
+
+
+
+
 }

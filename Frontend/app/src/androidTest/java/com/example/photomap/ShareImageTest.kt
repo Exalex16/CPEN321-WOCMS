@@ -143,7 +143,11 @@ class ShareImageTest{
 
         composeTestRule.onNodeWithTag("ShareDialog").assertExists()
 
-        composeTestRule.onNodeWithTag("shareText_0").assertExists().assertTextEquals("rayyu626@gmail.com")
+        composeTestRule.waitForIdle()
+
+        Thread.sleep(2000)
+
+        composeTestRule.onNodeWithTag("shareText_0", useUnmergedTree = true).assertExists().assertTextEquals("rayyu626@gmail.com")
 
         Thread.sleep(2000)
     }

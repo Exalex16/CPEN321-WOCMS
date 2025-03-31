@@ -151,6 +151,12 @@ data class addFriendRequest(
     val friendEmail: String,
 )
 
+data class cancelShareRequest(
+    val imageKey : String,
+    val senderEmail: String,
+    val recipientEmail: String
+)
+
 
 
 
