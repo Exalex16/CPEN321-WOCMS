@@ -70,6 +70,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.photomap.MainActivity.userInfo
 import com.google.gson.JsonParseException
@@ -120,7 +121,6 @@ class GalleryActivity : ComponentActivity() {
                 imageGroups[MainActivity.mapContent.markerList[i]] = imageArr
             }
         }
-
         Gallery(imageGroups)
     }
 
@@ -131,10 +131,8 @@ class GalleryActivity : ComponentActivity() {
         val imageSize = screenWidth / 3
         var selectedImageIndex by remember { mutableStateOf<Int?>(null) }
         var selectedImages by remember { mutableStateOf<List<Pair<MarkerInstance,PhotoInstance>>>(emptyList()) }
-
         var isRefreshing by remember { mutableStateOf(false) }
         val refreshScope = rememberCoroutineScope()
-
         val allImages: MutableList<Pair<MarkerInstance, PhotoInstance>> = mutableListOf()
         for ((key, value) in imageGroups) {
             for (item in value) {
@@ -169,9 +167,7 @@ class GalleryActivity : ComponentActivity() {
                     mapContentInit(photoResponse,markerResponse)
                 }
                 Log.d("Gallery", "Refresh triggered")
-
                 imageGroups.clear()
-
                 for(i in 0 until MainActivity.mapContent.markerList.size){
                     if(MainActivity.mapContent.markerList[i].photoAtCurrentMarker.size != 0){
                         val imageArr: MutableList<PhotoInstance> = mutableListOf()
@@ -188,14 +184,12 @@ class GalleryActivity : ComponentActivity() {
                     }
                 }
                 isRefreshing = false
-
             }
             val intent = Intent("com.yourapp.ACTION_MARKERS_UPDATED")
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
         }
 
         val pullRefreshState = rememberPullRefreshState(isRefreshing, ::refreshGallery)
-
 
         Column(
             modifier = Modifier
@@ -225,59 +219,15 @@ class GalleryActivity : ComponentActivity() {
                         .align(Alignment.CenterHorizontally)
                 )
 
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-
-
-                imageGroups.forEach { (category, img) ->
-                    item {
-                        Text(
-                            text = category.title,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp, horizontal = 16.dp)
-                        )
-                    }
-
-                    items(img.chunked(3)) { rowImages ->
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            var count = 0
-                            for (imageUrl in rowImages) {
-                                Image(
-                                    painter = rememberImagePainter(imageUrl.imageURL),
-                                    contentDescription = "Gallery Image",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .width(imageSize)
-                                        .height(imageSize)
-                                        .padding(2.dp)
-                                        .clickable {
-                                            selectedImageIndex =
-                                                allImages.indexOfFirst { it.second == imageUrl } // ✅ Get index from full list
-                                            selectedImages =
-                                                allImages // ✅ Store all images, not just row
-                                            Log.d("Gallery", "Clicked Image: $imageUrl")
-                                            Log.d("Gallery", "All Images: $allImages")
-                                            Log.d(
-                                                "Gallery",
-                                                "GalleryImage_${allImages.indexOfFirst { it.second == imageUrl }}"
-                                            )
-                                        }
-                                        .testTag("GalleryImage_${allImages.indexOfFirst { it.second == imageUrl }}")
-                                )
-                                count++
-                            }
-                            repeat(3 - rowImages.size) {
-                                Spacer(
-                                    modifier = Modifier.width(imageSize).height(imageSize)
-                                        .padding(2.dp)
-                                )
-                            }
-                        }
-                    }
+            GalleryImageGrid(
+                imageGroups = imageGroups,
+                imageSize = imageSize,
+                allImages = allImages,
+                onImageClick = { clickedIndex, all ->
+                    selectedImageIndex = clickedIndex
+                    selectedImages = all
                 }
-            }
+            )
         }
         selectedImageIndex?.let { index ->
             FullScreenImageViewer(
@@ -287,6 +237,67 @@ class GalleryActivity : ComponentActivity() {
             )
         }
     }
+
+    @Composable
+    fun GalleryImageGrid(
+        imageGroups: Map<MarkerInstance, List<PhotoInstance>>,
+        imageSize: Dp,
+        allImages: MutableList<Pair<MarkerInstance, PhotoInstance>>,
+        onImageClick: (Int, List<Pair<MarkerInstance, PhotoInstance>>) -> Unit
+    ) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            imageGroups.forEach { (category, img) ->
+                item {
+                    Text(
+                        text = category.title,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp, horizontal = 16.dp)
+                    )
+                }
+
+                items(img.chunked(3)) { rowImages ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        for (image in rowImages) {
+                            val index = allImages.indexOfFirst { it.second == image }
+                            Image(
+                                painter = rememberImagePainter(image.imageURL),
+                                contentDescription = "Gallery Image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .width(imageSize)
+                                    .height(imageSize)
+                                    .padding(2.dp)
+                                    .clickable {
+                                        onImageClick(index, allImages)
+                                    }
+                                    .testTag("GalleryImage_${index}")
+                            )
+                        }
+                        repeat(3 - rowImages.size) {
+                            Spacer(
+                                modifier = Modifier
+                                    .width(imageSize)
+                                    .height(imageSize)
+                                    .padding(2.dp)
+                            )
+                        }
+                    }
+                    allImages.addAll(rowImages.map { Pair(category, it) })
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
 
     @SuppressLint("UnrememberedMutableState")
     @Composable
