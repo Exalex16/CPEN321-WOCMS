@@ -36,6 +36,7 @@
 | **POST /user/delete-friend** | [`backend/tests/unmocked/userNM.test.ts#L367`](#) | [`backend/tests/mocked/userM.test.ts#L205`](#) | User DB |
 | **DELETE /user/:googleEmail** | [`backend/tests/unmocked/userNM.test.ts#L432`](#) | [`backend/tests/mocked/userM.test.ts#L121`](#) | User DB |
 | **GET /map/popular-locations/:userEmail** | [`backend/tests/unmocked/mapNM.test.ts#L432`](#) | [`backend/tests/mocked/mapM.test.ts#L121`](#) [`backend/tests/mocked/mapM_specialReturn.test.ts#L121`](#) | Image DB |
+| **POST /image/cancel-share-individual** | [`backend/tests/unmocked/imageNM.test.ts#L434`](#) | [`backend/tests/mocked/imageM.test.ts#L580`](#) | Image DB |
 
 
 #### 2.1.2. Commit Hash Where Tests Run
@@ -87,7 +88,7 @@
 
 ### 2.3. Jest Coverage Report Screenshots With Mocks
 
-<img src="images/BackendTestM.png" alt="Alt text" width="500">
+<img src="images/final_coverage.png" alt="Alt text" width="500">
   
   - Line that not corvered in services.ts is the environment variable check, run acitivite if there is no environment variable
   - The two lines in index.ts is the 400 route validation check. Since our route did not have validation check, so it won't activite. It is copied from tutorial video, and keep for furture. Instead of validation check, we check input in each controller with 404 or 403 status.
