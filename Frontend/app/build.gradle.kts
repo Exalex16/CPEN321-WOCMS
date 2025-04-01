@@ -96,4 +96,8 @@ dependencies {
 
     // Glide
     implementation ("com.github.bumptech.glide:glide:4.14.2")
+
+    //pull refresh
+    implementation("androidx.compose.material3:material3:1.2.0")
+    implementation("androidx.compose.material:material:1.5.4")
 }

@@ -20,6 +20,8 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.text.HtmlCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -71,6 +73,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var recyclerView: RecyclerView
     private lateinit var noMarkersText: TextView
+    private lateinit var composeView : ComposeView
 
     private var currentMarker: MarkerInstance? = null
 
@@ -107,6 +110,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         recyclerView = findViewById(R.id.marker_recycler_view)
         noMarkersText= findViewById(R.id.noMarkersText)
 
+        //compose userCenter
+        composeView = findViewById(R.id.user_center_view)
+
         // Recommendation button
         val fabRecommendation: FloatingActionButton = findViewById(R.id.recommendation)
         fabRecommendation.visibility = View.VISIBLE
@@ -130,8 +136,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         fabUserCentre.visibility = View.VISIBLE
         fabUserCentre.setOnClickListener {
             Toast.makeText(this, "User Centre clicked!", Toast.LENGTH_SHORT).show()
-            //val intent = Intent(this, UserCentreActivity::class.java)
-            //startActivity(intent)
+            showUserCenterOverlay(composeView)
         }
 
         // Help Button
@@ -184,6 +189,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d("MapsActivity", "Addedplaces: $addedPlaces")
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 15f))
         }
+    }
+
+    fun showUserCenterOverlay(composeView: ComposeView) {
+        composeView.setContent {
+            UserCenterOverlay(
+                context = LocalContext.current,
+                showOverlay = true,
+                onClose = { composeView.visibility = View.GONE }
+            )
+        }
+        composeView.visibility = View.VISIBLE
     }
 
     /**
