@@ -42,6 +42,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +59,9 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -66,12 +70,17 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
+import com.example.photomap.MainActivity.userInfo
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import retrofit2.HttpException
 import java.io.IOException
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,79 +123,163 @@ class GalleryActivity : ComponentActivity() {
         Gallery(imageGroups)
     }
 
-
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
     @Composable
-    fun Gallery(imageGroups: Map<MarkerInstance, List<PhotoInstance>>) {
+    fun Gallery(imageGroups: MutableMap<MarkerInstance, MutableList<PhotoInstance>>) {
         val screenWidth = LocalConfiguration.current.screenWidthDp.dp
         val imageSize = screenWidth / 3
         var selectedImageIndex by remember { mutableStateOf<Int?>(null) }
         var selectedImages by remember { mutableStateOf<List<Pair<MarkerInstance,PhotoInstance>>>(emptyList()) }
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            item {
-                Spacer(modifier = Modifier.height(40.dp))
-                Text(
-                    text = "Gallery",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
+        var isRefreshing by remember { mutableStateOf(false) }
+        val refreshScope = rememberCoroutineScope()
+
+        val allImages: MutableList<Pair<MarkerInstance, PhotoInstance>> = mutableListOf()
+        for ((key, value) in imageGroups) {
+            for (item in value) {
+                allImages.add(Pair(key, item))
+            }
+        }
+
+        fun refreshGallery() {
+            refreshScope.launch {
+                isRefreshing = true
+                delay(1000) // Simulate API refresh or data reload
+                val photoResponse = withContext(Dispatchers.IO) {
+                    RetrofitClient.api.getImagesByUser(userToken.toString())
+                }
+                val markerResponse =  withContext(Dispatchers.IO) {
+                    RetrofitClient.apiUser.getMarkerByUser(userToken.toString())
+                }
+
+                val friendsResponse =  withContext(Dispatchers.IO) {
+                    RetrofitClient.apiUser.getFriendsByUser(userToken.toString())
+                }
+
+                if(friendsResponse.isSuccessful && friendsResponse.body() != null){
+                    val friendsList = JSONObject(friendsResponse.body()!!.string()).optJSONArray("friends") ?: JSONArray()
+                    for(i in 0 until friendsList.length()){
+                        userInfo.friends.add(friendsList.optString(i))
+                    }
+                }
+                val isPhotoResponseValid = photoResponse.isSuccessful && photoResponse.body() != null
+                val isMarkerResponseValid = markerResponse.isSuccessful && markerResponse.body() != null
+                if(isPhotoResponseValid && isMarkerResponseValid){
+                    mapContentInit(photoResponse,markerResponse)
+                }
+                Log.d("Gallery", "Refresh triggered")
+
+                imageGroups.clear()
+
+                for(i in 0 until MainActivity.mapContent.markerList.size){
+                    if(MainActivity.mapContent.markerList[i].photoAtCurrentMarker.size != 0){
+                        val imageArr: MutableList<PhotoInstance> = mutableListOf()
+                        for (j in 0 until MainActivity.mapContent.markerList[i].photoAtCurrentMarker.size){
+                            imageArr.add(MainActivity.mapContent.markerList[i].photoAtCurrentMarker[j])
+                        }
+                        imageGroups[MainActivity.mapContent.markerList[i]] = imageArr
+                    }
+                }
+                allImages.clear()
+                for ((key, value) in imageGroups) {
+                    for (item in value) {
+                        allImages.add(Pair(key, item))
+                    }
+                }
+
+
+
+
+                isRefreshing = false
+
+            }
+        }
+
+        val pullRefreshState = rememberPullRefreshState(isRefreshing, ::refreshGallery)
+
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 24.dp, bottom = 50.dp) // optional outer padding
+
+                .pullRefresh(pullRefreshState)
+
+        ) {
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Text(
+                text = "Gallery",
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .testTag("Title")
+            )
+                PullRefreshIndicator(
+                    refreshing = isRefreshing,
+                    state = pullRefreshState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 16.dp)
-                        .testTag("Title")
+                        .padding(vertical = 2.dp)
+                        .align(Alignment.CenterHorizontally)
                 )
-                Spacer(modifier = Modifier.height(10.dp))
 
-            }
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
 
-            val allImages: MutableList<Pair<MarkerInstance, PhotoInstance>> = mutableListOf()
-            for((key, value) in imageGroups){
-                for(item in value){
-                    allImages.add(Pair(key, item))
-                }
-            }
-            imageGroups.forEach { (category, img) ->
-                item {
-                    Text(
-                        text = category.title,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp, horizontal = 16.dp)
-                    )
-                }
 
-                items(img.chunked(3)) { rowImages ->
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        var count = 0
-                        for (imageUrl in rowImages) {
-                            Image(
-                                painter = rememberImagePainter(imageUrl.imageURL),
-                                contentDescription = "Gallery Image",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .width(imageSize)
-                                    .height(imageSize)
-                                    .padding(2.dp)
-                                    .clickable {
-                                        selectedImageIndex = allImages.indexOfFirst {it.second == imageUrl} // ✅ Get index from full list
-                                        selectedImages = allImages // ✅ Store all images, not just row
-                                        Log.d("Gallery", "Clicked Image: $imageUrl")
-                                        Log.d("Gallery", "All Images: $allImages")
-                                        Log.d("Gallery", "GalleryImage_${allImages.indexOfFirst { it.second == imageUrl }}")
-                                    }
-                                    .testTag("GalleryImage_${allImages.indexOfFirst { it.second == imageUrl }}")
-                            )
-                            count++
-                        }
-                        repeat(3 - rowImages.size) {
-                            Spacer(modifier = Modifier.width(imageSize).height(imageSize).padding(2.dp))
+                imageGroups.forEach { (category, img) ->
+                    item {
+                        Text(
+                            text = category.title,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp, horizontal = 16.dp)
+                        )
+                    }
+
+                    items(img.chunked(3)) { rowImages ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            var count = 0
+                            for (imageUrl in rowImages) {
+                                Image(
+                                    painter = rememberImagePainter(imageUrl.imageURL),
+                                    contentDescription = "Gallery Image",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .width(imageSize)
+                                        .height(imageSize)
+                                        .padding(2.dp)
+                                        .clickable {
+                                            selectedImageIndex =
+                                                allImages.indexOfFirst { it.second == imageUrl } // ✅ Get index from full list
+                                            selectedImages =
+                                                allImages // ✅ Store all images, not just row
+                                            Log.d("Gallery", "Clicked Image: $imageUrl")
+                                            Log.d("Gallery", "All Images: $allImages")
+                                            Log.d(
+                                                "Gallery",
+                                                "GalleryImage_${allImages.indexOfFirst { it.second == imageUrl }}"
+                                            )
+                                        }
+                                        .testTag("GalleryImage_${allImages.indexOfFirst { it.second == imageUrl }}")
+                                )
+                                count++
+                            }
+                            repeat(3 - rowImages.size) {
+                                Spacer(
+                                    modifier = Modifier.width(imageSize).height(imageSize)
+                                        .padding(2.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-
         selectedImageIndex?.let { index ->
             FullScreenImageViewer(
                 images = selectedImages,
