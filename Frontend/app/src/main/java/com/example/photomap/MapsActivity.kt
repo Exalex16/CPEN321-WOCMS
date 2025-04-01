@@ -1,7 +1,9 @@
 package com.example.photomap
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Resources
 import android.location.Geocoder
 import android.net.Uri
@@ -26,6 +28,7 @@ import androidx.core.text.HtmlCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.photomap.BuildConfig.MAPS_API_KEY
@@ -63,6 +66,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val TAG: String = "MapsActivity"
     private var addMarkerDialog: AlertDialog? = null
     private val addedPlaces = mutableListOf<Place>()
+    private val markerUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            Log.d("MapsActivity", "Received marker update broadcast")
+            for (marker in mapContent.markerList) {
+               if (marker.drawnMarker == null){
+                   val drawnMarker = mMap.addMarker(
+                       MarkerOptions()
+                           .position(LatLng(marker.lat, marker.lng))
+                           .title(marker.title)
+                           .icon(BitmapDescriptorFactory.defaultMarker(MapUtils.getHueFromColor(marker.color)))
+                   )
+                   // Assign marker tag and reference
+                   drawnMarker?.tag = marker.color
+                   marker.drawnMarker = drawnMarker
+               }
+            }
+        }
+    }
 
     private lateinit var USER_EMAIL: String
     internal lateinit var mMap: GoogleMap
@@ -80,7 +101,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var photoUploader: PhotoUploader
     lateinit var recommendationManager: RecommendationManager
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -96,7 +116,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         )
         recommendationManager = RecommendationManager(this, addedPlaces)
 
-        // Normal buttons
+        // Live update receiver
+        LocalBroadcastManager.getInstance(this)
+            .registerReceiver(markerUpdateReceiver, IntentFilter("com.yourapp.ACTION_MARKERS_UPDATED"))
 
         // Hidden Buttons
         fabActions = findViewById(R.id.fab_actions)
@@ -535,6 +557,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onDestroy() {
         addMarkerDialog?.dismiss()
         addMarkerDialog = null
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(markerUpdateReceiver)
         super.onDestroy()
     }
 }

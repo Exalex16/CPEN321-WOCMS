@@ -70,6 +70,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.photomap.MainActivity.userInfo
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineScope
@@ -186,13 +187,11 @@ class GalleryActivity : ComponentActivity() {
                         allImages.add(Pair(key, item))
                     }
                 }
-
-
-
-
                 isRefreshing = false
 
             }
+            val intent = Intent("com.yourapp.ACTION_MARKERS_UPDATED")
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
         }
 
         val pullRefreshState = rememberPullRefreshState(isRefreshing, ::refreshGallery)
