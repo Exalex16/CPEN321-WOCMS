@@ -117,7 +117,8 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
             - **Failure scenario(s)**:
                 - 2a. The system fails to retrieve marker or photo data from the backend.
                     - 2a1. An error message is displayed indicating that marker and photo data fetching has failed. 
-4. **Receive Location Recommendation** 
+
+4. **Recommendation Location** 
     - **Overview**:
         1. Receive Location Recommendation
     
@@ -137,9 +138,9 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
                 - 4a. The system encounters a server error or network issue and cannot fetch recommendations.
                     - 4a1. The system displays an error message and prompts the user to retry later.
     
-6. **Share Images** 
+5. **View Gallery** 
     - **Overview**:
-        1. View and Share  Images inside Gallery
+        1. View and Share Images inside Gallery
     
     - **Detailed Flow for Each Independent Scenario**: 
         1. **Share a Photo from Gallery**:
@@ -167,11 +168,11 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 <a name="nfr1"></a>
 
 1. **Photo Gallery Upload Speed**
-    - **Description**: The application should ensure that photo uploads to the gallery are achieved at a minimum of 10mB/s
-    - **Justification**:  According to a study of user preference on upload speed, 10mb/s is sufficient to handle photo and video upload. Regular photos are usually 4-5 mB in size, rendering 10mB/s an appropriate speed for photo upload. A slow upload experience can frustrate users and discourage them from archiving their photos efficiently. 
-2. **Photo Browsing Buffer Time**
-    - **Description**: When retrieving photos and displaying them on the screen, the buffer time should be no more than 2 seconds. 
-    - **Justification**:  Conventional photo album apps like IPhone Photos and Google Drive storage of viewing photos have small buffer windows. Long buffering time will reduce engagement and lead to impatience. We intend that when our app is fetching photo data from database, the time is short and the action swift. 
+    - **Description**: The application should ensure that photo uploads to the gallery are achieved at a minimum of 6s
+    - **Justification**:  According to a study of user preference on upload speed, 10mb/s is sufficient to handle photo and video upload. Regular photos are usually 4-5 mB in size, rendering 10mB/s an appropriate speed for photo upload. A slow upload experience can frustrate users and discourage them from archiving their photos efficiently. Therefore, for uploading more than one image to app should not take more than 6s
+2. **Recommendation Delivery Speed**
+    - **Description**: When retrieving the recommendation locations, the buffer time should be no more than 2 seconds. 
+    - **Justification**:  Companies such as Google recommend server response thresholds to be around 800 milliseconds. Hence, we determine a suitable requirement of a response time not exceeding 2 seconds, accounting for both backend server response and Places API response. 
 
 
 ## 4. Designs Specification
@@ -223,6 +224,26 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
             - **Purpose**: Convert input image to .jpg or .png format. Makesure the MIMETYPE is correct when uploading to S3
 	        - **Parameter**: input file from imageUpload method
 	        - **Return Value**: image with available type
+        9. updateImageDescription
+            - **Purpose**: Update the metadata to the photo in database
+	        - **Parameter**: filename name, user email, description, location
+	        - **Return Value**: JSON with updated full image metadata
+        10. deleteAllImagesByUser
+            - **Purpose**: Delete all images that uploaded by a user
+	        - **Parameter**: user email
+	        - **Return Value**: action result
+        11. getSharedImages
+            - **Purpose**: Get all images that shared by or with user
+	        - **Parameter**: user email
+	        - **Return Value**: JSON that contain a lists of image metadata
+        12. cancelShare
+            - **Purpose**: Remove the shared to user of an image
+	        - **Parameter**: user email, image filename
+	        - **Return Value**: action result
+        13. cancelShareForUser
+            - **Purpose**: Remove one of the shared to email from image metadata, cancel share one by one 
+	        - **Parameter**: user email, image filename, receiver email
+	        - **Return Value**: action result
 
 3. **User**
     - **Purpose**: User component is mandatory as we will store user information. This component will include all interactions directly related to the user. Also, some functions for Administrator use only.
@@ -247,10 +268,22 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
             - **Purpose**: get a list of all users from data
 	        - **Parameter**: none
 	        - **Return Value**: JSON that contains all users with their data in database  
-        6. superviseAction
-            - **Purpose**: Perform actions to the user on the supervisor’s list
-	        - **Parameter**: googleEmail, action
+        6. removeLocation
+            - **Purpose**: remove one location from the user
+	        - **Parameter**: location, user email
 	        - **Return Value**: action result  
+        7. addFriend
+            - **Purpose**: add a friend email to the user's friend list
+	        - **Parameter**: user email, receiver email
+	        - **Return Value**: action result  
+        8. deleteFriend
+            - **Purpose**: remove a friend email to the user's friend list
+	        - **Parameter**: user email, receiver email
+	        - **Return Value**: action result  
+        9. getFriends
+            - **Purpose**: remove one location from the user
+	        - **Parameter**: user gmail
+	        - **Return Value**: list of email  
 
 
 ### **4.2. Databases**
@@ -313,8 +346,8 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 ### **4.7. Non-Functional Requirements Design**
 1. [**Photo Gallery Upload Speed**](#nfr1)
     - **Validation**: We will be using AWS S3, a cloud storage that enables multiparts uploading, optimizing file transfer by splitting large files into smaller chunks. Additionally, we will introduce an option to compress images to reduce file size. 
-2. [**Data Privacy**](#nfr1)
-    - **Validation**: Photo data, such as GPS location and timestamp, will be encrypted at rest using AES-256 and in transit using TLS 1.3.(Robust encryption methods) The app will store encrypted metadata in a MongoDB database with field-level encryption, ensuring only authorized users can decrypt and view location data.
+2. [**Recommendation Delivery Speed**](#nfr1)
+    - **Validation**: We will store the user locations histories and images content tags into database and associate with correct user. Then, when we try to get hte recommendation, it will use the exist knowledge to process. This will make the entire process faster.
 
 
 ### **4.8. Main Project Complexity Design**
