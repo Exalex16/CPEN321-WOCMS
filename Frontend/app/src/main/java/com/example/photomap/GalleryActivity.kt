@@ -3,7 +3,6 @@ package com.example.photomap
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.BitmapDrawable
 
 import android.os.Bundle
 import android.util.Log
@@ -62,6 +61,7 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextFieldDefaults
@@ -563,81 +563,6 @@ class GalleryActivity : ComponentActivity() {
                                 )
                             }
                         )
-                        /*
-                        // Use ExposedDropdownMenuBox for better dropdown behavior
-                        ExposedDropdownMenuBox(
-                            expanded = expanded,
-                            onExpandedChange = { } // ✅ Prevents TextField from toggling the dropdown
-                        ) {
-                            TextField(
-                                value = userInput,
-                                onValueChange = { userInput = it },
-                                placeholder = { Text("Type email here") },
-                                singleLine = true,
-                                textStyle = TextStyle(fontSize = 16.sp),
-
-                                modifier = Modifier
-                                    .menuAnchor()
-                                    .fillMaxWidth()
-                                    .testTag("TextInputField"),
-                                readOnly = false, // ✅ Allows typing without affecting dropdown
-                                colors = TextFieldDefaults.colors(
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    disabledIndicatorColor = Color.Transparent
-                                ),
-                                trailingIcon = {
-                                    IconButton(
-                                        onClick = {
-                                            expanded = !expanded // ✅ Only the icon controls dropdown
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                            contentDescription = "Dropdown Arrow",
-                                            tint = Color.Black
-                                        )
-                                    }
-                                }
-                            )
-                            ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { }, // ✅ Clicking outside closes it
-                                modifier = Modifier.heightIn(max = 80.dp) // ✅ Limits dropdown height
-                                    .verticalScroll(rememberScrollState())
-                            ) {
-                                options.forEach { option ->
-                                    DropdownMenuItem(
-                                        text = { Text(option, fontSize = 16.sp) },
-                                        onClick = {
-                                            userInput = option // Auto-fill TextField
-                                            expanded = false // Close dropdown
-                                        },
-                                        modifier = Modifier.height(30.dp)
-                                    )
-                                }
-                                DropdownMenuItem(
-                                    text = { Text("Add Friend", fontSize = 16.sp) },
-                                    onClick = {
-                                        // Close dropdown
-                                        coroutineScope.launch {
-                                            if(!userInfo.friends.contains(userInput.trim())){
-                                                addFriendWithFeedback(
-                                                    context = context,
-                                                    userToken = userToken.toString(),
-                                                    userInput = userInput
-                                                )
-                                            }else{
-                                                Toast.makeText(context, "The person is already your friend", Toast.LENGTH_SHORT).show()
-                                            }
-                                            expanded = false
-                                        }
-                                    },
-                                    modifier = Modifier.height(30.dp)
-                                )
-                            }
-                        }
-                        */
                         Spacer(Modifier.height(10.dp))
                         Text("People with Access", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
                         Spacer(Modifier.height(10.dp))
@@ -676,33 +601,18 @@ class GalleryActivity : ComponentActivity() {
             expanded = state.expanded,
             onExpandedChange = { }
         ) {
-            TextField(
-                value = state.userInput,
-                onValueChange = state.onUserInputChange,
-                placeholder = { Text("Type email here") },
-                singleLine = true,
-                textStyle = TextStyle(fontSize = 16.sp),
+
+            Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+                .testTag("TextInputField")
+            FriendTextField(
+                state = state,
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth()
-                    .testTag("TextInputField"),
-                readOnly = false,
-                colors = TextFieldDefaults.colors(
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
-                ),
-                trailingIcon = {
-                    IconButton(onClick = { state.onExpandedChange(!state.expanded) }) {
-                        Icon(
-                            imageVector = if (state.expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                            contentDescription = "Dropdown Arrow",
-                            tint = Color.Black
-                        )
-                    }
-                }
+                    .testTag("TextInputField")
             )
-
             ExposedDropdownMenu(
                 expanded = state.expanded,
                 onDismissRequest = { },
@@ -735,16 +645,37 @@ class GalleryActivity : ComponentActivity() {
                     modifier = Modifier.height(30.dp)
                 )
             }
+
         }
     }
 
-
-
-
-
-
-
-
+    @Composable
+    fun FriendTextField(state: FriendDropdownState,
+    modifier: Modifier) {
+        TextField(
+            value = state.userInput,
+            onValueChange = state.onUserInputChange,
+            placeholder = { Text("Type email here") },
+            singleLine = true,
+            textStyle = TextStyle(fontSize = 16.sp),
+            modifier = modifier,
+            readOnly = false,
+            colors = TextFieldDefaults.colors(
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            ),
+            trailingIcon = {
+                IconButton(onClick = { state.onExpandedChange(!state.expanded) }) {
+                    Icon(
+                        imageVector = if (state.expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = "Dropdown Arrow",
+                        tint = Color.Black
+                    )
+                }
+            }
+        )
+    }
 
 
 
