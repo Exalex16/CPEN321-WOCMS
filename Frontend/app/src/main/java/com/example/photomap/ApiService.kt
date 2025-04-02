@@ -25,11 +25,20 @@ interface ApiService {
         @Part image: MultipartBody.Part,
         @Part("description") description: RequestBody,
         @Part("uploadedBy") uploader: RequestBody,
-        @Part("location") location: RequestBody,
-        @Part("sharedTo") sharedTo: RequestBody,
-        @Part("shared") shared: RequestBody,
-        @Part("sharedBy") sharedBy: RequestBody
+        @Part("location") location: RequestBody
     ): Response<UploadResponse>
+
+//    @Multipart
+//    @POST("upload")
+//    suspend fun uploadPhoto(
+//        @Part image: MultipartBody.Part,
+//        @Part("description") description: RequestBody,
+//        @Part("uploadedBy") uploader: RequestBody,
+//        @Part("location") location: RequestBody,
+//        @Part("sharedTo") sharedTo: RequestBody,
+//        @Part("shared") shared: RequestBody,
+//        @Part("sharedBy") sharedBy: RequestBody
+//    ): Response<UploadResponse>
 
     @GET("images/uploader/{email}")
     suspend fun getImagesByUser(@Path("email") email: String): Response<ResponseBody>

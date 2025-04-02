@@ -144,11 +144,18 @@ class PhotoUploader(
                     image = createImagePart(selectedImageUri!!),
                     description = "This is a test description".toRequestBody("text/plain".toMediaTypeOrNull()),
                     uploader = userEmail.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    location = locationBody,
-                    sharedTo = "[]".toRequestBody("application/json".toMediaTypeOrNull()),
-                    shared = "false".toRequestBody("text/plain".toMediaTypeOrNull()),
-                    sharedBy = "".toRequestBody("text/plain".toMediaTypeOrNull())
+                    location = locationBody
                 )
+
+//                val response = RetrofitClient.api.uploadPhoto(
+//                    image = createImagePart(selectedImageUri!!),
+//                    description = "This is a test description".toRequestBody("text/plain".toMediaTypeOrNull()),
+//                    uploader = userEmail.toRequestBody("text/plain".toMediaTypeOrNull()),
+//                    location = locationBody,
+//                    sharedTo = "[]".toRequestBody("application/json".toMediaTypeOrNull()),
+//                    shared = "false".toRequestBody("text/plain".toMediaTypeOrNull()),
+//                    sharedBy = "".toRequestBody("text/plain".toMediaTypeOrNull())
+//                )
 
                 if (response.isSuccessful) {
                     val uploadData = response.body()

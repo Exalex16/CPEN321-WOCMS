@@ -236,18 +236,13 @@ class ShareImageTest{
             put("icon", "Red")
         }.toString()
         val location = locationJson.toRequestBody("application/json".toMediaTypeOrNull())
-        val sharedTo =  "[]".toRequestBody("application/json".toMediaTypeOrNull())
-        val shared = "false".toRequestBody("text/plain".toMediaTypeOrNull())
-        val sharedBy =  "".toRequestBody("text/plain".toMediaTypeOrNull())
         val imagePart = createImagePartFromResource(context,fakeUri!!)
 
          val response = RetrofitClient.api.uploadPhoto(image=imagePart,
             description = description,
-            uploader=uploader,
-            location =location,
-            sharedTo = sharedTo,
-            shared = shared,
-            sharedBy = sharedBy)
+            uploader = uploader,
+            location = location,
+         )
 
         Log.d("UploadTest", "Upload successful: ${response.body()}")
         return response
