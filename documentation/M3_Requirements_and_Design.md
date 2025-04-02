@@ -30,11 +30,15 @@ therefore the ban algorithm is not implement yet. Therefore, the main actor of o
 7. Add new framework: AWS Route 53, and External Modules (2.20.2024)
 
 8. Clarified and modified use cases: View Map Info, Upload Photos, Receive Recommendation. 
-- Past descriptors misaligned with our vision during development, and we incorporated concrete tests to test for specific behavior. (3.18)
+    - Past descriptors misaligned with our vision during development, and we incorporated concrete tests to test for specific behavior. (3.18)
+
+9. Renamed usecase "Recommend Locations" to "Explore Locations of Interest" (3.30)
+    - New name better reflects the functionality of use case 
+
 
 
 ## 2. Project Description
-PhotoMap: Personalized map-based photography assistant and archive. Users can upload photos and have them displayed on the map, at the same location where the photo was taken. It will also provide recommendation information about based on user prefer locations
+PhotoMap: Personalized map-based photography assistant and archive. Users can upload photos and have them displayed on the map, at the same location where the photo was taken. Uses can view their uploaded photos and navigate between their location markers on the map. PhotoMap will also provide recommendation information about potential locations of interest, based on the geographical data of location-markers and user's photo history. 
 
 
 ## 3. Requirements Specification
@@ -43,9 +47,7 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 <img src="images/use_case.drawio.png" alt="Alt text" width="500">
 
 ### **3.2. Actors Description**
-1. **Indie photographers (User)**: take photos and update locations with photos; receive recommendation of users with similar photo taken, as well as locations with potentially interesting photos. 
-2. **Secondary - Administrator**: supervisor who ensures app and information follow standards; can ban improper information and user
-
+1. **Indie photographers (User)**: take photos and update locations with photos; receive recommendation of places of interests, as well as sharing their photos for other photos. 
 
 ### **3.3. Functional Requirements**
 <a name="fr1"></a>
@@ -76,7 +78,7 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
     - **Detailed Flow for Each Independent Scenario**:
 
         1. **Create Marker**:
-            - **Description**: The user creates a marker, pinpointing a location  on the map. They can use this loaction marker to upload and view their photos
+            - **Description**: The user creates a marker, pinpointing a location  on the map. They can use this location marker to upload and view their photos
             - **Primary actor(s)**: User
             - **Main success scenario**:
                 - 1.The user clicks on any non-marker-occupied location on the map. A form appears prompting the user to fill in marker info.
@@ -118,13 +120,13 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
                 - 2a. The system fails to retrieve marker or photo data from the backend.
                     - 2a1. An error message is displayed indicating that marker and photo data fetching has failed. 
 
-4. **Recommendation Location** 
+4. **Explore Locations of Interest** 
     - **Overview**:
         1. Receive Location Recommendation
     
     - **Detailed Flow for Each Independent Scenario**: 
         1. **Receive Location Recommendation**:
-            - **Description**: The system provides location recommendations based on previously uploaded photos and marker density. Once the "Recommend" button is clikced, the user receives a summary of their major photo themes and most active locations. The recommendation also includes a list of locations matching the user's preferences.
+            - **Description**: The system provides location recommendations based on previously uploaded photos and marker density. Once the "Recommend" button is clicked, the user receives a summary of their major photo themes and most active locations. The recommendation also includes a list of locations matching the user's preferences.
             - **Primary actor(s)**: User
             - **Main success scenario**:
                 - 1.The user clicks the button "Popular Location Notification"
@@ -397,3 +399,5 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 - Alex Cheng: Generating Sequence diagram and dependencies diagram. Modifying component's interface. Generating complexity
 - Ray Yu: Generating components, and database, external modules, and frameworks
 - Jiashu Long: Creating main actors, functional requirements and non-functional requirements. Also generating use-case diagram
+
+
