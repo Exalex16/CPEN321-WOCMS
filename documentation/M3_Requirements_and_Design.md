@@ -401,3 +401,8 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 - Jiashu Long: Creating main actors, functional requirements and non-functional requirements. Also generating use-case diagram
 
 
+
+
+
+
+    
