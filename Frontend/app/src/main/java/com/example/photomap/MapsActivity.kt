@@ -203,16 +203,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    fun showUserCenterOverlay(composeView: ComposeView) {
-        composeView.setContent {
-            UserCenterOverlay(
-                context = LocalContext.current,
-                showOverlay = true,
-                onClose = { composeView.visibility = View.GONE }
-            )
-        }
-        composeView.visibility = View.VISIBLE
-    }
+
 
     /**
      * Manipulates the map once available.
