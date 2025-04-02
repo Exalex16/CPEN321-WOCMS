@@ -400,3 +400,4 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 - Ray Yu: Generating components, and database, external modules, and frameworks
 - Jiashu Long: Creating main actors, functional requirements and non-functional requirements. Also generating use-case diagram
 
+
