@@ -113,3 +113,54 @@ suspend fun cancelShareWithFeedback(
         }
     }
 }
+
+
+suspend fun addFriendWithFeedback(
+    context: Context,
+    userToken: String,
+    userInput: String
+) {
+    try {
+
+        val response = RetrofitClient.apiUser.addFriend(
+            addFriendRequest(
+                googleEmail = userToken.trim(), // Get current image URL
+                friendEmail = userInput.trim() // Use user input as description
+            )
+        )
+
+        if (response.isSuccessful) {
+            Log.d("DialogInput", "API Success: ${response.body()?.string()}")
+            MainActivity.userInfo.friends.add(userInput.trim())
+            Log.d("friends", MainActivity.userInfo.friends.toString())
+            withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
+                Toast.makeText(context, "Friend is successfully added", Toast.LENGTH_SHORT).show()
+            }
+
+
+        } else {
+            Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
+            withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
+                Toast.makeText(context, "Invalid Input. Please Enter the correct user email", Toast.LENGTH_SHORT).show()
+            }
+
+        }
+    }catch (e: HttpException) {
+        Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
+        withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
+            Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+        }
+
+    } catch (e: JsonParseException) {
+        Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
+        withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
+            Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+        }
+
+    } catch (e: IOException) {
+        Log.e("DialogInput", "Network Error: ${e.message}") // ✅ Handles internet connection failures
+        withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
+            Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
+        }
+    }
+}

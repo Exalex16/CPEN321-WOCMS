@@ -158,6 +158,7 @@ class GalleryActivity : ComponentActivity() {
 
                 if(friendsResponse.isSuccessful && friendsResponse.body() != null){
                     val friendsList = JSONObject(friendsResponse.body()!!.string()).optJSONArray("friends") ?: JSONArray()
+                    userInfo.friends.clear()
                     for(i in 0 until friendsList.length()){
                         userInfo.friends.add(friendsList.optString(i))
                     }
@@ -545,116 +546,21 @@ class GalleryActivity : ComponentActivity() {
 
                         Spacer(Modifier.height(6.dp))
 
-                        // Use ExposedDropdownMenuBox for better dropdown behavior
-                        ExposedDropdownMenuBox(
+                        FriendDropdownMenu(
+                            userInput = userInput,
+                            onUserInputChange = { userInput = it },
                             expanded = expanded,
-                            onExpandedChange = { } // ✅ Prevents TextField from toggling the dropdown
-                        ) {
-                            TextField(
-                                value = userInput,
-                                onValueChange = { userInput = it },
-                                placeholder = { Text("Type email here") },
-                                singleLine = true,
-                                textStyle = TextStyle(fontSize = 16.sp),
-
-                                modifier = Modifier
-                                    .menuAnchor()
-                                    .fillMaxWidth()
-                                    .testTag("TextInputField"),
-                                readOnly = false, // ✅ Allows typing without affecting dropdown
-                                colors = TextFieldDefaults.colors(
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    disabledIndicatorColor = Color.Transparent
-                                ),
-                                trailingIcon = {
-                                    IconButton(
-                                        onClick = {
-                                            expanded = !expanded // ✅ Only the icon controls dropdown
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                                            contentDescription = "Dropdown Arrow",
-                                            tint = Color.Black
-                                        )
-                                    }
-                                }
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { }, // ✅ Clicking outside closes it
-                                modifier = Modifier.heightIn(max = 80.dp) // ✅ Limits dropdown height
-                                    .verticalScroll(rememberScrollState())
-                            ) {
-                                options.forEach { option ->
-                                    DropdownMenuItem(
-                                        text = { Text(option, fontSize = 16.sp) },
-                                        onClick = {
-                                            userInput = option // Auto-fill TextField
-                                            expanded = false // Close dropdown
-                                        },
-                                        modifier = Modifier.height(30.dp)
-                                    )
-                                }
-                                DropdownMenuItem(
-                                    text = { Text("Add Friend", fontSize = 16.sp) },
-                                    onClick = {
-                                        // Close dropdown
-
-                                        coroutineScope.launch {
-                                            try {
-                                                val response = RetrofitClient.apiUser.addFriend(
-                                                    addFriendRequest(
-                                                        googleEmail = userToken.toString().trim(), // Get current image URL
-                                                        friendEmail = userInput.trim() // Use user input as description
-                                                    )
-                                                )
-
-                                                if (response.isSuccessful) {
-                                                    Log.d("DialogInput", "API Success: ${response.body()?.string()}")
-                                                    MainActivity.userInfo.friends.add(userInput.trim())
-                                                    Log.d("friends", MainActivity.userInfo.friends.toString())
-                                                    withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                                        Toast.makeText(context, "Friend is successfully added", Toast.LENGTH_SHORT).show()
-                                                    }
-
-
-                                                } else {
-                                                    Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
-                                                    withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                                        Toast.makeText(context, "Invalid Input. Please Enter the correct user email", Toast.LENGTH_SHORT).show()
-                                                    }
-
-                                                }
-                                            }catch (e: HttpException) {
-                                                Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}") // ✅ Handles HTTP errors
-                                                withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                                    Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-                                                }
-
-                                            } catch (e: JsonParseException) {
-                                                Log.e("DialogInput", "JSON Parsing Error: ${e.message}") // ✅ Handles malformed JSON responses
-                                                withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                                    Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-                                                }
-
-                                            } catch (e: IOException) {
-                                                Log.e("DialogInput", "Network Error: ${e.message}") // ✅ Handles internet connection failures
-                                                withContext(Dispatchers.Main) { // ✅ Ensure Toast runs on the main thread
-                                                    Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-                                                }
-                                            }
-                                            expanded = false
-                                        }
-                                    },
-                                    modifier = Modifier.height(30.dp)
+                            onExpandedChange = { expanded = it },
+                            context = context,
+                            coroutineScope = coroutineScope,
+                            onAddFriend = {
+                                addFriendWithFeedback(
+                                    context = context,
+                                    userToken = userToken.toString(),
+                                    userInput = userInput
                                 )
                             }
-                        }
-
-
+                        )
                         Spacer(Modifier.height(10.dp))
                         Text("People with Access", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
                         Spacer(Modifier.height(10.dp))
@@ -680,6 +586,86 @@ class GalleryActivity : ComponentActivity() {
                     }
                 }
             }
+    }
+
+
+    @Composable
+    fun FriendDropdownMenu(
+        userInput: String,
+        onUserInputChange: (String) -> Unit,
+        expanded: Boolean,
+        onExpandedChange: (Boolean) -> Unit,
+        context: Context,
+        coroutineScope: CoroutineScope,
+        onAddFriend: suspend () -> Unit
+    ) {
+        val options = userInfo.friends
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { }
+        ) {
+            TextField(
+                value = userInput,
+                onValueChange = onUserInputChange,
+                placeholder = { Text("Type email here") },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 16.sp),
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .testTag("TextInputField"),
+                readOnly = false,
+                colors = TextFieldDefaults.colors(
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                ),
+                trailingIcon = {
+                    IconButton(onClick = { onExpandedChange(!expanded) }) {
+                        Icon(
+                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            contentDescription = "Dropdown Arrow",
+                            tint = Color.Black
+                        )
+                    }
+                }
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = {  },
+                modifier = Modifier
+                    .heightIn(max = 80.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option, fontSize = 16.sp) },
+                        onClick = {
+                            onUserInputChange(option)
+                            onExpandedChange(false)
+                        },
+                        modifier = Modifier.height(30.dp)
+                    )
+                }
+
+                DropdownMenuItem(
+                    text = { Text("Add Friend", fontSize = 16.sp) },
+                    onClick = {
+                        coroutineScope.launch {
+                            if (!MainActivity.userInfo.friends.contains(userInput.trim())) {
+                                onAddFriend()
+                            } else {
+                                Toast.makeText(context, "The person is already your friend", Toast.LENGTH_SHORT).show()
+                            }
+                            onExpandedChange(false)
+                        }
+                    },
+                    modifier = Modifier.height(30.dp)
+                )
+            }
+        }
     }
 
     @Composable
