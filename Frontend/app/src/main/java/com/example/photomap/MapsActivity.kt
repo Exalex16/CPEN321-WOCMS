@@ -443,7 +443,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         // Delete each photo in the list
                         for (photo in photos) {
                             try {
-                                deleteImage(photo.fileName)
+                                if(photo.sharedBy.equals("null") || photo.sharedBy.equals(USER_EMAIL)){
+                                    deleteImage(photo.fileName)
+                                }else{
+                                    RetrofitClient.api.cancelShare(
+                                        cancelShareRequest(
+                                            imageKey = photo.fileName,
+                                            recipientEmail = USER_EMAIL,
+                                            senderEmail = photo.sharedBy.toString()
+                                        )
+                                    )
+                                }
                             } catch (e: IOException) {
                                 e.printStackTrace()
                                 Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_SHORT).show()
