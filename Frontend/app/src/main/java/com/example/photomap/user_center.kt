@@ -4,9 +4,8 @@ package com.example.photomap
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
+import android.view.View
 import androidx.activity.compose.BackHandler
-import androidx.appcompat.app.AppCompatActivity.MODE_PRIVATE
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -18,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -38,6 +39,17 @@ fun UserCenterOverlay(
     }
 }
 
+
+fun showUserCenterOverlay(composeView: ComposeView) {
+    composeView.setContent {
+        UserCenterOverlay(
+            context = LocalContext.current,
+            showOverlay = true,
+            onClose = { composeView.visibility = View.GONE }
+        )
+    }
+    composeView.visibility = View.VISIBLE
+}
 
 @Composable
 fun UserCenterContent(
