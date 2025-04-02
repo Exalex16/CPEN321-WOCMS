@@ -11,7 +11,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,7 +62,6 @@ import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextFieldDefaults
@@ -139,6 +137,7 @@ class GalleryActivity : ComponentActivity() {
                 allImages.add(Pair(key, item))
             }
         }
+        val context = LocalContext.current
 
         fun refreshGallery() {
             refreshScope.launch {
@@ -164,9 +163,17 @@ class GalleryActivity : ComponentActivity() {
                 val isPhotoResponseValid = photoResponse.isSuccessful && photoResponse.body() != null
                 val isMarkerResponseValid = markerResponse.isSuccessful && markerResponse.body() != null
                 if(isPhotoResponseValid && isMarkerResponseValid){
+                    for (marker in MainActivity.mapContent.markerList) {
+                        marker.drawnMarker!!.remove()
+                        marker.drawnMarker = null
+                    }
                     mapContentInit(photoResponse,markerResponse)
                 }
                 Log.d("Gallery", "Refresh triggered")
+                Log.d("Gallery", MainActivity.mapContent.markerList.toString())
+                Log.d("Gallery", MainActivity.mapContent.imageList.toString())
+
+
                 imageGroups.clear()
                 for(i in 0 until MainActivity.mapContent.markerList.size){
                     if(MainActivity.mapContent.markerList[i].photoAtCurrentMarker.size != 0){
@@ -184,9 +191,10 @@ class GalleryActivity : ComponentActivity() {
                     }
                 }
                 isRefreshing = false
+                val intent = Intent("com.yourapp.ACTION_MARKERS_UPDATED")
+                LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
             }
-            val intent = Intent("com.yourapp.ACTION_MARKERS_UPDATED")
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+
         }
 
         val pullRefreshState = rememberPullRefreshState(isRefreshing, ::refreshGallery)

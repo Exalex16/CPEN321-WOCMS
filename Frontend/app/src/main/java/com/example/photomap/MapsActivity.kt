@@ -69,19 +69,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val markerUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("MapsActivity", "Received marker update broadcast")
-            for (marker in mapContent.markerList) {
-               if (marker.drawnMarker == null){
-                   val drawnMarker = mMap.addMarker(
-                       MarkerOptions()
-                           .position(LatLng(marker.lat, marker.lng))
-                           .title(marker.title)
-                           .icon(BitmapDescriptorFactory.defaultMarker(MapUtils.getHueFromColor(marker.color)))
-                   )
-                   // Assign marker tag and reference
-                   drawnMarker?.tag = marker.color
-                   marker.drawnMarker = drawnMarker
-               }
-            }
+            Log.d("MapsActivity", mapContent.markerList.toString())
+            loadMarkers()
+            markerAdapter.refreshMarkerList(mapContent.markerList)
         }
     }
 
@@ -311,6 +301,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     //Load Markers
     private fun loadMarkers() {
         // Add saved markers to map
+        Log.d("MapsActivity", "LoadMarkerTrigger")
+        Log.d("MapsActivity", mapContent.markerList.toString())
         for (marker in mapContent.markerList) {
             val position = LatLng(marker.lat, marker.lng)
 
