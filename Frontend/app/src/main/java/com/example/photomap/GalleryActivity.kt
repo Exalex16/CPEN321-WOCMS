@@ -83,6 +83,8 @@ import java.io.IOException
 
 
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 class GalleryActivity : ComponentActivity() {
 
@@ -307,6 +309,9 @@ class GalleryActivity : ComponentActivity() {
 
 
 
+
+
+
     @SuppressLint("UnrememberedMutableState")
     @Composable
     fun FullScreenImageViewer(images: List<Pair<MarkerInstance,PhotoInstance>>, startIndex: Int, onDismiss: () -> Unit) {
@@ -353,7 +358,15 @@ class GalleryActivity : ComponentActivity() {
                              // Makes image take most of the space
                     )
 
+                    ImageMetadataRow(
+                        page = page,
+                        userToken = userToken,
+                        images = images,
+                        showDialog = showDialog
+                    )
+
                     // Row of Text (Directly Below Image)
+                    /*
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -387,7 +400,6 @@ class GalleryActivity : ComponentActivity() {
                                 )
                             }
                         }
-
                         // Second Column (Right Side)
                         Column(
                             modifier = Modifier
@@ -416,6 +428,7 @@ class GalleryActivity : ComponentActivity() {
                             }
                         }
                     }
+                    */
                 }
             }
         }
@@ -430,6 +443,80 @@ class GalleryActivity : ComponentActivity() {
             }
         }
     }
+
+
+
+    @Composable
+    fun ImageMetadataRow(
+        page: Int,
+        userToken: String?,
+        images: List<Pair<MarkerInstance, PhotoInstance>>,
+        showDialog: MutableState<Boolean>
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Black)
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // First Column (Left Side)
+            Column(
+                modifier = Modifier
+                    .weight(4f) // Takes up available space
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = "Marker: ${images[page].first.title}",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+
+                )
+                Text(
+                    text = "Location: ${images[page].first.location}",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+                if(!(images[page].second.sharedBy.equals("null") || images[page].second.sharedBy.equals(userToken))){
+                    Text(
+                        text = "SharedBy: ${images[page].second.sharedBy}",
+                        color = Color.Gray,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+            // Second Column (Right Side)
+            Column(
+                modifier = Modifier
+                    .weight(1f) // Takes up available space
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.End // Aligns content to the right
+            ) {
+                if(!images[page].second.shared || (images[page].second.shared && images[page].second.sharedBy.equals(userToken))){
+                    Button(
+                        onClick = {
+                            Log.d("Gallery", "Icon Button Clicked")
+                            showDialog.value = true
+
+                        },
+                        modifier = Modifier.size(64.dp).testTag("IconButton"), // Adjust size as needed
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent
+                        )
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.share), // Replace with actual drawable name
+                            contentDescription = "Button Icon",
+                            modifier = Modifier.fillMaxSize() // Adjust icon size as needed
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+
 
 
     @Composable
@@ -576,7 +663,9 @@ class GalleryActivity : ComponentActivity() {
                         Button(
                             onClick = {
                                 coroutineScope.launch {
-                                    shareImageWithFeedback(context, userInput, images,pagerState.currentPage)
+                                    shareImageWithFeedback(context, userInput, images,pagerState.currentPage,
+                                        userToken.toString()
+                                    )
                                 }
                                 showDialog.value = false
                             },
@@ -634,7 +723,7 @@ class GalleryActivity : ComponentActivity() {
                             IconButton(
                                 onClick = {
                                     coroutineScope.launch {
-                                        cancelShareWithFeedback(context, selectedIndex.value!!, images, pagerState.currentPage)
+                                        cancelShareWithFeedback(context, selectedIndex.value!!, images, pagerState.currentPage, userToken.toString())
                                         selectedIndex.value = null
                                     }
                                 },
@@ -651,107 +740,6 @@ class GalleryActivity : ComponentActivity() {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    private suspend fun shareImageWithFeedback(
-        context: Context,
-        userInput: String,
-        images: List<Pair<MarkerInstance, PhotoInstance>>,
-        currentPage: Int
-    ) {
-        try {
-            Log.d("Gallery", userToken.toString().trim())
-            Log.d("Gallery", userInput.trim())
-            val response = RetrofitClient.api.shareImage(
-                ShareImageRequest(
-                    recipientEmail = userInput.trim(),
-                    imageKey = images[currentPage].second.fileName,
-                    senderEmail = userToken.toString().trim()
-                )
-            )
-
-            if (response.isSuccessful) {
-                Log.d("DialogInput", "API Success: ${response.body()?.string()}")
-                images[currentPage].second.sharedTo.add(userInput.trim())
-                images[currentPage].second.shared = true
-                images[currentPage].second.sharedBy = userToken.toString().trim()
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Image is shared successfully", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "The email you entered is invalid", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } catch (e: HttpException) {
-            Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}")
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: JsonParseException) {
-            Log.e("DialogInput", "JSON Parsing Error: ${e.message}")
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: IOException) {
-            Log.e("DialogInput", "Unexpected Error: ${e.message}")
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-
-
-    private suspend fun cancelShareWithFeedback(
-        context: Context,
-        index: Int,
-        images: List<Pair<MarkerInstance, PhotoInstance>>,
-        currentPage: Int
-    ) {
-        try {
-            Log.d("Gallery", userToken.toString().trim())
-            val response = RetrofitClient.api.cancelShare(
-                cancelShareRequest(
-                    imageKey = images[currentPage].second.fileName,
-                    recipientEmail = images[currentPage].second.sharedTo[index],
-                    senderEmail = userToken.toString().trim()
-                )
-            )
-
-            if (response.isSuccessful) {
-                Log.d("DialogInput", "API Success: ${response.body()?.string()}")
-                images[currentPage].second.sharedTo.removeAt(index)
-                images[currentPage].second.shared = true
-                images[currentPage].second.sharedBy = userToken.toString().trim()
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Share is canceled successfully", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Log.e("DialogInput", "API Error: ${response.errorBody()?.string()}")
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Share is canceled unsuccessfully", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } catch (e: HttpException) {
-            Log.e("DialogInput", "API Error ${e.code()}: ${e.message()}")
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: JsonParseException) {
-            Log.e("DialogInput", "JSON Parsing Error: ${e.message}")
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: IOException) {
-            Log.e("DialogInput", "Unexpected Error: ${e.message}")
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Server Error. Please try again later", Toast.LENGTH_SHORT).show()
             }
         }
     }
