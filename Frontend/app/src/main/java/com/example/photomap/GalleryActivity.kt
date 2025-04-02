@@ -545,22 +545,79 @@ class GalleryActivity : ComponentActivity() {
 
 
                         Spacer(Modifier.height(6.dp))
-
-                        FriendDropdownMenu(
-                            userInput = userInput,
-                            onUserInputChange = { userInput = it },
+                        // Use ExposedDropdownMenuBox for better dropdown behavior
+                        ExposedDropdownMenuBox(
                             expanded = expanded,
-                            onExpandedChange = { expanded = it },
-                            context = context,
-                            coroutineScope = coroutineScope,
-                            onAddFriend = {
-                                addFriendWithFeedback(
-                                    context = context,
-                                    userToken = userToken.toString(),
-                                    userInput = userInput
+                            onExpandedChange = { } // ✅ Prevents TextField from toggling the dropdown
+                        ) {
+                            TextField(
+                                value = userInput,
+                                onValueChange = { userInput = it },
+                                placeholder = { Text("Type email here") },
+                                singleLine = true,
+                                textStyle = TextStyle(fontSize = 16.sp),
+
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth()
+                                    .testTag("TextInputField"),
+                                readOnly = false, // ✅ Allows typing without affecting dropdown
+                                colors = TextFieldDefaults.colors(
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent
+                                ),
+                                trailingIcon = {
+                                    IconButton(
+                                        onClick = {
+                                            expanded = !expanded // ✅ Only the icon controls dropdown
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                                            contentDescription = "Dropdown Arrow",
+                                            tint = Color.Black
+                                        )
+                                    }
+                                }
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { }, // ✅ Clicking outside closes it
+                                modifier = Modifier.heightIn(max = 80.dp) // ✅ Limits dropdown height
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                options.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option, fontSize = 16.sp) },
+                                        onClick = {
+                                            userInput = option // Auto-fill TextField
+                                            expanded = false // Close dropdown
+                                        },
+                                        modifier = Modifier.height(30.dp)
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = { Text("Add Friend", fontSize = 16.sp) },
+                                    onClick = {
+                                        // Close dropdown
+                                        coroutineScope.launch {
+                                            if(!userInfo.friends.contains(userInput.trim())){
+                                                addFriendWithFeedback(
+                                                    context = context,
+                                                    userToken = userToken.toString(),
+                                                    userInput = userInput
+                                                )
+                                            }else{
+                                                Toast.makeText(context, "The person is already your friend", Toast.LENGTH_SHORT).show()
+                                            }
+                                            expanded = false
+                                        }
+                                    },
+                                    modifier = Modifier.height(30.dp)
                                 )
                             }
-                        )
+                        }
                         Spacer(Modifier.height(10.dp))
                         Text("People with Access", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
                         Spacer(Modifier.height(10.dp))
@@ -589,84 +646,14 @@ class GalleryActivity : ComponentActivity() {
     }
 
 
-    @Composable
-    fun FriendDropdownMenu(
-        userInput: String,
-        onUserInputChange: (String) -> Unit,
-        expanded: Boolean,
-        onExpandedChange: (Boolean) -> Unit,
-        context: Context,
-        coroutineScope: CoroutineScope,
-        onAddFriend: suspend () -> Unit
-    ) {
-        val options = userInfo.friends
 
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { }
-        ) {
-            TextField(
-                value = userInput,
-                onValueChange = onUserInputChange,
-                placeholder = { Text("Type email here") },
-                singleLine = true,
-                textStyle = TextStyle(fontSize = 16.sp),
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
-                    .testTag("TextInputField"),
-                readOnly = false,
-                colors = TextFieldDefaults.colors(
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
-                ),
-                trailingIcon = {
-                    IconButton(onClick = { onExpandedChange(!expanded) }) {
-                        Icon(
-                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                            contentDescription = "Dropdown Arrow",
-                            tint = Color.Black
-                        )
-                    }
-                }
-            )
 
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = {  },
-                modifier = Modifier
-                    .heightIn(max = 80.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option, fontSize = 16.sp) },
-                        onClick = {
-                            onUserInputChange(option)
-                            onExpandedChange(false)
-                        },
-                        modifier = Modifier.height(30.dp)
-                    )
-                }
 
-                DropdownMenuItem(
-                    text = { Text("Add Friend", fontSize = 16.sp) },
-                    onClick = {
-                        coroutineScope.launch {
-                            if (!MainActivity.userInfo.friends.contains(userInput.trim())) {
-                                onAddFriend()
-                            } else {
-                                Toast.makeText(context, "The person is already your friend", Toast.LENGTH_SHORT).show()
-                            }
-                            onExpandedChange(false)
-                        }
-                    },
-                    modifier = Modifier.height(30.dp)
-                )
-            }
-        }
-    }
+
+
+
+
+
 
     @Composable
     fun SharedUserList(
