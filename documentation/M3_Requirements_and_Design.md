@@ -338,11 +338,6 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
 <!-- ![SEQUENCE_DIAGRAM_HERE](images/Share_Galleries.drawio.png) -->
 <img src="images/Share_Galleries.drawio.png" alt="Alt text" width="500">
 
-6. [**Supervise Account**](#fr1)
-<!-- ![SEQUENCE_DIAGRAM_HERE](images/Supervise_Account.drawio.png) -->
-<img src="images/Supervise_Account.drawio.png" alt="Alt text" width="500">
-
-
 ### **4.7. Non-Functional Requirements Design**
 1. [**Photo Gallery Upload Speed**](#nfr1)
     - **Validation**: We will be using AWS S3, a cloud storage that enables multiparts uploading, optimizing file transfer by splitting large files into smaller chunks. Additionally, we will introduce an option to compress images to reduce file size. 
