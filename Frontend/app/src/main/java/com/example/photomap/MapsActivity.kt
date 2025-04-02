@@ -69,19 +69,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val markerUpdateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("MapsActivity", "Received marker update broadcast")
-            for (marker in mapContent.markerList) {
-               if (marker.drawnMarker == null){
-                   val drawnMarker = mMap.addMarker(
-                       MarkerOptions()
-                           .position(LatLng(marker.lat, marker.lng))
-                           .title(marker.title)
-                           .icon(BitmapDescriptorFactory.defaultMarker(MapUtils.getHueFromColor(marker.color)))
-                   )
-                   // Assign marker tag and reference
-                   drawnMarker?.tag = marker.color
-                   marker.drawnMarker = drawnMarker
-               }
-            }
+            Log.d("MapsActivity", mapContent.markerList.toString())
+            loadMarkers()
+            markerAdapter.refreshMarkerList(mapContent.markerList)
         }
     }
 
@@ -213,16 +203,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    fun showUserCenterOverlay(composeView: ComposeView) {
-        composeView.setContent {
-            UserCenterOverlay(
-                context = LocalContext.current,
-                showOverlay = true,
-                onClose = { composeView.visibility = View.GONE }
-            )
-        }
-        composeView.visibility = View.VISIBLE
-    }
+
 
     /**
      * Manipulates the map once available.
@@ -311,6 +292,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     //Load Markers
     private fun loadMarkers() {
         // Add saved markers to map
+        Log.d("MapsActivity", "LoadMarkerTrigger")
+        Log.d("MapsActivity", mapContent.markerList.toString())
         for (marker in mapContent.markerList) {
             val position = LatLng(marker.lat, marker.lng)
 
@@ -451,7 +434,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         // Delete each photo in the list
                         for (photo in photos) {
                             try {
-                                deleteImage(photo.fileName)
+                                if(photo.sharedBy.equals("null") || photo.sharedBy.equals(USER_EMAIL)){
+                                    deleteImage(photo.fileName)
+                                }else{
+                                    RetrofitClient.api.cancelShare(
+                                        cancelShareRequest(
+                                            imageKey = photo.fileName,
+                                            recipientEmail = USER_EMAIL,
+                                            senderEmail = photo.sharedBy.toString()
+                                        )
+                                    )
+                                }
                             } catch (e: IOException) {
                                 e.printStackTrace()
                                 Toast.makeText(this@MapsActivity, "Network error, please check your connection.", Toast.LENGTH_SHORT).show()
