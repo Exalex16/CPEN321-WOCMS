@@ -27,10 +27,7 @@ import com.example.photomap.MarkerInstance
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import retrofit2.Response
-import java.io.InputStream
 import com.example.photomap.RetrofitClient
-import retrofit2.http.DELETE
-import retrofit2.http.Path
 import java.time.Instant
 
 

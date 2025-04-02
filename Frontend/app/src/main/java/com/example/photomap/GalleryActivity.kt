@@ -517,9 +517,6 @@ class GalleryActivity : ComponentActivity() {
         }
     }
 
-
-
-
     @Composable
     fun DialogController(images: List<Pair<MarkerInstance,PhotoInstance>>, pagerState: PagerState,coroutineScope: CoroutineScope, showDialog: MutableState<Boolean>) {
         val context = LocalContext.current
@@ -542,9 +539,31 @@ class GalleryActivity : ComponentActivity() {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Spacer(Modifier.height(8.dp))
                         Text("Share Photo", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
-
-
                         Spacer(Modifier.height(6.dp))
+
+
+
+                        val dropdownState = FriendDropdownState(
+                            userInput = userInput,
+                            onUserInputChange = { userInput = it },
+                            expanded = expanded,
+                            onExpandedChange = { expanded = it },
+                            context = context,
+                            coroutineScope = coroutineScope,
+                            userToken = userToken.toString()
+                        )
+
+                        FriendDropdownMenu(
+                            state = dropdownState,
+                            onAddFriend = {
+                                addFriendWithFeedback(
+                                    context = context,
+                                    userToken = userToken.toString(),
+                                    userInput = userInput
+                                )
+                            }
+                        )
+                        /*
                         // Use ExposedDropdownMenuBox for better dropdown behavior
                         ExposedDropdownMenuBox(
                             expanded = expanded,
@@ -618,6 +637,7 @@ class GalleryActivity : ComponentActivity() {
                                 )
                             }
                         }
+                        */
                         Spacer(Modifier.height(10.dp))
                         Text("People with Access", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.Start))
                         Spacer(Modifier.height(10.dp))
@@ -643,6 +663,79 @@ class GalleryActivity : ComponentActivity() {
                     }
                 }
             }
+    }
+
+
+    @Composable
+    fun FriendDropdownMenu(
+        state: FriendDropdownState,
+        onAddFriend: suspend () -> Unit
+    ) {
+        val options = userInfo.friends
+        ExposedDropdownMenuBox(
+            expanded = state.expanded,
+            onExpandedChange = { }
+        ) {
+            TextField(
+                value = state.userInput,
+                onValueChange = state.onUserInputChange,
+                placeholder = { Text("Type email here") },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 16.sp),
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .testTag("TextInputField"),
+                readOnly = false,
+                colors = TextFieldDefaults.colors(
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                ),
+                trailingIcon = {
+                    IconButton(onClick = { state.onExpandedChange(!state.expanded) }) {
+                        Icon(
+                            imageVector = if (state.expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            contentDescription = "Dropdown Arrow",
+                            tint = Color.Black
+                        )
+                    }
+                }
+            )
+
+            ExposedDropdownMenu(
+                expanded = state.expanded,
+                onDismissRequest = { },
+                modifier = Modifier
+                    .heightIn(max = 80.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option, fontSize = 16.sp) },
+                        onClick = {
+                            state.onUserInputChange(option)
+                            state.onExpandedChange(false)
+                        },
+                        modifier = Modifier.height(30.dp)
+                    )
+                }
+                DropdownMenuItem(
+                    text = { Text("Add Friend", fontSize = 16.sp) },
+                    onClick = {
+                        state.coroutineScope.launch {
+                            if (!MainActivity.userInfo.friends.contains(state.userInput.trim())) {
+                                onAddFriend()
+                            } else {
+                                Toast.makeText(state.context, "The person is already your friend", Toast.LENGTH_SHORT).show()
+                            }
+                            state.onExpandedChange(false)
+                        }
+                    },
+                    modifier = Modifier.height(30.dp)
+                )
+            }
+        }
     }
 
 

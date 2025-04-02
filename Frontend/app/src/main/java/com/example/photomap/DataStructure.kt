@@ -1,5 +1,6 @@
 package com.example.photomap
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +10,7 @@ import java.time.Instant
 import com.bumptech.glide.Glide
 import com.google.android.gms.maps.model.Marker
 import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.CoroutineScope
 
 
 class GalleryAdapter(
@@ -157,6 +159,15 @@ data class cancelShareRequest(
     val recipientEmail: String
 )
 
+data class FriendDropdownState(
+    val userInput: String,
+    val onUserInputChange: (String) -> Unit,
+    val expanded: Boolean,
+    val onExpandedChange: (Boolean) -> Unit,
+    val context: Context,
+    val coroutineScope: CoroutineScope,
+    val userToken: String
+)
 
 
 
