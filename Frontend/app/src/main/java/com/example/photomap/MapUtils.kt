@@ -46,7 +46,7 @@ object MapUtils {
             "yellow" -> Color.YELLOW
             "blue" -> Color.BLUE
             "green" -> Color.GREEN
-            "violet" -> Color.MAGENTA
+            "violet" -> Color.parseColor("#9C27B0")
             "azure" -> Color.CYAN
             "orange" -> Color.parseColor("#FFA500") // or Color.rgb(255, 165, 0)
             // Add more mappings as needed

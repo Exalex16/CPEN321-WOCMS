@@ -66,9 +66,9 @@
         <TextView
             android:id="@+id/tutorial1Text2"
             android:layout_width="193dp"
-            android:layout_height="98dp"
+            android:layout_height="59dp"
             android:layout_gravity="center_horizontal|top"
-            android:text="See other users you've shared photos with."
+            android:text="See your account details and log out."
             android:textColor="@android:color/white"
             android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -76,7 +76,7 @@
             app:layout_constraintHorizontal_bias="0.715"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.288" />
+            app:layout_constraintVertical_bias="0.32" />
 
         <TextView
             android:id="@+id/tutorial1Text3"
@@ -86,12 +86,12 @@
             android:text="View and share your photos in a marker-based album."
             android:textColor="@android:color/white"
             android:textSize="20sp"
-            app:layout_constraintBottom_toTopOf="@+id/tutorial1Text4"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.709"
+            app:layout_constraintHorizontal_bias="0.715"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tutorial1Text2"
-            app:layout_constraintVertical_bias="0.659" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.514" />
 
         <TextView
             android:id="@+id/tutorial1Text4"
