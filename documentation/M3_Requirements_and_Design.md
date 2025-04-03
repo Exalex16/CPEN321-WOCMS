@@ -32,10 +32,6 @@ therefore the ban algorithm is not implement yet. Therefore, the main actor of o
 8. Clarified and modified use cases: View Map Info, Upload Photos, Receive Recommendation. 
     - Past descriptors misaligned with our vision during development, and we incorporated concrete tests to test for specific behavior. (3.18)
 
-9. Renamed usecase "Recommend Locations" to "Explore Locations of Interest" (3.30)
-    - New name better reflects the functionality of use case 
-
-
 
 ## 2. Project Description
 PhotoMap: Personalized map-based photography assistant and archive. Users can upload photos and have them displayed on the map, at the same location where the photo was taken. Uses can view their uploaded photos and navigate between their location markers on the map. PhotoMap will also provide recommendation information about potential locations of interest, based on the geographical data of location-markers and user's photo history. 
@@ -120,7 +116,7 @@ PhotoMap: Personalized map-based photography assistant and archive. Users can up
                 - 2a. The system fails to retrieve marker or photo data from the backend.
                     - 2a1. An error message is displayed indicating that marker and photo data fetching has failed. 
 
-4. **Explore Locations of Interest** 
+4. **Receive Location Recommendation** 
     - **Overview**:
         1. Receive Location Recommendation
     
