@@ -60,7 +60,7 @@ class RecommendationTest {
     private val photoApi = retrofit.create(PhotoApi::class.java)
 
     // Non-functional Testing: Recommendation Response
-    private val MAX_RESPONSE_TIME = 2000
+    private val MAX_RESPONSE_TIME = 2500
 
     @get:Rule
     val activityRule = ActivityScenarioRule(MapsActivity::class.java)

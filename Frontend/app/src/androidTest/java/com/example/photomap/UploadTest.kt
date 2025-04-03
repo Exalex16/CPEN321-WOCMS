@@ -253,7 +253,7 @@ class UploadTest {
         onView(withId(R.id.btn_submit_upload))
             .perform(click())
 
-        Thread.sleep(3000)
+        Thread.sleep(2000)
 
         // Verify that the error message (Snackbar or Toast) is displayed
         // For example, if you use a Snackbar:
@@ -272,7 +272,8 @@ class UploadTest {
     @Test
     fun testUploadPhotoWithMockedPicker() {
         // Add a marker for upload test
-        simulateScreenTap(1000, 1400)
+        Thread.sleep(1000)
+        simulateScreenTap(400, 1400)
 
         onView(withId(R.id.markerTitle))
             .inRoot(isDialog())

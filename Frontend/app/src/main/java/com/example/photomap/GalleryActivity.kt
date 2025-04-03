@@ -93,7 +93,6 @@ class GalleryActivity : ComponentActivity() {
 
 
         userToken = getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("user_email", null)
-        //Log.d("GalleryActivity",MainActivity.mapContent.markerList.toString())
         if (userToken == null) {
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
@@ -437,7 +436,6 @@ class GalleryActivity : ComponentActivity() {
     fun DialogController(images: List<Pair<MarkerInstance,PhotoInstance>>, pagerState: PagerState,coroutineScope: CoroutineScope, showDialog: MutableState<Boolean>) {
         val context = LocalContext.current
         var expanded by remember { mutableStateOf(false) }
-        val options = MainActivity.userInfo.friends
         var userInput by remember { mutableStateOf("") }
             Dialog(onDismissRequest = {
                 showDialog.value = false
