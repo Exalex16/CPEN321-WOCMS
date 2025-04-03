@@ -4,7 +4,8 @@
 
 | **Change Date**   | **Modified Sections** | **Rationale** |
 | ----------------- | --------------------- | ------------- |
-| _Nothing to show_ |
+| 3/31/2025 | 2.1.1. Tests | Update one new function and the test of it|
+| 4/1/2025 | 5.4. Justifications for Unfixed Issues | Removed fixed issue |
 
 ---
 
@@ -282,34 +283,13 @@ _<img src="images/Test_5_3.png" alt="Alt text" width="800">_
 
 - **Code Pattern: [One method should have one responsibility. Long methods tend to handle many things at once. Prefer smaller methods to make them easier to understand.](#)**
 
-  1. **The function Gallery is too long (66). The maximum length is 60.**
-
-     - **Location in Git:** Frontend/app/src/main/java/com/example/photomap/
-GalleryActivity.kt
-     - **Justification:** ​
-        - Gallery is a compose UI function. It can't be reduced to smaller functions otherwise the styling would be inconsistent.
-  
-  2. **The function FullScreenImageViewer is too long (173). The maximum length is 60.**
-
-     - **Location in Git:** Frontend/app/src/main/java/com/example/photomap/
-GalleryActivity.kt
-     - **Justification:** ​
-        - FullScreenImageViewer is a compose UI function. I have tried to broken this into smaller functions but result in messed up UI. It can't be reduced to smaller functions otherwise the styling would be inconsistent.
-
-  3. **The function DialogController is too long (159). The maximum length is 60.**
+  1. **The function DialogController is too long (159). The maximum length is 60.**
 
      - **Location in Git:** Frontend/app/src/main/java/com/example/photomap/
 GalleryActivity.kt
      - **Justification:** ​
         - DialogContoller is a compose UI function. I have tried to broken this into smaller functions but result in messed up UI. It can't be reduced to smaller functions otherwise the styling would be inconsistent.
 
-- **Code Pattern: [Others](#)**
-
-  1. **The function uploadPhoto(image: MultipartBody.Part, description: RequestBody, uploader: RequestBody, location: RequestBody, sharedTo: RequestBody, shared: RequestBody, sharedBy: RequestBody) has too many parameters. The current threshold is set to 6.**
-
-     - **Location in Git:** Frontend/app/src/main/java/com/example/photomap/
-ApiService.kt
-     - **Justification:** ​The parameters of this function are all the necessary information of the image which can not be reduced. 
         
 
   
