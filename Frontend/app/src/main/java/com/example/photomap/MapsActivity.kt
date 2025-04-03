@@ -138,7 +138,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val fabAlbum: FloatingActionButton = findViewById(R.id.album)
         fabAlbum.visibility = View.VISIBLE
         fabAlbum.setOnClickListener {
-            Toast.makeText(this, "Album clicked!", Toast.LENGTH_SHORT).show()
+
             val intent = Intent(this, GalleryActivity::class.java)
             startActivity(intent)
         }
@@ -147,7 +147,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val fabUserCentre: FloatingActionButton = findViewById(R.id.usercentre)
         fabUserCentre.visibility = View.VISIBLE
         fabUserCentre.setOnClickListener {
-            Toast.makeText(this, "User Centre clicked!", Toast.LENGTH_SHORT).show()
+
             showUserCenterOverlay(composeView)
         }
 
@@ -155,7 +155,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val fabHelp: FloatingActionButton = findViewById(R.id.help)
         fabHelp.visibility = View.VISIBLE
         fabHelp.setOnClickListener {
-            Toast.makeText(this, "Help clicked!", Toast.LENGTH_SHORT).show()
+
             val tutorialDialog = TutorialDialogFragment()
             tutorialDialog.show(supportFragmentManager, "TutorialDialog")
         }

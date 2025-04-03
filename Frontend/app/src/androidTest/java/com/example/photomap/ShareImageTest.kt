@@ -214,11 +214,6 @@ class ShareImageTest{
 
     }
 
-
-
-
-
-
     private suspend fun uploadTestPhoto(context: Context): Response<UploadResponse> {
         val fakeUri = Uri.parse("android.resource://com.example.photomap/drawable/restaurant")
         val description = "This is a test description".toRequestBody("text/plain".toMediaTypeOrNull())

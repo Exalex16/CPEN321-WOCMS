@@ -83,8 +83,6 @@ import java.io.IOException
 
 
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 class GalleryActivity : ComponentActivity() {
 
@@ -301,18 +299,6 @@ class GalleryActivity : ComponentActivity() {
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
     @SuppressLint("UnrememberedMutableState")
     @Composable
     fun FullScreenImageViewer(images: List<Pair<MarkerInstance,PhotoInstance>>, startIndex: Int, onDismiss: () -> Unit) {
@@ -321,10 +307,6 @@ class GalleryActivity : ComponentActivity() {
             pageCount = { images.size } // ✅ Correct way in newer versions
         )
         val coroutineScope = rememberCoroutineScope()
-
-
-        //var showDialog by remember { mutableStateOf(false) }  // Controls the dialog visibility
-
         val showDialog = remember { mutableStateOf(false) }
 
         Log.d("Gallery", "Opening Full-Screen Viewer at Index: $startIndex")
@@ -358,78 +340,12 @@ class GalleryActivity : ComponentActivity() {
                             .testTag("GalleryImage_${page}_full")
                              // Makes image take most of the space
                     )
-
                     ImageMetadataRow(
                         page = page,
                         userToken = userToken,
                         images = images,
                         showDialog = showDialog
                     )
-
-                    // Row of Text (Directly Below Image)
-                    /*
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.Black)
-                            .padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // First Column (Left Side)
-                        Column(
-                            modifier = Modifier
-                                .weight(4f) // Takes up available space
-                                .padding(8.dp)
-                        ) {
-                            Text(
-                                text = "Marker: ${images[page].first.title}",
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-
-                            )
-                            Text(
-                                text = "Location: ${images[page].first.location}",
-                                color = Color.Gray,
-                                fontSize = 14.sp
-                            )
-                            if(!(images[page].second.sharedBy.equals("null") || images[page].second.sharedBy.equals(userToken))){
-                                Text(
-                                    text = "SharedBy: ${images[page].second.sharedBy}",
-                                    color = Color.Gray,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-                        // Second Column (Right Side)
-                        Column(
-                            modifier = Modifier
-                                .weight(1f) // Takes up available space
-                                .padding(8.dp),
-                            horizontalAlignment = Alignment.End // Aligns content to the right
-                        ) {
-                            if(!images[page].second.shared || (images[page].second.shared && images[page].second.sharedBy.equals(userToken))){
-                                Button(
-                                    onClick = {
-                                        Log.d("Gallery", "Icon Button Clicked")
-                                        showDialog.value = true
-
-                                              },
-                                    modifier = Modifier.size(64.dp).testTag("IconButton"), // Adjust size as needed
-                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                        containerColor = Color.Transparent
-                                    )
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.share), // Replace with actual drawable name
-                                        contentDescription = "Button Icon",
-                                        modifier = Modifier.fillMaxSize() // Adjust icon size as needed
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    */
                 }
             }
         }
