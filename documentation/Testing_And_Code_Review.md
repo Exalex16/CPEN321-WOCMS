@@ -275,11 +275,11 @@ _<img src="images/BackendTestNM.png" alt="Alt text" width="500">_
 
 _<img src="images/Test_5_2.png" alt="Alt text" width="800">_
 
-### 5.3. Unfixed Issues per Codacy Code Pattern
+### 5.3. Unfixed Issue per Codacy Code Pattern
 
 _<img src="images/Test_5_3.png" alt="Alt text" width="800">_
 
-### 5.4. Justifications for Unfixed Issues
+### 5.4. Justifications for Unfixed Issue
 
 - **Code Pattern: [One method should have one responsibility. Long methods tend to handle many things at once. Prefer smaller methods to make them easier to understand.](#)**
 
